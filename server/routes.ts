@@ -173,9 +173,144 @@ function getRandomElementalWords(count: number): WordWithElement[] {
 }
 
 function startBotTyping(bot: BotPlayer, room: GameRoom, io: SocketIOServer) {
-  // Bots are currently disabled in elemental mode
-  // This function is kept for future implementation
-  return;
+  if (!bot.currentWords || bot.currentWords.length === 0) return;
+  
+  const typingDelay = 2000 + Math.random() * 3000; // 2-5 seconds between words
+  
+  bot.typingTimeout = setTimeout(() => {
+    if (room.phase !== 'playing' || !bot.currentWords || bot.currentWords.length === 0) return;
+    
+    // Pick a random word from bot's current words
+    const randomIndex = Math.floor(Math.random() * bot.currentWords.length);
+    const wordObj = bot.currentWords[randomIndex] as any;
+    
+    if (!wordObj) {
+      startBotTyping(bot, room, io);
+      return;
+    }
+    
+    // Simulate typing the word
+    bot.stats.wordsTyped++;
+    bot.stats.correctWords++;
+    
+    // Get new words for the bot
+    const newWords = getRandomElementalWords(6);
+    bot.currentWords = newWords as any;
+    
+    // Update bot's element charge (simulate charging)
+    const { element, isCharge } = wordObj;
+    
+    // Randomly decide to use element if bot has enough charge (simulate having 100 charge)
+    const shouldUseElement = Math.random() < 0.3; // 30% chance to use element
+    
+    if (shouldUseElement) {
+      const action = Math.random() < 0.7 ? 'attack' : 'barrier'; // 70% attack, 30% barrier
+      const randomElement = ['fire', 'water', 'leaf'][Math.floor(Math.random() * 3)] as Element;
+      
+      if (action === 'attack') {
+        const enemyTeam = bot.team === 'blue' ? 'red' : 'blue';
+        const enemyState = enemyTeam === 'blue' ? room.blueTeam : room.redTeam;
+        
+        let damage = 30;
+        let isCritical = false;
+        
+        if (enemyState.barrier) {
+          const advantage = getElementAdvantage(randomElement, enemyState.barrier.element);
+          if (advantage === 'critical') {
+            damage = 60;
+            isCritical = true;
+          } else if (advantage === 'weak') {
+            damage = 15;
+          }
+          
+          const barrierDamage = Math.min(damage, enemyState.barrier.strength);
+          enemyState.barrier.strength -= barrierDamage;
+          damage -= barrierDamage;
+          
+          if (enemyState.barrier.strength <= 0) {
+            enemyState.barrier = null;
+          }
+        }
+        
+        if (damage > 0) {
+          enemyState.hp = Math.max(0, enemyState.hp - damage);
+        }
+        
+        bot.stats.damageDealt += damage;
+        
+        io.to(room.id).emit('attack_landed', {
+          attackerTeam: bot.team,
+          element: randomElement,
+          blueTeam: room.blueTeam,
+          redTeam: room.redTeam,
+          isCritical
+        });
+        
+        if (enemyState.hp <= 0) {
+          room.phase = 'ended';
+          room.winner = bot.team;
+          
+          const endTime = Date.now();
+          const matchDuration = (endTime - room.matchStartTime) / 60000;
+          const playerStats = Array.from(room.players.values()).map(p => {
+            const wpm = matchDuration > 0 ? Math.round(p.stats.correctWords / matchDuration) : 0;
+            const accuracy = p.stats.wordsTyped > 0 
+              ? Math.round((p.stats.correctWords / p.stats.wordsTyped) * 100) 
+              : 100;
+            
+            return {
+              id: p.id,
+              nickname: p.nickname,
+              team: p.team,
+              role: p.role,
+              wpm,
+              accuracy,
+              damageDealt: p.stats.damageDealt,
+              shieldRestored: p.stats.shieldRestored
+            };
+          });
+          
+          io.to(room.id).emit('match_ended', {
+            winner: bot.team,
+            blueTeam: room.blueTeam,
+            redTeam: room.redTeam,
+            stats: playerStats
+          });
+          return;
+        }
+      } else {
+        const myTeamState = bot.team === 'blue' ? room.blueTeam : room.redTeam;
+        myTeamState.barrier = {
+          element: randomElement,
+          strength: 100
+        };
+        
+        io.to(room.id).emit('barrier_created', {
+          team: bot.team,
+          element: randomElement,
+          blueTeam: room.blueTeam,
+          redTeam: room.redTeam
+        });
+      }
+    }
+    
+    // Continue bot typing
+    startBotTyping(bot, room, io);
+  }, typingDelay);
+  
+  room.botTimers.push(bot.typingTimeout);
+}
+
+function getElementAdvantage(attacker: Element, defender: Element): 'critical' | 'normal' | 'weak' {
+  if (attacker === 'fire' && defender === 'leaf') return 'critical';
+  if (attacker === 'water' && defender === 'fire') return 'critical';
+  if (attacker === 'leaf' && defender === 'water') return 'critical';
+  
+  if (attacker === 'fire' && defender === 'water') return 'weak';
+  if (attacker === 'water' && defender === 'leaf') return 'weak';
+  if (attacker === 'leaf' && defender === 'fire') return 'weak';
+  
+  return 'normal';
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -595,18 +730,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
     });
-
-    function getElementAdvantage(attacker: Element, defender: Element): 'critical' | 'normal' | 'weak' {
-      if (attacker === 'fire' && defender === 'leaf') return 'critical';
-      if (attacker === 'water' && defender === 'fire') return 'critical';
-      if (attacker === 'leaf' && defender === 'water') return 'critical';
-      
-      if (attacker === 'fire' && defender === 'water') return 'weak';
-      if (attacker === 'water' && defender === 'leaf') return 'weak';
-      if (attacker === 'leaf' && defender === 'fire') return 'weak';
-      
-      return 'normal';
-    }
 
     socket.on("disconnect", () => {
       console.log(`Player disconnected: ${socket.id}`);
