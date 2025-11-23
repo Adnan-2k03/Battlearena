@@ -64,24 +64,27 @@ function App() {
 
     console.log('Setting up socket listeners, socket.id:', socket.id);
 
-    socket.on('matched', ({ roomId: matchedRoomId, team, role }: { roomId: string; team: 'blue' | 'red'; role: 'striker' | 'guardian' }) => {
+    const handleMatched = ({ roomId: matchedRoomId, team, role }: { roomId: string; team: 'blue' | 'red'; role: 'striker' | 'guardian' }) => {
       console.log('Matched event received - roomId:', matchedRoomId, 'team:', team, 'role:', role);
       setRoomId(matchedRoomId);
       setMyTeam(team);
       setMyRole(role);
-    });
+    };
 
-    socket.on('room_update', ({ players }: { players: Player[] }) => {
+    const handleRoomUpdate = ({ players }: { players: Player[] }) => {
       console.log('Room update event received, players:', players, 'my socket.id:', socket.id);
       const me = players.find(p => p.id === socket.id);
       if (me) {
         console.log('Found me in players - Setting team:', me.team, 'role:', me.role);
-        setMyTeam(me.team);
-        setMyRole(me.role);
+        if (me.team) setMyTeam(me.team);
+        if (me.role) setMyRole(me.role);
       } else {
         console.log('Could not find myself in players list!');
       }
-    });
+    };
+
+    socket.on('matched', handleMatched);
+    socket.on('room_update', handleRoomUpdate);
 
     socket.on('match_started', () => {
       console.log('Match started event received');
