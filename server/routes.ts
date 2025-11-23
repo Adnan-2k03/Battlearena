@@ -347,6 +347,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         console.log(`Match created: ${roomId} with ${room.players.size} players (${playerData.length} human, ${room.players.size - playerData.length} bots)`);
+        
+        setTimeout(() => {
+          room.phase = "playing";
+          room.blueTeam = { hp: 100, shield: 0 };
+          room.redTeam = { hp: 100, shield: 0 };
+          room.winner = null;
+          room.matchStartTime = Date.now();
+
+          const startTime = Date.now();
+          room.players.forEach((player) => {
+            player.stats = {
+              wordsTyped: 0,
+              correctWords: 0,
+              incorrectWords: 0,
+              damageDealt: 0,
+              shieldRestored: 0,
+              startTime
+            };
+          });
+
+          const gameState = {
+            phase: "playing",
+            blueTeam: room.blueTeam,
+            redTeam: room.redTeam
+          };
+
+          io.to(roomId).emit("match_started", gameState);
+
+          room.players.forEach((player) => {
+            const words = getRandomWords(player.role!, 3);
+            if (isBot(player)) {
+              player.currentWords = words;
+              startBotTyping(player, room, io);
+            } else {
+              io.to(player.id).emit("new_words", { words });
+              console.log(`Sent words to ${player.nickname}: ${words.map(w => w.word).join(', ')}`);
+            }
+          });
+
+          console.log(`Match auto-started in room ${roomId}`);
+        }, 1000);
       }, 2000);
     });
 
