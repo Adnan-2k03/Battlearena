@@ -94,6 +94,10 @@ function App() {
       setSpectatorData({ players: validPlayers, blueTeam, redTeam, phase });
     });
 
+    socket.onAny((eventName, ...args) => {
+      console.log('Socket event received:', eventName, args);
+    });
+
     socket.on('matched', ({ roomId: matchedRoomId, team, role }: { roomId: string; team: 'blue' | 'red'; role: 'striker' | 'guardian' }) => {
       console.log('Matched event received - roomId:', matchedRoomId, 'team:', team, 'role:', role);
       setRoomId(matchedRoomId);
