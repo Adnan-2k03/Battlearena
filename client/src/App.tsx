@@ -142,7 +142,7 @@ function App() {
             <Lobby socket={socket} onMatchStart={handleMatchStart} />
           )}
 
-          {gamePhase === 'playing' && myTeam && myRole && (
+          {gamePhase === 'playing' && myTeam && myRole && roomId && (
             <GameArena 
               socket={socket}
               roomId={roomId}

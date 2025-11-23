@@ -44,7 +44,7 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
   const enemyTeamState = myTeam === 'blue' ? redTeam : blueTeam;
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !roomId) return;
 
     socket.emit('player_ready', { roomId });
 
