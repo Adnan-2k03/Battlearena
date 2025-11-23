@@ -64,15 +64,19 @@ function App() {
 
     console.log('Setting up socket listeners, socket.id:', socket.id);
 
-    const handleMatched = ({ roomId: matchedRoomId, team, role }: { roomId: string; team: 'blue' | 'red'; role: 'striker' | 'guardian' }) => {
-      console.log('Matched event received - roomId:', matchedRoomId, 'team:', team, 'role:', role);
+    socket.onAny((eventName, ...args) => {
+      console.log('Socket event received:', eventName, args);
+    });
+
+    socket.on('matched', ({ roomId: matchedRoomId, team, role }: { roomId: string; team: 'blue' | 'red'; role: 'striker' | 'guardian' }) => {
+      console.log('MATCHED HANDLER CALLED - roomId:', matchedRoomId, 'team:', team, 'role:', role);
       setRoomId(matchedRoomId);
       setMyTeam(team);
       setMyRole(role);
-    };
+    });
 
-    const handleRoomUpdate = ({ players }: { players: Player[] }) => {
-      console.log('Room update event received, players:', players, 'my socket.id:', socket.id);
+    socket.on('room_update', ({ players }: { players: Player[] }) => {
+      console.log('ROOM UPDATE HANDLER CALLED - players:', players, 'my socket.id:', socket.id);
       const me = players.find(p => p.id === socket.id);
       if (me) {
         console.log('Found me in players - Setting team:', me.team, 'role:', me.role);
@@ -81,10 +85,7 @@ function App() {
       } else {
         console.log('Could not find myself in players list!');
       }
-    };
-
-    socket.on('matched', handleMatched);
-    socket.on('room_update', handleRoomUpdate);
+    });
 
     socket.on('match_started', () => {
       console.log('Match started event received');
@@ -102,10 +103,6 @@ function App() {
       setRoomId(specRoomId);
       const validPlayers = players.filter((p: any) => p.team && p.role);
       setSpectatorData({ players: validPlayers, blueTeam, redTeam, phase });
-    });
-
-    socket.onAny((eventName, ...args) => {
-      console.log('Socket event received:', eventName, args);
     });
 
     return () => {
