@@ -1,73 +1,103 @@
-import { Canvas } from "@react-three/fiber";
-import { Suspense, useEffect, useState } from "react";
-import { KeyboardControls } from "@react-three/drei";
-// import { useAudio } from "./lib/stores/useAudio";
+import { useEffect, useState } from "react";
 import "@fontsource/inter";
+import { useSocket } from "./hooks/useSocket";
+import { Lobby } from "./components/Lobby";
+import { GameArena } from "./components/GameArena";
+import { VictoryModal } from "./components/VictoryModal";
 
-// Import our game components
+type GamePhase = 'lobby' | 'playing' | 'ended';
 
-// Define control keys for the game
-// const controls = [
-//   { name: "forward", keys: ["KeyW", "ArrowUp"] },
-//   { name: "backward", keys: ["KeyS", "ArrowDown"] },
-//   { name: "leftward", keys: ["KeyA", "ArrowLeft"] },
-//   { name: "rightward", keys: ["KeyD", "ArrowRight"] },
-//   { name: "punch", keys: ["KeyJ"] },
-//   { name: "kick", keys: ["KeyK"] },
-//   { name: "block", keys: ["KeyL"] },
-//   { name: "special", keys: ["Space"] },
-// ];
+interface Player {
+  id: string;
+  nickname: string;
+  team: 'blue' | 'red' | null;
+  role: 'striker' | 'guardian' | null;
+}
 
-// Main App component
 function App() {
-  //const { gamePhase } = useFighting();
-  const [showCanvas, setShowCanvas] = useState(false);
+  const socket = useSocket();
+  const [gamePhase, setGamePhase] = useState<GamePhase>('lobby');
+  const [roomId, setRoomId] = useState('');
+  const [myTeam, setMyTeam] = useState<'blue' | 'red' | null>(null);
+  const [myRole, setMyRole] = useState<'striker' | 'guardian' | null>(null);
+  const [winner, setWinner] = useState<'blue' | 'red' | null>(null);
 
-  // Show the canvas once everything is loaded
   useEffect(() => {
-    setShowCanvas(true);
-  }, []);
+    if (!socket) return;
+
+    socket.on('room_update', ({ players }: { players: Player[] }) => {
+      const me = players.find(p => p.id === socket.id);
+      if (me) {
+        setMyTeam(me.team);
+        setMyRole(me.role);
+      }
+    });
+
+    socket.on('match_started', () => {
+      setGamePhase('playing');
+    });
+
+    socket.on('match_ended', ({ winner: winningTeam }: { winner: 'blue' | 'red' }) => {
+      setWinner(winningTeam);
+      setGamePhase('ended');
+    });
+
+    return () => {
+      socket.off('room_update');
+      socket.off('match_started');
+      socket.off('match_ended');
+    };
+  }, [socket]);
+
+  const handleMatchStart = () => {
+    setGamePhase('playing');
+  };
+
+  const handlePlayAgain = () => {
+    window.location.reload();
+  };
+
+  useEffect(() => {
+    const handleJoinRoom = (data: any) => {
+      if (data.roomId) {
+        setRoomId(data.roomId);
+      }
+    };
+
+    if (socket) {
+      const originalEmit = socket.emit.bind(socket);
+      socket.emit = function(event: string, ...args: any[]) {
+        if (event === 'join_room' && args[0]?.roomId) {
+          setRoomId(args[0].roomId);
+        }
+        return originalEmit(event, ...args);
+      };
+    }
+  }, [socket]);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}/>
-    // {showCanvas && (
-    //   <KeyboardControls map={controls}>
-    //     {gamePhase === 'menu' && <Menu />}
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
+      {gamePhase === 'lobby' && (
+        <Lobby socket={socket} onMatchStart={handleMatchStart} />
+      )}
 
-    //     {gamePhase === 'character_selection' && <CharacterSelection />}
+      {gamePhase === 'playing' && myTeam && myRole && (
+        <GameArena 
+          socket={socket}
+          roomId={roomId}
+          myTeam={myTeam}
+          myRole={myRole}
+        />
+      )}
 
-    //     {(gamePhase === 'fighting' || gamePhase === 'round_end' || gamePhase === 'match_end') && (
-    //       <>
-    //         <Canvas
-    //           shadows
-    //           camera={{
-    //             position: [0, 2, 8],
-    //             fov: 45,
-    //             near: 0.1,
-    //             far: 1000
-    //           }}
-    //           gl={{
-    //             antialias: true,
-    //             powerPreference: "default"
-    //           }}
-    //         >
-    //           <color attach="background" args={["#111111"]} />
-
-    //           {/* Lighting */}
-    //           <Lights />
-
-    //           <Suspense fallback={null}>
-    //           </Suspense>
-    //         </Canvas>
-    //         <GameUI />
-    //       </>
-    //     )}
-
-    //     <ShortcutManager />
-    //     <SoundManager />
-    //   </KeyboardControls>
-    // )}
-    //</div>
+      {gamePhase === 'ended' && winner && myTeam && (
+        <VictoryModal 
+          winner={winner}
+          myTeam={myTeam}
+          onPlayAgain={handlePlayAgain}
+        />
+      )}
+    </div>
   );
 }
 
