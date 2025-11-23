@@ -2,11 +2,13 @@ import { useEffect, useState, useRef } from "react";
 import "@fontsource/inter";
 import { useSocket } from "./hooks/useSocket";
 import { Lobby } from "./components/Lobby";
-import { GameArena } from "./components/GameArena";
-import { ElementalArena } from "./components/ElementalArena";
+import { ElementalArena3D } from "./components/ElementalArena3D";
 import { VictoryModal } from "./components/VictoryModal";
 import { SoundManager } from "./components/SoundManager";
 import { SpectatorView } from "./components/SpectatorView";
+import { useAudio } from "./lib/stores/useAudio";
+import { Button } from "./components/ui/button";
+import { Volume2, VolumeX } from "lucide-react";
 
 type GamePhase = 'lobby' | 'playing' | 'ended';
 type UserMode = 'player' | 'spectator';
@@ -58,6 +60,8 @@ function App() {
     redTeam: TeamState;
     phase: string;
   } | null>(null);
+  
+  const { initializeAudio, toggleMute, isMuted, initialized } = useAudio();
 
   useEffect(() => {
     if (!socket) return;
@@ -179,13 +183,47 @@ function App() {
 
           {gamePhase === 'playing' && (
             <>
-              {myTeam && myRole && roomId ? (
-                <ElementalArena 
-                  socket={socket}
-                  roomId={roomId}
-                  myTeam={myTeam}
-                  myRole={myRole}
-                />
+              {!initialized ? (
+                <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+                  <div className="text-center text-white">
+                    <div className="text-6xl mb-4 animate-pulse">🎮</div>
+                    <h2 className="text-2xl font-bold mb-4">Ready to Battle!</h2>
+                    <p className="text-slate-400 mb-6">Click to enable sounds and start playing</p>
+                    <Button 
+                      onClick={initializeAudio}
+                      size="lg"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <Volume2 className="w-5 h-5 mr-2" />
+                      Start Game with Sound
+                    </Button>
+                  </div>
+                </div>
+              ) : myTeam && myRole && roomId ? (
+                <>
+                  <ElementalArena3D 
+                    socket={socket}
+                    roomId={roomId}
+                    myTeam={myTeam}
+                    myRole={myRole}
+                  />
+                  
+                  {/* Audio toggle button */}
+                  <div className="fixed top-4 right-4 z-50">
+                    <Button
+                      onClick={toggleMute}
+                      variant="outline"
+                      size="icon"
+                      className="bg-slate-900/80 border-slate-700 hover:bg-slate-800"
+                    >
+                      {isMuted ? (
+                        <VolumeX className="w-5 h-5 text-white" />
+                      ) : (
+                        <Volume2 className="w-5 h-5 text-white" />
+                      )}
+                    </Button>
+                  </div>
+                </>
               ) : (
                 <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
                   <div className="text-center text-white">

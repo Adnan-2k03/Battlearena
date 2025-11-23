@@ -685,7 +685,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Broadcast element charges to all players in the room
       const playerCharges = Array.from(room.players.values()).map(p => ({
         id: p.id,
+        nickname: p.nickname,
         team: p.team,
+        role: p.role,
         charges: p.elementCharges
       }));
       io.to(roomId).emit("element_charges_update", { playerCharges });
@@ -805,10 +807,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Broadcast updated element charges after using an element
       const playerCharges = Array.from(room.players.values()).map(p => ({
         id: p.id,
+        nickname: p.nickname,
         team: p.team,
+        role: p.role,
         charges: p.elementCharges
       }));
       io.to(roomId).emit("element_charges_update", { playerCharges });
+    });
+
+    socket.on("player_typing", ({ roomId, keyIndex }: { roomId: string; keyIndex: number }) => {
+      const room = rooms.get(roomId);
+      if (!room || room.phase !== "playing") return;
+
+      const player = room.players.get(socket.id);
+      if (!player) return;
+
+      // Broadcast typing event to all players in the room
+      io.to(roomId).emit("player_typing", { playerId: socket.id, keyIndex });
     });
 
     socket.on("disconnect", () => {
