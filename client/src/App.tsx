@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "@fontsource/inter";
 import { useSocket } from "./hooks/useSocket";
 import { Lobby } from "./components/Lobby";
@@ -64,53 +64,51 @@ function App() {
 
     console.log('Setting up socket listeners, socket.id:', socket.id);
 
+    // Remove all previous listeners first
+    socket.removeAllListeners('matched');
+    socket.removeAllListeners('room_update');
+    socket.removeAllListeners('match_started');
+    socket.removeAllListeners('match_ended');
+    socket.removeAllListeners('joined_as_spectator');
+
     socket.onAny((eventName, ...args) => {
       console.log('Socket event received:', eventName, args);
-    });
-
-    socket.on('matched', ({ roomId: matchedRoomId, team, role }: { roomId: string; team: 'blue' | 'red'; role: 'striker' | 'guardian' }) => {
-      console.log('MATCHED HANDLER CALLED - roomId:', matchedRoomId, 'team:', team, 'role:', role);
-      setRoomId(matchedRoomId);
-      setMyTeam(team);
-      setMyRole(role);
-    });
-
-    socket.on('room_update', ({ players }: { players: Player[] }) => {
-      console.log('ROOM UPDATE HANDLER CALLED - players:', players, 'my socket.id:', socket.id);
-      const me = players.find(p => p.id === socket.id);
-      if (me) {
-        console.log('Found me in players - Setting team:', me.team, 'role:', me.role);
-        if (me.team) setMyTeam(me.team);
-        if (me.role) setMyRole(me.role);
-      } else {
-        console.log('Could not find myself in players list!');
+      
+      // Manually handle events if handlers aren't working
+      if (eventName === 'matched' && args[0]) {
+        const { roomId: matchedRoomId, team, role } = args[0];
+        console.log('MANUAL MATCHED HANDLER - roomId:', matchedRoomId, 'team:', team, 'role:', role);
+        setRoomId(matchedRoomId);
+        setMyTeam(team);
+        setMyRole(role);
+      } else if (eventName === 'room_update' && args[0]) {
+        const { players } = args[0];
+        console.log('MANUAL ROOM UPDATE HANDLER - players:', players, 'my socket.id:', socket.id);
+        const me = players.find((p: any) => p.id === socket.id);
+        if (me) {
+          console.log('Found me in players - Setting team:', me.team, 'role:', me.role);
+          if (me.team) setMyTeam(me.team);
+          if (me.role) setMyRole(me.role);
+        }
+      } else if (eventName === 'match_started') {
+        console.log('MANUAL MATCH STARTED HANDLER');
+        setGamePhase('playing');
+      } else if (eventName === 'match_ended' && args[0]) {
+        const { winner: winningTeam, stats } = args[0];
+        setWinner(winningTeam);
+        setMatchStats(stats || []);
+        setGamePhase('ended');
+      } else if (eventName === 'joined_as_spectator' && args[0]) {
+        const { roomId: specRoomId, players, blueTeam, redTeam, phase } = args[0];
+        setUserMode('spectator');
+        setRoomId(specRoomId);
+        const validPlayers = players.filter((p: any) => p.team && p.role);
+        setSpectatorData({ players: validPlayers, blueTeam, redTeam, phase });
       }
     });
 
-    socket.on('match_started', () => {
-      console.log('Match started event received');
-      setGamePhase('playing');
-    });
-
-    socket.on('match_ended', ({ winner: winningTeam, stats }: { winner: 'blue' | 'red'; stats: PlayerStat[] }) => {
-      setWinner(winningTeam);
-      setMatchStats(stats || []);
-      setGamePhase('ended');
-    });
-
-    socket.on('joined_as_spectator', ({ roomId: specRoomId, players, blueTeam, redTeam, phase }: any) => {
-      setUserMode('spectator');
-      setRoomId(specRoomId);
-      const validPlayers = players.filter((p: any) => p.team && p.role);
-      setSpectatorData({ players: validPlayers, blueTeam, redTeam, phase });
-    });
-
     return () => {
-      socket.off('matched');
-      socket.off('room_update');
-      socket.off('match_started');
-      socket.off('match_ended');
-      socket.off('joined_as_spectator');
+      socket.offAny();
     };
   }, [socket]);
 
