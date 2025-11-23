@@ -1,12 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 import { Input } from './ui/input';
-import { Swords, Shield as ShieldIcon, Heart } from 'lucide-react';
+import { Swords, Shield as ShieldIcon, Heart, Flame, Droplet, Leaf } from 'lucide-react';
 import { useAudio } from '@/lib/stores/useAudio';
 
 interface TeamState {
   hp: number;
   shield: number;
+  barrier?: {
+    element: 'fire' | 'water' | 'leaf';
+    strength: number;
+  } | null;
 }
 
 interface GameArenaProps {
@@ -22,22 +26,39 @@ interface Projectile {
   startTime: number;
 }
 
-type WordType = 'normal' | 'double_damage' | 'full_shield' | 'stun';
+type Element = 'fire' | 'water' | 'leaf';
 
-interface WordWithType {
+interface WordWithElement {
   word: string;
-  type: WordType;
+  element: Element;
+  isCharge: boolean;
+}
+
+interface ElementCharges {
+  fire: number;
+  water: number;
+  leaf: number;
+}
+
+interface PlayerCharges {
+  id: string;
+  team: 'blue' | 'red' | null;
+  charges: ElementCharges;
 }
 
 export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
   const [blueTeam, setBlueTeam] = useState<TeamState>({ hp: 100, shield: 0 });
   const [redTeam, setRedTeam] = useState<TeamState>({ hp: 100, shield: 0 });
-  const [words, setWords] = useState<WordWithType[]>([]);
+  const [words, setWords] = useState<WordWithElement[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
   const [shieldFlash, setShieldFlash] = useState<'blue' | 'red' | null>(null);
+  const [playerCharges, setPlayerCharges] = useState<PlayerCharges[]>([]);
+  const [myElementCharges, setMyElementCharges] = useState<ElementCharges>({ fire: 0, water: 0, leaf: 0 });
+  const [enemyElementCharges, setEnemyElementCharges] = useState<ElementCharges>({ fire: 0, water: 0, leaf: 0 });
+  const [keyboardFlash, setKeyboardFlash] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { playHit, playSuccess } = useAudio();
+  const { playHit, playSuccess, playCharge, playBarrier, playAttack } = useAudio();
 
   const enemyTeam = myTeam === 'blue' ? 'red' : 'blue';
   const myTeamState = myTeam === 'blue' ? blueTeam : redTeam;
@@ -48,8 +69,36 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
 
     socket.emit('player_ready', { roomId });
 
-    socket.on('new_words', ({ words: newWords }: { words: WordWithType[] }) => {
+    socket.on('new_words', ({ words: newWords }: { words: WordWithElement[] }) => {
       setWords(newWords);
+    });
+
+    socket.on('element_charges_update', ({ playerCharges: charges }: { playerCharges: PlayerCharges[] }) => {
+      setPlayerCharges(charges);
+      
+      // Find my charges
+      const myCharges = charges.find(p => p.id === socket.id);
+      if (myCharges) {
+        setMyElementCharges(myCharges.charges);
+      }
+      
+      // Find enemy team charges (only players on the opposite team)
+      const enemyTeamName = myTeam === 'blue' ? 'red' : 'blue';
+      const enemyPlayers = charges.filter(p => p.team === enemyTeamName);
+      
+      if (enemyPlayers.length > 0) {
+        // Average the enemy charges for display
+        const avgCharges: ElementCharges = { fire: 0, water: 0, leaf: 0 };
+        enemyPlayers.forEach(p => {
+          avgCharges.fire += p.charges.fire;
+          avgCharges.water += p.charges.water;
+          avgCharges.leaf += p.charges.leaf;
+        });
+        avgCharges.fire = Math.round(avgCharges.fire / enemyPlayers.length);
+        avgCharges.water = Math.round(avgCharges.water / enemyPlayers.length);
+        avgCharges.leaf = Math.round(avgCharges.leaf / enemyPlayers.length);
+        setEnemyElementCharges(avgCharges);
+      }
     });
 
     socket.on('damage_dealt', ({ attackerTeam, blueTeam: blue, redTeam: red }: any) => {
@@ -70,6 +119,29 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
       }, 1000);
     });
 
+    socket.on('attack_landed', ({ blueTeam: blue, redTeam: red, attackerTeam }: any) => {
+      setBlueTeam(blue);
+      setRedTeam(red);
+      playAttack();
+      
+      setKeyboardFlash(attackerTeam === myTeam ? 'attack-out' : 'attack-in');
+      setTimeout(() => setKeyboardFlash(null), 500);
+    });
+
+    socket.on('barrier_created', ({ blueTeam: blue, redTeam: red, team }: any) => {
+      setBlueTeam(blue);
+      setRedTeam(red);
+      playBarrier();
+      
+      setKeyboardFlash(team === myTeam ? 'barrier' : null);
+      setTimeout(() => setKeyboardFlash(null), 500);
+    });
+
+    socket.on('small_boost', ({ blueTeam: blue, redTeam: red }: any) => {
+      setBlueTeam(blue);
+      setRedTeam(red);
+    });
+
     socket.on('shield_restored', ({ team, blueTeam: blue, redTeam: red }: any) => {
       setBlueTeam(blue);
       setRedTeam(red);
@@ -82,9 +154,15 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
       }, 500);
     });
 
-    socket.on('word_correct', () => {
+    socket.on('word_correct', ({ isCharge }: any) => {
       setInputValue('');
       inputRef.current?.focus();
+      
+      if (isCharge) {
+        playCharge();
+        setKeyboardFlash('charge');
+        setTimeout(() => setKeyboardFlash(null), 300);
+      }
     });
 
     socket.on('word_invalid', () => {
@@ -94,24 +172,24 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
 
     return () => {
       socket.off('new_words');
+      socket.off('element_charges_update');
       socket.off('damage_dealt');
+      socket.off('attack_landed');
+      socket.off('barrier_created');
+      socket.off('small_boost');
       socket.off('shield_restored');
       socket.off('word_correct');
       socket.off('word_invalid');
     };
-  }, [socket, roomId, playHit, playSuccess]);
+  }, [socket, roomId, myTeam, playHit, playSuccess, playCharge, playBarrier, playAttack]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim() || !socket) return;
 
-    const typedWord = inputValue.trim().toUpperCase();
-    const matchedWord = words.find(w => w.word === typedWord);
-
     socket.emit('word_typed', { 
       roomId, 
-      word: inputValue.trim(),
-      wordType: matchedWord?.type || 'normal'
+      word: inputValue.trim()
     });
   };
 
@@ -119,6 +197,28 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
     if (hp > 60) return 'bg-green-500';
     if (hp > 30) return 'bg-yellow-500';
     return 'bg-red-500';
+  };
+
+  const getElementIcon = (element: Element, size: string = "w-4 h-4") => {
+    switch (element) {
+      case 'fire':
+        return <Flame className={`${size} text-orange-500`} />;
+      case 'water':
+        return <Droplet className={`${size} text-blue-500`} />;
+      case 'leaf':
+        return <Leaf className={`${size} text-green-500`} />;
+    }
+  };
+
+  const getElementColor = (element: Element) => {
+    switch (element) {
+      case 'fire':
+        return 'bg-orange-500';
+      case 'water':
+        return 'bg-blue-500';
+      case 'leaf':
+        return 'bg-green-500';
+    }
   };
 
   return (
@@ -154,6 +254,38 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
                 />
               </div>
             </div>
+            
+            {/* Enemy Element Charges */}
+            <div>
+              <span className="text-white text-xs font-medium mb-1 block">Enemy Element Charges:</span>
+              <div className="flex gap-2">
+                {(['fire', 'water', 'leaf'] as Element[]).map(element => (
+                  <div key={element} className="flex-1">
+                    <div className="flex items-center gap-1 mb-1">
+                      {getElementIcon(element, "w-3 h-3")}
+                      <span className="text-white text-xs">{enemyElementCharges[element]}%</span>
+                    </div>
+                    <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-300 ${getElementColor(element)}`}
+                        style={{ width: `${enemyElementCharges[element]}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Enemy Barrier Display */}
+            {enemyTeamState.barrier && (
+              <div className="bg-slate-700/50 rounded-lg p-2">
+                <div className="flex items-center gap-2">
+                  {getElementIcon(enemyTeamState.barrier.element, "w-5 h-5")}
+                  <span className="text-white text-sm font-bold">Barrier Active!</span>
+                  <span className="text-white text-sm">{enemyTeamState.barrier.strength}/100</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -176,9 +308,76 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
           />
         ))}
         
-        <div className="text-center text-white">
-          <div className="text-6xl md:text-8xl mb-4">⚔️</div>
-          <p className="text-slate-400 text-sm md:text-base">Type words to battle!</p>
+        <div className="text-center">
+          {/* Animated Keyboard Visual */}
+          <div className={`relative mb-6 inline-block transition-all duration-300 ${
+            keyboardFlash === 'charge' ? 'scale-110' :
+            keyboardFlash === 'attack-out' ? 'scale-105 -translate-y-4' :
+            keyboardFlash === 'attack-in' ? 'scale-95 translate-y-2' :
+            keyboardFlash === 'barrier' ? 'scale-110' : ''
+          }`}>
+            {/* Keyboard Base */}
+            <div className={`bg-slate-800 rounded-xl p-4 shadow-2xl border-4 transition-all duration-300 ${
+              keyboardFlash === 'charge' ? 'border-yellow-400 shadow-yellow-500/50' :
+              keyboardFlash === 'attack-out' ? 'border-red-500 shadow-red-500/50' :
+              keyboardFlash === 'attack-in' ? 'border-orange-600 shadow-orange-600/50' :
+              keyboardFlash === 'barrier' ? 'border-blue-400 shadow-blue-400/50' :
+              'border-slate-600'
+            }`}>
+              {/* Keyboard Keys - 3 rows */}
+              <div className="space-y-2">
+                {/* Row 1 */}
+                <div className="flex gap-1 justify-center">
+                  {[...Array(10)].map((_, i) => (
+                    <div key={`row1-${i}`} className={`w-6 h-6 md:w-8 md:h-8 rounded ${
+                      Math.random() > 0.7 && inputValue.length > 0 ? 'bg-slate-500' : 'bg-slate-700'
+                    } transition-colors`} />
+                  ))}
+                </div>
+                {/* Row 2 */}
+                <div className="flex gap-1 justify-center">
+                  {[...Array(9)].map((_, i) => (
+                    <div key={`row2-${i}`} className={`w-6 h-6 md:w-8 md:h-8 rounded ${
+                      Math.random() > 0.6 && inputValue.length > 0 ? 'bg-slate-500' : 'bg-slate-700'
+                    } transition-colors`} />
+                  ))}
+                </div>
+                {/* Row 3 - Spacebar */}
+                <div className="flex gap-1 justify-center">
+                  <div className="w-40 h-6 md:w-48 md:h-8 rounded bg-slate-700" />
+                </div>
+              </div>
+              
+              {/* Hands - Simplified finger indicators */}
+              <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 flex gap-16">
+                <div className="text-4xl opacity-70">👈</div>
+                <div className="text-4xl opacity-70">👉</div>
+              </div>
+            </div>
+            
+            {/* Effect Indicators */}
+            {keyboardFlash === 'charge' && (
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-6xl animate-ping">⚡</div>
+            )}
+            {keyboardFlash === 'attack-out' && (
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-6xl animate-pulse">💥</div>
+            )}
+            {keyboardFlash === 'barrier' && (
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-6xl animate-pulse">🛡️</div>
+            )}
+          </div>
+          
+          <p className="text-slate-300 text-sm md:text-base font-bold mb-2">
+            {inputValue.length > 0 ? 'Typing...' : 'Type words to battle!'}
+          </p>
+          {keyboardFlash && (
+            <p className="text-yellow-400 text-xs md:text-sm animate-pulse">
+              {keyboardFlash === 'charge' && '⚡ Charging Element Energy!'}
+              {keyboardFlash === 'attack-out' && '💥 Attack Sent!'}
+              {keyboardFlash === 'attack-in' && '💥 Under Attack!'}
+              {keyboardFlash === 'barrier' && '🛡️ Barrier Activated!'}
+            </p>
+          )}
         </div>
       </div>
 
@@ -235,29 +434,54 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
             </div>
           </div>
 
+          {/* My Element Charges */}
+          <div>
+            <span className="text-white text-sm font-medium mb-1 block">Your Element Charges:</span>
+            <div className="flex gap-3">
+              {(['fire', 'water', 'leaf'] as Element[]).map(element => (
+                <div key={element} className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    {getElementIcon(element, "w-4 h-4")}
+                    <span className="text-white text-sm font-bold">{myElementCharges[element]}%</span>
+                  </div>
+                  <div className="w-full bg-slate-700 rounded-full h-3 overflow-hidden">
+                    <div 
+                      className={`h-full transition-all duration-300 ${getElementColor(element)} ${myElementCharges[element] >= 100 ? 'animate-pulse' : ''}`}
+                      style={{ width: `${myElementCharges[element]}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-slate-400 mt-1">Type elemental words to charge. Use at 100% to attack/barrier!</p>
+          </div>
+
           {/* Word Deck */}
           <div className="bg-slate-700/50 rounded-lg p-3 md:p-4">
             <h3 className="text-white font-bold mb-2 text-sm md:text-base">Available Words:</h3>
             <div className="flex flex-wrap gap-2">
               {words.map((wordObj, index) => {
-                const isPowerUp = wordObj.type !== 'normal';
+                const isCharge = wordObj.isCharge;
                 return (
                   <div
                     key={index}
-                    className={`px-3 py-2 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base ${
-                      isPowerUp
+                    className={`px-3 py-2 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base flex items-center gap-1 ${
+                      isCharge
                         ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white animate-pulse shadow-lg'
-                        : myRole === 'striker' 
-                          ? 'bg-red-600 text-white' 
-                          : 'bg-blue-600 text-white'
+                        : 'bg-slate-600 text-white border-2 border-slate-500'
                     }`}
                   >
-                    {wordObj.word}
-                    {isPowerUp && <span className="ml-1">⚡</span>}
+                    {getElementIcon(wordObj.element, "w-4 h-4")}
+                    <span>{wordObj.word}</span>
+                    {isCharge && <span className="ml-1">⚡</span>}
                   </div>
                 );
               })}
             </div>
+            <p className="text-xs text-slate-400 mt-2">
+              {words.some(w => w.isCharge) && "⚡ = Charge words (+30 energy)"}
+              {" | "}Normal words: +10 energy, +2 HP, +3 Shield
+            </p>
           </div>
 
           {/* Input Box */}

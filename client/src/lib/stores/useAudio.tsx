@@ -15,6 +15,9 @@ interface AudioState {
   toggleMute: () => void;
   playHit: () => void;
   playSuccess: () => void;
+  playCharge: () => void;
+  playBarrier: () => void;
+  playAttack: () => void;
 }
 
 export const useAudio = create<AudioState>((set, get) => ({
@@ -69,6 +72,38 @@ export const useAudio = create<AudioState>((set, get) => ({
       successSound.play().catch(error => {
         console.log("Success sound play prevented:", error);
       });
+    }
+  },
+  
+  playCharge: () => {
+    const { successSound, isMuted } = get();
+    if (isMuted) return;
+    if (successSound) {
+      const clone = successSound.cloneNode() as HTMLAudioElement;
+      clone.volume = 0.2;
+      clone.playbackRate = 1.2;
+      clone.play().catch(() => {});
+    }
+  },
+  
+  playBarrier: () => {
+    const { successSound, isMuted } = get();
+    if (isMuted) return;
+    if (successSound) {
+      const clone = successSound.cloneNode() as HTMLAudioElement;
+      clone.volume = 0.4;
+      clone.playbackRate = 0.9;
+      clone.play().catch(() => {});
+    }
+  },
+  
+  playAttack: () => {
+    const { hitSound, isMuted } = get();
+    if (isMuted) return;
+    if (hitSound) {
+      const clone = hitSound.cloneNode() as HTMLAudioElement;
+      clone.volume = 0.5;
+      clone.play().catch(() => {});
     }
   }
 }));

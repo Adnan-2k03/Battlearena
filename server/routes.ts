@@ -201,19 +201,31 @@ function startBotTyping(bot: BotPlayer, room: GameRoom, io: SocketIOServer) {
     bot.stats.wordsTyped++;
     bot.stats.correctWords++;
     
+    // Update bot's element charge
+    const { element, isCharge } = wordObj;
+    const elementType = element as Element;
+    const chargeIncrease = isCharge ? 30 : 10;
+    bot.elementCharges[elementType] = Math.min(100, bot.elementCharges[elementType] + chargeIncrease);
+    
+    // Non-elemental boost for bot too
+    const botTeamState = bot.team === 'blue' ? room.blueTeam : room.redTeam;
+    if (!isCharge) {
+      botTeamState.hp = Math.min(100, botTeamState.hp + 2);
+      botTeamState.shield = Math.min(100, botTeamState.shield + 3);
+    }
+    
     // Get new words for the bot
     const newWords = getRandomElementalWords(6);
     bot.currentWords = newWords as any;
     
-    // Update bot's element charge (simulate charging)
-    const { element, isCharge } = wordObj;
-    
-    // Randomly decide to use element if bot has enough charge (simulate having 100 charge)
-    const shouldUseElement = Math.random() < 0.3; // 30% chance to use element
+    // Randomly decide to use element if bot has enough charge (check actual charge)
+    const shouldUseElement = Math.random() < 0.2 && bot.elementCharges[elementType] >= 100; // 20% chance if charged
     
     if (shouldUseElement) {
       const action = Math.random() < 0.7 ? 'attack' : 'barrier'; // 70% attack, 30% barrier
-      const randomElement = ['fire', 'water', 'leaf'][Math.floor(Math.random() * 3)] as Element;
+      
+      // Consume the charge
+      bot.elementCharges[elementType] = 0;
       
       if (action === 'attack') {
         const enemyTeam = bot.team === 'blue' ? 'red' : 'blue';
@@ -223,7 +235,7 @@ function startBotTyping(bot: BotPlayer, room: GameRoom, io: SocketIOServer) {
         let isCritical = false;
         
         if (enemyState.barrier) {
-          const advantage = getElementAdvantage(randomElement, enemyState.barrier.element);
+          const advantage = getElementAdvantage(elementType, enemyState.barrier.element);
           if (advantage === 'critical') {
             damage = 60;
             isCritical = true;
@@ -248,7 +260,7 @@ function startBotTyping(bot: BotPlayer, room: GameRoom, io: SocketIOServer) {
         
         io.to(room.id).emit('attack_landed', {
           attackerTeam: bot.team,
-          element: randomElement,
+          element: elementType,
           blueTeam: room.blueTeam,
           redTeam: room.redTeam,
           isCritical
@@ -289,18 +301,26 @@ function startBotTyping(bot: BotPlayer, room: GameRoom, io: SocketIOServer) {
       } else {
         const myTeamState = bot.team === 'blue' ? room.blueTeam : room.redTeam;
         myTeamState.barrier = {
-          element: randomElement,
+          element: elementType,
           strength: 100
         };
         
         io.to(room.id).emit('barrier_created', {
           team: bot.team,
-          element: randomElement,
+          element: elementType,
           blueTeam: room.blueTeam,
           redTeam: room.redTeam
         });
       }
     }
+    
+    // Broadcast element charges update
+    const playerCharges = Array.from(room.players.values()).map(p => ({
+      id: p.id,
+      team: p.team,
+      charges: p.elementCharges
+    }));
+    io.to(room.id).emit("element_charges_update", { playerCharges });
     
     // Continue bot typing
     startBotTyping(bot, room, io);
@@ -642,10 +662,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       player.stats.correctWords++;
 
       const { element, isCharge } = matchedWord as any;
+      const elementType = element as Element;
       
       // Update element charge
       const chargeIncrease = isCharge ? 30 : 10;
-      player.elementCharges[element] = Math.min(100, player.elementCharges[element] + chargeIncrease);
+      player.elementCharges[elementType] = Math.min(100, player.elementCharges[elementType] + chargeIncrease);
       
       // Non-elemental boost: small HP/shield restoration based on element
       const myTeamState = player.team === "blue" ? room.blueTeam : room.redTeam;
@@ -664,6 +685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Broadcast element charges to all players in the room
       const playerCharges = Array.from(room.players.values()).map(p => ({
         id: p.id,
+        team: p.team,
         charges: p.elementCharges
       }));
       io.to(roomId).emit("element_charges_update", { playerCharges });
@@ -783,6 +805,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Broadcast updated element charges after using an element
       const playerCharges = Array.from(room.players.values()).map(p => ({
         id: p.id,
+        team: p.team,
         charges: p.elementCharges
       }));
       io.to(roomId).emit("element_charges_update", { playerCharges });
