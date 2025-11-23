@@ -447,11 +447,11 @@ function Scene({ gameState }: { gameState: ReturnType<typeof useGameState> }) {
       ))}
       
       {/* Camera */}
-      <PerspectiveCamera makeDefault position={[0, 15, 0]} fov={60} />
+      <PerspectiveCamera makeDefault position={[0, 25, 0]} fov={70} />
       <OrbitControls 
         enablePan={false} 
-        minDistance={10} 
-        maxDistance={40}
+        minDistance={15} 
+        maxDistance={45}
         maxPolarAngle={Math.PI / 2.2}
         target={[0, 0, 0]}
       />
@@ -521,40 +521,29 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole }: ElementalAr
 
       {/* HUD Overlay */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Enemy Team Status - Top */}
-        <div className="pointer-events-auto bg-slate-900/90 border-b-4 border-red-900 p-4">
-          <div className="max-w-4xl mx-auto space-y-2">
-            <h3 className={`text-lg font-bold ${gameState.enemyTeam === 'blue' ? 'text-blue-400' : 'text-red-400'}`}>
+        {/* Enemy Team Status - Top Compact */}
+        <div className="pointer-events-auto bg-slate-900/90 border-b-2 border-red-900 p-2">
+          <div className="max-w-6xl mx-auto flex items-center gap-4">
+            <h3 className={`text-sm font-bold ${gameState.enemyTeam === 'blue' ? 'text-blue-400' : 'text-red-400'}`}>
               Enemy ({gameState.enemyTeam.toUpperCase()})
             </h3>
-            
-            {/* HP Bar */}
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Heart className="w-5 h-5 text-red-400" />
-                <span className="text-white text-sm font-bold">HP: {gameState.enemyTeamState.hp}/100</span>
-              </div>
-              <div className="w-full bg-slate-700 rounded-full h-6 overflow-hidden border-2 border-slate-600">
+            <div className="flex items-center gap-2 flex-1">
+              <Heart className="w-4 h-4 text-red-400" />
+              <div className="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden border border-slate-600 max-w-xs">
                 <div 
                   className="h-full bg-red-500 transition-all duration-300"
                   style={{ width: `${gameState.enemyTeamState.hp}%` }}
                 />
               </div>
+              <span className="text-white text-xs font-bold w-16">{gameState.enemyTeamState.hp}/100</span>
             </div>
-            
-            {/* Enemy Barrier */}
             {gameState.enemyTeamState.barrier && (
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <ShieldIcon className="w-5 h-5" style={{ 
-                    color: gameState.enemyTeamState.barrier.element === 'fire' ? '#ef4444' : 
-                           gameState.enemyTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e' 
-                  }} />
-                  <span className="text-white text-sm font-bold capitalize">
-                    {gameState.enemyTeamState.barrier.element} Barrier: {gameState.enemyTeamState.barrier.strength}/100
-                  </span>
-                </div>
-                <div className="w-full bg-slate-700 rounded-full h-4 overflow-hidden border-2 border-red-900">
+              <>
+                <ShieldIcon className="w-4 h-4" style={{ 
+                  color: gameState.enemyTeamState.barrier.element === 'fire' ? '#ef4444' : 
+                         gameState.enemyTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e' 
+                }} />
+                <div className="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden border border-slate-600 max-w-xs">
                   <div 
                     className="h-full transition-all duration-300"
                     style={{ 
@@ -564,96 +553,182 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole }: ElementalAr
                     }}
                   />
                 </div>
-              </div>
+                <span className="text-white text-xs font-bold w-16 capitalize">{gameState.enemyTeamState.barrier.strength}/100</span>
+              </>
             )}
-            
           </div>
         </div>
 
-        {/* Input Area - Center */}
-        <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 pointer-events-auto">
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <Input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Type words..."
-              className="w-64 bg-slate-900/90 text-white border-slate-700"
-              autoFocus
-            />
-          </form>
-          
-          {/* Words display */}
-          <div className="mt-3">
-            <h3 className="text-white font-bold mb-2 text-sm text-center">Available Words:</h3>
-            <div className="flex flex-wrap gap-2 justify-center">
-              {gameState.words.slice(0, 6).map((word, idx) => {
-                const getElementBgColor = () => {
-                  switch (word.element) {
-                    case 'fire': return 'bg-red-600';
-                    case 'water': return 'bg-blue-600';
-                    case 'leaf': return 'bg-green-600';
-                  }
-                };
-                
-                return (
-                  <div 
-                    key={idx}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold text-white flex items-center gap-1 ${getElementBgColor()} ${
-                      word.isCharge ? 'ring-2 ring-yellow-400 shadow-lg shadow-yellow-400/50 animate-pulse' : 'shadow-md'
-                    }`}
-                  >
-                    {getElementIcon(word.element)}
-                    <span className="uppercase">{word.word}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* My Team Status - Bottom */}
-        <div className="absolute bottom-0 left-0 right-0 pointer-events-auto bg-slate-900/90 border-t-4 border-slate-700 p-4">
-          <div className="max-w-4xl mx-auto space-y-3">
-            {/* Team Header */}
-            <div className="text-center">
-              <h3 className={`text-xl font-bold ${myTeam === 'blue' ? 'text-blue-400' : 'text-red-400'}`}>
-                Your Team ({myTeam.toUpperCase()})
+        {/* Left Side Panel - Element Controls */}
+        <div className="absolute left-0 top-16 bottom-16 w-64 pointer-events-auto bg-slate-900/90 border-r-2 border-slate-700 p-3 overflow-y-auto">
+          <div className="space-y-3">
+            {/* Your Role */}
+            <div className="text-center p-2 bg-slate-800/50 rounded-lg border border-slate-700">
+              <h3 className={`text-sm font-bold ${myTeam === 'blue' ? 'text-blue-400' : 'text-red-400'}`}>
+                {myTeam.toUpperCase()} Team
               </h3>
-              <div className="flex items-center justify-center gap-2 mt-1">
-                {myRole === 'striker' ? <Swords className="w-5 h-5 text-red-400" /> : <ShieldIcon className="w-5 h-5 text-blue-400" />}
-                <span className="text-sm text-white capitalize font-bold">{myRole}</span>
+              <div className="flex items-center justify-center gap-1 mt-1">
+                {myRole === 'striker' ? <Swords className="w-4 h-4 text-red-400" /> : <ShieldIcon className="w-4 h-4 text-blue-400" />}
+                <span className="text-xs text-white capitalize font-bold">{myRole}</span>
               </div>
             </div>
 
-            {/* HP Bar */}
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Heart className="w-5 h-5 text-red-400" />
-                <span className="text-white text-sm font-bold">HP: {gameState.myTeamState.hp}/100</span>
+            {/* Element Energy */}
+            <div className="bg-slate-800/50 rounded-lg p-2 border border-slate-700">
+              <h4 className="text-white font-bold mb-2 text-xs flex items-center gap-1">
+                <Flame className="w-3 h-3 text-orange-500" />
+                Element Energy:
+              </h4>
+              <div className="space-y-2">
+                {(['fire', 'water', 'leaf'] as Element[]).map((element) => {
+                  const Icon = element === 'fire' ? Flame : element === 'water' ? Droplet : Leaf;
+                  const color = element === 'fire' ? '#ef4444' : element === 'water' ? '#3b82f6' : '#22c55e';
+                  
+                  return (
+                    <div key={element} className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Icon className="w-4 h-4" style={{ color }} />
+                        <span className="text-white text-xs font-bold capitalize flex-1">{element}</span>
+                        <span className="text-white text-xs font-bold">{gameState.myCharges[element]}%</span>
+                      </div>
+                      <div className="w-full bg-slate-700 rounded-full h-3 overflow-hidden border border-slate-600">
+                        <div 
+                          className="h-full transition-all duration-300"
+                          style={{ width: `${gameState.myCharges[element]}%`, backgroundColor: color }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="w-full bg-slate-700 rounded-full h-6 overflow-hidden border-2 border-slate-600">
+            </div>
+
+            {/* Mode Selection */}
+            <div className="bg-slate-800/50 rounded-lg p-2 border border-slate-700">
+              <h4 className="text-white font-bold mb-2 text-xs">Action Mode:</h4>
+              <div className="space-y-2">
+                <Button
+                  onClick={() => setActionMode('attack')}
+                  className={`w-full h-9 text-xs font-bold flex items-center justify-center gap-1 ${
+                    actionMode === 'attack' 
+                      ? 'bg-red-600 hover:bg-red-700 text-white' 
+                      : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                  }`}
+                >
+                  <Swords className="w-4 h-4" />
+                  Attack Mode
+                </Button>
+                <Button
+                  onClick={() => setActionMode('barrier')}
+                  className={`w-full h-9 text-xs font-bold flex items-center justify-center gap-1 ${
+                    actionMode === 'barrier' 
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                      : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                  }`}
+                >
+                  <ShieldIcon className="w-4 h-4" />
+                  Barrier Mode
+                </Button>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="bg-slate-800/50 rounded-lg p-2 border border-slate-700">
+              <h4 className="text-white font-bold mb-2 text-xs">Use Element:</h4>
+              <div className="space-y-2">
+                {(['fire', 'water', 'leaf'] as Element[]).map((element) => {
+                  const Icon = element === 'fire' ? Flame : element === 'water' ? Droplet : Leaf;
+                  const color = element === 'fire' ? 'bg-red-600' : element === 'water' ? 'bg-blue-600' : 'bg-green-600';
+                  const isReady = gameState.myCharges[element] >= 100;
+                  
+                  return (
+                    <Button
+                      key={element}
+                      onClick={() => gameState.useElement(element, actionMode)}
+                      disabled={!isReady}
+                      className={`w-full h-9 font-bold capitalize text-xs ${
+                        isReady ? `${color} hover:opacity-90 text-white` : 'bg-slate-700 text-slate-500'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 mr-1" />
+                      {actionMode === 'attack' ? 'Attack' : 'Protect'}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Center - Text Input & Words */}
+        <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 pointer-events-auto">
+          <div className="bg-slate-900/95 rounded-xl p-4 border-2 border-slate-700 shadow-2xl max-w-2xl">
+            {/* Input Area */}
+            <form onSubmit={handleSubmit} className="mb-3">
+              <Input
+                ref={inputRef}
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Type words here..."
+                className="w-full text-center text-lg bg-slate-800 text-white border-2 border-blue-500 h-12 font-bold"
+                autoFocus
+              />
+            </form>
+            
+            {/* Words display */}
+            <div>
+              <h3 className="text-white font-bold mb-2 text-sm text-center">Available Words:</h3>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {gameState.words.slice(0, 6).map((word, idx) => {
+                  const getElementBgColor = () => {
+                    switch (word.element) {
+                      case 'fire': return 'bg-red-600';
+                      case 'water': return 'bg-blue-600';
+                      case 'leaf': return 'bg-green-600';
+                    }
+                  };
+                  
+                  return (
+                    <div 
+                      key={idx}
+                      className={`px-4 py-2 rounded-lg text-sm font-bold text-white flex items-center gap-1 ${getElementBgColor()} ${
+                        word.isCharge ? 'ring-2 ring-yellow-400 shadow-lg shadow-yellow-400/50 animate-pulse' : 'shadow-md'
+                      }`}
+                    >
+                      {getElementIcon(word.element)}
+                      <span className="uppercase">{word.word}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom - My Team Status Compact */}
+        <div className="absolute bottom-0 left-0 right-0 pointer-events-auto bg-slate-900/90 border-t-2 border-blue-500 p-2">
+          <div className="max-w-6xl mx-auto flex items-center gap-4">
+            <h3 className={`text-sm font-bold ${myTeam === 'blue' ? 'text-blue-400' : 'text-red-400'}`}>
+              Your Team ({myTeam.toUpperCase()})
+            </h3>
+            <div className="flex items-center gap-2 flex-1">
+              <Heart className="w-4 h-4 text-red-400" />
+              <div className="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden border border-slate-600 max-w-xs">
                 <div 
                   className="h-full bg-green-500 transition-all duration-300"
                   style={{ width: `${gameState.myTeamState.hp}%` }}
                 />
               </div>
+              <span className="text-white text-xs font-bold w-16">{gameState.myTeamState.hp}/100</span>
             </div>
-
-            {/* Fire Barrier (if exists) */}
             {gameState.myTeamState.barrier && (
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <ShieldIcon className="w-5 h-5" style={{ 
-                    color: gameState.myTeamState.barrier.element === 'fire' ? '#ef4444' : 
-                           gameState.myTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e' 
-                  }} />
-                  <span className="text-white text-sm font-bold capitalize">
-                    {gameState.myTeamState.barrier.element} Barrier: {gameState.myTeamState.barrier.strength}/100
-                  </span>
-                </div>
-                <div className="w-full bg-slate-700 rounded-full h-4 overflow-hidden border-2 border-red-900">
+              <>
+                <ShieldIcon className="w-4 h-4" style={{ 
+                  color: gameState.myTeamState.barrier.element === 'fire' ? '#ef4444' : 
+                         gameState.myTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e' 
+                }} />
+                <div className="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden border border-slate-600 max-w-xs">
                   <div 
                     className="h-full transition-all duration-300"
                     style={{ 
@@ -663,85 +738,9 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole }: ElementalAr
                     }}
                   />
                 </div>
-              </div>
+                <span className="text-white text-xs font-bold w-20 capitalize">{gameState.myTeamState.barrier.element} {gameState.myTeamState.barrier.strength}/100</span>
+              </>
             )}
-
-            {/* Element Energy */}
-            <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
-              <h4 className="text-white font-bold mb-2 text-sm flex items-center gap-2">
-                <Flame className="w-4 h-4 text-orange-500" />
-                Element Energy:
-              </h4>
-              <div className="space-y-2">
-                {(['fire', 'water', 'leaf'] as Element[]).map((element) => {
-                  const Icon = element === 'fire' ? Flame : element === 'water' ? Droplet : Leaf;
-                  const color = element === 'fire' ? '#ef4444' : element === 'water' ? '#3b82f6' : '#22c55e';
-                  
-                  return (
-                    <div key={element} className="flex items-center gap-2">
-                      <Icon className="w-5 h-5" style={{ color }} />
-                      <span className="text-white text-sm font-bold capitalize w-12">{element}</span>
-                      <div className="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden border border-slate-600">
-                        <div 
-                          className="h-full transition-all duration-300"
-                          style={{ width: `${gameState.myCharges[element]}%`, backgroundColor: color }}
-                        />
-                      </div>
-                      <span className="text-white text-sm font-bold w-12 text-right">{gameState.myCharges[element]}%</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Attack Mode / Barrier Mode Buttons */}
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                onClick={() => setActionMode('attack')}
-                className={`h-12 text-base font-bold flex items-center justify-center gap-2 ${
-                  actionMode === 'attack' 
-                    ? 'bg-red-600 hover:bg-red-700 text-white' 
-                    : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
-                }`}
-              >
-                <Swords className="w-5 h-5" />
-                Attack Mode
-              </Button>
-              <Button
-                onClick={() => setActionMode('barrier')}
-                className={`h-12 text-base font-bold flex items-center justify-center gap-2 ${
-                  actionMode === 'barrier' 
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                    : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
-                }`}
-              >
-                <ShieldIcon className="w-5 h-5" />
-                Barrier Mode
-              </Button>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="grid grid-cols-3 gap-2">
-              {(['fire', 'water', 'leaf'] as Element[]).map((element) => {
-                const Icon = element === 'fire' ? Flame : element === 'water' ? Droplet : Leaf;
-                const color = element === 'fire' ? 'bg-red-600' : element === 'water' ? 'bg-blue-600' : 'bg-green-600';
-                const isReady = gameState.myCharges[element] >= 100;
-                
-                return (
-                  <Button
-                    key={element}
-                    onClick={() => gameState.useElement(element, actionMode)}
-                    disabled={!isReady}
-                    className={`h-10 font-bold capitalize ${
-                      isReady ? `${color} hover:opacity-90 text-white` : 'bg-slate-700 text-slate-500'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 mr-1" />
-                    {actionMode === 'attack' ? 'Attack' : 'Protect'}
-                  </Button>
-                );
-              })}
-            </div>
           </div>
         </div>
       </div>
