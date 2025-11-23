@@ -35,19 +35,53 @@ interface PlayerNickname {
   nickname: string;
 }
 
+interface BotPlayer extends Player {
+  isBot: true;
+  currentWords: WordWithType[];
+  typingTimeout?: NodeJS.Timeout;
+}
+
 interface GameRoom {
   id: string;
-  players: Map<string, Player>;
+  players: Map<string, Player | BotPlayer>;
   spectators: Set<string>;
   phase: GamePhase;
   blueTeam: TeamState;
   redTeam: TeamState;
   winner: Team | null;
   matchStartTime: number;
+  botTimers: NodeJS.Timeout[];
 }
 
 const rooms = new Map<string, GameRoom>();
 const matchmakingQueue: PlayerNickname[] = [];
+
+function isBot(player: Player | BotPlayer): player is BotPlayer {
+  return 'isBot' in player && player.isBot === true;
+}
+
+const BOT_NAMES = ["EasyBot", "SlowTyper", "BeginnerBot", "NoobMaster"];
+
+function createBot(id: string, team: Team, role: Role, roomId: string): BotPlayer {
+  const botName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] + Math.floor(Math.random() * 100);
+  return {
+    id,
+    nickname: botName,
+    team,
+    role,
+    roomId,
+    isBot: true,
+    currentWords: [],
+    stats: {
+      wordsTyped: 0,
+      correctWords: 0,
+      incorrectWords: 0,
+      damageDealt: 0,
+      shieldRestored: 0,
+      startTime: 0
+    }
+  };
+}
 
 const STRIKER_WORDS = ["ATTACK", "BURST", "SHOOT", "CRUSH", "STRIKE", "BLAST", "SLAM", "POUND"];
 const GUARDIAN_WORDS = ["PROTECT", "SHIELD", "HOLD", "REPAIR", "DEFEND", "GUARD", "BLOCK", "RESTORE"];
@@ -92,6 +126,138 @@ function getRandomWords(role: Role, count: number): WordWithType[] {
   return words;
 }
 
+function startBotTyping(bot: BotPlayer, room: GameRoom, io: SocketIOServer) {
+  if (room.phase !== "playing" || bot.currentWords.length === 0) return;
+  
+  if (!room.players.has(bot.id)) {
+    return;
+  }
+
+  const delay = 2000 + Math.random() * 3000;
+  
+  const timer = setTimeout(() => {
+    if (room.phase !== "playing" || !room.players.has(bot.id)) {
+      bot.typingTimeout = undefined;
+      return;
+    }
+    
+    const shouldMakeMistake = Math.random() < 0.3;
+    
+    if (shouldMakeMistake) {
+      bot.stats.wordsTyped++;
+      bot.stats.incorrectWords++;
+      const newWords = getRandomWords(bot.role!, 3);
+      bot.currentWords = newWords;
+      startBotTyping(bot, room, io);
+      return;
+    }
+    
+    const wordToType = bot.currentWords[Math.floor(Math.random() * bot.currentWords.length)];
+    
+    bot.stats.wordsTyped++;
+    bot.stats.correctWords++;
+    
+    if (bot.role === "striker") {
+      const enemyTeam = bot.team === "blue" ? "red" : "blue";
+      const enemyState = enemyTeam === "blue" ? room.blueTeam : room.redTeam;
+
+      let damage = 15;
+      let isStun = false;
+
+      if (wordToType.type === "double_damage") {
+        damage = 30;
+      } else if (wordToType.type === "stun") {
+        damage = 15;
+        isStun = true;
+      }
+
+      if (enemyState.shield > 0) {
+        const shieldDamage = Math.min(damage, enemyState.shield);
+        enemyState.shield -= shieldDamage;
+        damage -= shieldDamage;
+      }
+      
+      if (damage > 0) {
+        enemyState.hp = Math.max(0, enemyState.hp - damage);
+      }
+
+      bot.stats.damageDealt += damage;
+
+      io.to(room.id).emit("damage_dealt", {
+        attackerTeam: bot.team,
+        targetTeam: enemyTeam,
+        blueTeam: room.blueTeam,
+        redTeam: room.redTeam,
+        isPowerUp: wordToType.type === "double_damage" || wordToType.type === "stun",
+        isStun
+      });
+
+      if (enemyState.hp <= 0) {
+        room.phase = "ended";
+        room.winner = bot.team;
+        
+        const endTime = Date.now();
+        const matchDuration = (endTime - room.matchStartTime) / 60000;
+        const playerStats = Array.from(room.players.values()).map(p => {
+          const wpm = matchDuration > 0 ? Math.round(p.stats.correctWords / matchDuration) : 0;
+          const accuracy = p.stats.wordsTyped > 0 
+            ? Math.round((p.stats.correctWords / p.stats.wordsTyped) * 100) 
+            : 100;
+          
+          return {
+            id: p.id,
+            nickname: p.nickname,
+            team: p.team,
+            role: p.role,
+            wpm,
+            accuracy,
+            damageDealt: p.stats.damageDealt,
+            shieldRestored: p.stats.shieldRestored
+          };
+        });
+
+        io.to(room.id).emit("match_ended", {
+          winner: bot.team,
+          blueTeam: room.blueTeam,
+          redTeam: room.redTeam,
+          stats: playerStats
+        });
+        
+        room.botTimers.forEach(t => clearTimeout(t));
+        room.botTimers = [];
+        return;
+      }
+    } else if (bot.role === "guardian") {
+      const myTeamState = bot.team === "blue" ? room.blueTeam : room.redTeam;
+      const oldShield = myTeamState.shield;
+      
+      if (wordToType.type === "full_shield") {
+        myTeamState.shield = 100;
+      } else {
+        myTeamState.shield = Math.min(100, myTeamState.shield + 10);
+      }
+
+      const shieldGained = myTeamState.shield - oldShield;
+      bot.stats.shieldRestored += shieldGained;
+
+      io.to(room.id).emit("shield_restored", {
+        team: bot.team,
+        blueTeam: room.blueTeam,
+        redTeam: room.redTeam,
+        isPowerUp: wordToType.type === "full_shield"
+      });
+    }
+    
+    const newWords = getRandomWords(bot.role!, 3);
+    bot.currentWords = newWords;
+    
+    startBotTyping(bot, room, io);
+  }, delay);
+  
+  bot.typingTimeout = timer;
+  room.botTimers.push(timer);
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   const io = new SocketIOServer(httpServer, {
@@ -108,8 +274,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       matchmakingQueue.push({ socketId: socket.id, nickname });
       console.log(`${nickname} joined matchmaking queue. Queue size: ${matchmakingQueue.length}`);
 
-      if (matchmakingQueue.length >= 4) {
-        const playerData = matchmakingQueue.splice(0, 4);
+      const timeout = setTimeout(() => {
+        const queueIndex = matchmakingQueue.findIndex(p => p.socketId === socket.id);
+        if (queueIndex === -1) return;
+        
+        const playerData = matchmakingQueue.splice(0, matchmakingQueue.length);
         const roomId = `auto-${Date.now()}`;
         
         const room: GameRoom = {
@@ -120,7 +289,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           blueTeam: { hp: 100, shield: 0 },
           redTeam: { hp: 100, shield: 0 },
           winner: null,
-          matchStartTime: 0
+          matchStartTime: 0,
+          botTimers: []
         };
         
         playerData.forEach(({ socketId: playerId, nickname: playerNickname }, index) => {
@@ -152,6 +322,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           playerSocket.emit("matched", { roomId, team, role });
         });
         
+        while (room.players.size < 4) {
+          const index = room.players.size;
+          const team: Team = index < 2 ? "blue" : "red";
+          const role: Role = index % 2 === 0 ? "striker" : "guardian";
+          const botId = `bot-${Date.now()}-${index}`;
+          const bot = createBot(botId, team, role, roomId);
+          room.players.set(botId, bot);
+        }
+        
         rooms.set(roomId, room);
         
         const playersList = Array.from(room.players.values()).map(p => ({
@@ -167,10 +346,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           phase: room.phase
         });
         
-        console.log(`Match created: ${roomId} with ${room.players.size} players`);
-      } else {
-        socket.emit("queue_update", { position: matchmakingQueue.length });
-      }
+        console.log(`Match created: ${roomId} with ${room.players.size} players (${playerData.length} human, ${room.players.size - playerData.length} bots)`);
+      }, 2000);
     });
 
     socket.on("join_room", ({ nickname, roomId }: { nickname: string; roomId: string }) => {
@@ -185,35 +362,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
           blueTeam: { hp: 100, shield: 0 },
           redTeam: { hp: 100, shield: 0 },
           winner: null,
-          matchStartTime: 0
+          matchStartTime: 0,
+          botTimers: []
         };
         rooms.set(roomId, room);
       }
 
-      if (room.players.size >= 4) {
-        room.spectators.add(socket.id);
-        socket.join(roomId);
-        
-        socket.emit("joined_as_spectator", {
-          roomId,
-          blueTeam: room.blueTeam,
-          redTeam: room.redTeam,
-          phase: room.phase,
-          players: Array.from(room.players.values()).map(p => ({
-            id: p.id,
-            nickname: p.nickname,
-            team: p.team,
-            role: p.role
-          }))
-        });
-        
-        console.log(`${nickname} joined room ${roomId} as spectator`);
-        return;
-      }
+      let team: Team;
+      let role: Role;
+      let replacedBot: BotPlayer | null = null;
 
-      const playerCount = room.players.size;
-      const team: Team = playerCount < 2 ? "blue" : "red";
-      const role: Role = playerCount % 2 === 0 ? "striker" : "guardian";
+      if (room.players.size >= 4) {
+        const botInRoom = Array.from(room.players.values()).find(p => isBot(p));
+        
+        if (!botInRoom) {
+          room.spectators.add(socket.id);
+          socket.join(roomId);
+          
+          socket.emit("joined_as_spectator", {
+            roomId,
+            blueTeam: room.blueTeam,
+            redTeam: room.redTeam,
+            phase: room.phase,
+            players: Array.from(room.players.values()).map(p => ({
+              id: p.id,
+              nickname: p.nickname,
+              team: p.team,
+              role: p.role
+            }))
+          });
+          
+          console.log(`${nickname} joined room ${roomId} as spectator`);
+          return;
+        }
+        
+        replacedBot = botInRoom as BotPlayer;
+        team = replacedBot.team!;
+        role = replacedBot.role!;
+        
+        if (replacedBot && replacedBot.typingTimeout) {
+          clearTimeout(replacedBot.typingTimeout);
+          room.botTimers = room.botTimers.filter(t => t !== replacedBot!.typingTimeout);
+        }
+        
+        room.players.delete(replacedBot.id);
+        console.log(`Replacing bot ${replacedBot.nickname} with human player ${nickname}`);
+      } else {
+        const playerCount = room.players.size;
+        team = playerCount < 2 ? "blue" : "red";
+        role = playerCount % 2 === 0 ? "striker" : "guardian";
+      }
 
       const player: Player = {
         id: socket.id,
@@ -234,6 +432,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       room.players.set(socket.id, player);
       socket.join(roomId);
 
+      while (room.players.size < 4) {
+        const index = room.players.size;
+        const botTeam: Team = index < 2 ? "blue" : "red";
+        const botRole: Role = index % 2 === 0 ? "striker" : "guardian";
+        const botId = `bot-${Date.now()}-${index}`;
+        const bot = createBot(botId, botTeam, botRole, roomId);
+        room.players.set(botId, bot);
+      }
+
       const playersList = Array.from(room.players.values()).map(p => ({
         id: p.id,
         nickname: p.nickname,
@@ -247,7 +454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phase: room.phase
       });
 
-      console.log(`${nickname} joined room ${roomId} as ${team} ${role}`);
+      console.log(`${nickname} joined room ${roomId} as ${team} ${role} (filled with ${room.players.size - 1} bots)`);
     });
 
     socket.on("start_match", ({ roomId }: { roomId: string }) => {
@@ -282,7 +489,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       room.players.forEach((player) => {
         const words = getRandomWords(player.role!, 3);
-        io.to(player.id).emit("new_words", { words });
+        if (isBot(player)) {
+          player.currentWords = words;
+          startBotTyping(player, room, io);
+        } else {
+          io.to(player.id).emit("new_words", { words });
+        }
       });
 
       console.log(`Match started in room ${roomId}`);
@@ -418,6 +630,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           room.players.delete(socket.id);
 
           if (room.players.size === 0 && room.spectators.size === 0) {
+            room.botTimers.forEach(t => clearTimeout(t));
+            room.botTimers = [];
             rooms.delete(roomId);
           } else {
             const playersList = Array.from(room.players.values()).map(p => ({
@@ -436,6 +650,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else if (room.spectators.has(socket.id)) {
           room.spectators.delete(socket.id);
           if (room.players.size === 0 && room.spectators.size === 0) {
+            room.botTimers.forEach(t => clearTimeout(t));
+            room.botTimers = [];
             rooms.delete(roomId);
           }
         }

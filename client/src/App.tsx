@@ -17,6 +17,13 @@ interface Player {
   role: 'striker' | 'guardian' | null;
 }
 
+interface AssignedPlayer {
+  id: string;
+  nickname: string;
+  team: 'blue' | 'red';
+  role: 'striker' | 'guardian';
+}
+
 interface PlayerStat {
   id: string;
   nickname: string;
@@ -43,7 +50,7 @@ function App() {
   const [winner, setWinner] = useState<'blue' | 'red' | null>(null);
   const [matchStats, setMatchStats] = useState<PlayerStat[]>([]);
   const [spectatorData, setSpectatorData] = useState<{
-    players: Player[];
+    players: AssignedPlayer[];
     blueTeam: TeamState;
     redTeam: TeamState;
     phase: string;
@@ -73,7 +80,8 @@ function App() {
     socket.on('joined_as_spectator', ({ roomId: specRoomId, players, blueTeam, redTeam, phase }: any) => {
       setUserMode('spectator');
       setRoomId(specRoomId);
-      setSpectatorData({ players, blueTeam, redTeam, phase });
+      const validPlayers = players.filter((p: any) => p.team && p.role);
+      setSpectatorData({ players: validPlayers, blueTeam, redTeam, phase });
     });
 
     return () => {
