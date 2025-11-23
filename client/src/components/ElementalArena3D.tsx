@@ -447,11 +447,11 @@ function Scene({ gameState }: { gameState: ReturnType<typeof useGameState> }) {
       ))}
       
       {/* Camera */}
-      <PerspectiveCamera makeDefault position={[0, 25, 0]} fov={70} />
+      <PerspectiveCamera makeDefault position={[0, 28, 0]} fov={75} />
       <OrbitControls 
         enablePan={false} 
-        minDistance={15} 
-        maxDistance={45}
+        minDistance={18} 
+        maxDistance={50}
         maxPolarAngle={Math.PI / 2.2}
         target={[0, 0, 0]}
       />
@@ -510,6 +510,22 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole }: ElementalAr
     }
   };
 
+  // Calculate enemy team's element charges (average across all enemy players)
+  const enemyCharges = { fire: 0, water: 0, leaf: 0 };
+  const enemyPlayers = Array.from(gameState.players.values()).filter(p => p.team === gameState.enemyTeam);
+  if (enemyPlayers.length > 0) {
+    enemyPlayers.forEach(p => {
+      if (p.charges) {
+        enemyCharges.fire += p.charges.fire || 0;
+        enemyCharges.water += p.charges.water || 0;
+        enemyCharges.leaf += p.charges.leaf || 0;
+      }
+    });
+    enemyCharges.fire = Math.round(enemyCharges.fire / enemyPlayers.length);
+    enemyCharges.water = Math.round(enemyCharges.water / enemyPlayers.length);
+    enemyCharges.leaf = Math.round(enemyCharges.leaf / enemyPlayers.length);
+  }
+
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* 3D Canvas */}
@@ -523,44 +539,72 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole }: ElementalAr
       <div className="absolute inset-0 pointer-events-none">
         {/* Enemy Team Status - Top Compact */}
         <div className="pointer-events-auto bg-slate-900/90 border-b-2 border-red-900 p-2">
-          <div className="max-w-6xl mx-auto flex items-center gap-4">
-            <h3 className={`text-sm font-bold ${gameState.enemyTeam === 'blue' ? 'text-blue-400' : 'text-red-400'}`}>
-              Enemy ({gameState.enemyTeam.toUpperCase()})
-            </h3>
-            <div className="flex items-center gap-2 flex-1">
-              <Heart className="w-4 h-4 text-red-400" />
-              <div className="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden border border-slate-600 max-w-xs">
-                <div 
-                  className="h-full bg-red-500 transition-all duration-300"
-                  style={{ width: `${gameState.enemyTeamState.hp}%` }}
-                />
-              </div>
-              <span className="text-white text-xs font-bold w-16">{gameState.enemyTeamState.hp}/100</span>
-            </div>
-            {gameState.enemyTeamState.barrier && (
-              <>
-                <ShieldIcon className="w-4 h-4" style={{ 
-                  color: gameState.enemyTeamState.barrier.element === 'fire' ? '#ef4444' : 
-                         gameState.enemyTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e' 
-                }} />
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center gap-4 mb-2">
+              <h3 className={`text-sm font-bold ${gameState.enemyTeam === 'blue' ? 'text-blue-400' : 'text-red-400'}`}>
+                Enemy ({gameState.enemyTeam.toUpperCase()})
+              </h3>
+              <div className="flex items-center gap-2 flex-1">
+                <Heart className="w-4 h-4 text-red-400" />
                 <div className="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden border border-slate-600 max-w-xs">
                   <div 
-                    className="h-full transition-all duration-300"
-                    style={{ 
-                      width: `${gameState.enemyTeamState.barrier.strength}%`,
-                      backgroundColor: gameState.enemyTeamState.barrier.element === 'fire' ? '#ef4444' : 
-                                     gameState.enemyTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e'
-                    }}
+                    className="h-full bg-red-500 transition-all duration-300"
+                    style={{ width: `${gameState.enemyTeamState.hp}%` }}
                   />
                 </div>
-                <span className="text-white text-xs font-bold w-16 capitalize">{gameState.enemyTeamState.barrier.strength}/100</span>
-              </>
-            )}
+                <span className="text-white text-xs font-bold w-16">{gameState.enemyTeamState.hp}/100</span>
+              </div>
+              {gameState.enemyTeamState.barrier && (
+                <>
+                  <ShieldIcon className="w-4 h-4" style={{ 
+                    color: gameState.enemyTeamState.barrier.element === 'fire' ? '#ef4444' : 
+                           gameState.enemyTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e' 
+                  }} />
+                  <div className="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden border border-slate-600 max-w-xs">
+                    <div 
+                      className="h-full transition-all duration-300"
+                      style={{ 
+                        width: `${gameState.enemyTeamState.barrier.strength}%`,
+                        backgroundColor: gameState.enemyTeamState.barrier.element === 'fire' ? '#ef4444' : 
+                                       gameState.enemyTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e'
+                      }}
+                    />
+                  </div>
+                  <span className="text-white text-xs font-bold w-16 capitalize">{gameState.enemyTeamState.barrier.strength}/100</span>
+                </>
+              )}
+            </div>
+            
+            {/* Enemy Element Charges */}
+            <div className="flex items-center gap-3">
+              <span className="text-white text-xs font-bold">Energy:</span>
+              {(['fire', 'water', 'leaf'] as Element[]).map((element) => {
+                const Icon = element === 'fire' ? Flame : element === 'water' ? Droplet : Leaf;
+                const color = element === 'fire' ? '#ef4444' : element === 'water' ? '#3b82f6' : '#22c55e';
+                const charge = enemyCharges[element];
+                
+                return (
+                  <div key={element} className="flex items-center gap-1">
+                    <Icon className="w-3 h-3" style={{ color }} />
+                    <div className="w-20 bg-slate-700 rounded-full h-3 overflow-hidden border border-slate-600">
+                      <div 
+                        className={`h-full transition-all duration-300 ${charge >= 80 ? 'animate-pulse' : ''}`}
+                        style={{ width: `${charge}%`, backgroundColor: color }}
+                      />
+                    </div>
+                    <span className="text-white text-xs font-bold w-8">{charge}%</span>
+                  </div>
+                );
+              })}
+              {Object.values(enemyCharges).some((v) => v >= 80) && (
+                <span className="text-yellow-400 text-xs font-bold animate-pulse">⚠️ Attack Ready!</span>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Left Side Panel - Element Controls */}
-        <div className="absolute left-0 top-16 bottom-16 w-64 pointer-events-auto bg-slate-900/90 border-r-2 border-slate-700 p-3 overflow-y-auto">
+        <div className="absolute left-2 top-20 w-56 pointer-events-auto bg-slate-900/95 border-2 border-slate-700 rounded-lg p-2 overflow-y-auto max-h-96">
           <div className="space-y-3">
             {/* Your Role */}
             <div className="text-center p-2 bg-slate-800/50 rounded-lg border border-slate-700">
@@ -661,24 +705,24 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole }: ElementalAr
         </div>
 
         {/* Center - Text Input & Words */}
-        <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 pointer-events-auto">
-          <div className="bg-slate-900/95 rounded-xl p-4 border-2 border-slate-700 shadow-2xl max-w-2xl">
+        <div className="absolute bottom-14 left-1/2 transform -translate-x-1/2 pointer-events-auto">
+          <div className="bg-slate-900/95 rounded-lg p-3 border-2 border-slate-700 shadow-xl max-w-xl">
             {/* Input Area */}
-            <form onSubmit={handleSubmit} className="mb-3">
+            <form onSubmit={handleSubmit} className="mb-2">
               <Input
                 ref={inputRef}
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Type words here..."
-                className="w-full text-center text-lg bg-slate-800 text-white border-2 border-blue-500 h-12 font-bold"
+                className="w-full text-center text-base bg-slate-800 text-white border-2 border-blue-500 h-10 font-bold"
                 autoFocus
               />
             </form>
             
             {/* Words display */}
             <div>
-              <h3 className="text-white font-bold mb-2 text-sm text-center">Available Words:</h3>
+              <h3 className="text-white font-bold mb-1 text-xs text-center">Available Words:</h3>
               <div className="flex flex-wrap gap-2 justify-center">
                 {gameState.words.slice(0, 6).map((word, idx) => {
                   const getElementBgColor = () => {
@@ -692,7 +736,7 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole }: ElementalAr
                   return (
                     <div 
                       key={idx}
-                      className={`px-4 py-2 rounded-lg text-sm font-bold text-white flex items-center gap-1 ${getElementBgColor()} ${
+                      className={`px-3 py-1 rounded-md text-xs font-bold text-white flex items-center gap-1 ${getElementBgColor()} ${
                         word.isCharge ? 'ring-2 ring-yellow-400 shadow-lg shadow-yellow-400/50 animate-pulse' : 'shadow-md'
                       }`}
                     >
