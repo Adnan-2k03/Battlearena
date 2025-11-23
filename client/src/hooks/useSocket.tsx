@@ -9,7 +9,10 @@ export function useSocket() {
       transports: ['websocket', 'polling']
     });
 
-    setSocket(newSocket);
+    newSocket.on('connect', () => {
+      console.log('Socket connected with id:', newSocket.id);
+      setSocket(newSocket);
+    });
 
     return () => {
       newSocket.disconnect();
