@@ -16,6 +16,12 @@ interface PlayerStats {
   startTime: number;
 }
 
+interface ElementCharges {
+  fire: number;
+  water: number;
+  leaf: number;
+}
+
 interface Player {
   id: string;
   nickname: string;
@@ -24,6 +30,7 @@ interface Player {
   roomId: string;
   stats: PlayerStats;
   currentWords: WordWithType[];
+  elementCharges: ElementCharges;
 }
 
 interface TeamState {
@@ -77,6 +84,7 @@ function createBot(id: string, team: Team, role: Role, roomId: string): BotPlaye
     roomId,
     isBot: true,
     currentWords: [],
+    elementCharges: { fire: 0, water: 0, leaf: 0 },
     stats: {
       wordsTyped: 0,
       correctWords: 0,
@@ -362,6 +370,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             team,
             role,
             roomId,
+            elementCharges: { fire: 0, water: 0, leaf: 0 },
             stats: {
               wordsTyped: 0,
               correctWords: 0,
@@ -514,6 +523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         team,
         role,
         roomId,
+        elementCharges: { fire: 0, water: 0, leaf: 0 },
         stats: {
           wordsTyped: 0,
           correctWords: 0,
@@ -611,7 +621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
 
-    socket.on("word_typed", ({ roomId, word, element, isCharge }: { roomId: string; word: string; element: Element; isCharge: boolean }) => {
+    socket.on("word_typed", ({ roomId, word }: { roomId: string; word: string }) => {
       const room = rooms.get(roomId);
       if (!room || room.phase !== "playing") return;
 
@@ -631,10 +641,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       player.stats.correctWords++;
 
+      const { element, isCharge } = matchedWord as any;
+      
+      // Update element charge
+      const chargeIncrease = isCharge ? 30 : 10;
+      player.elementCharges[element] = Math.min(100, player.elementCharges[element] + chargeIncrease);
+      
+      // Non-elemental boost: small HP/shield restoration based on element
+      const myTeamState = player.team === "blue" ? room.blueTeam : room.redTeam;
+      if (!isCharge) {
+        // Small heal: +2 HP
+        myTeamState.hp = Math.min(100, myTeamState.hp + 2);
+        // Small shield: +3 shield
+        myTeamState.shield = Math.min(100, myTeamState.shield + 3);
+      }
+
       const newWords = getRandomElementalWords(6);
       player.currentWords = newWords as any;
       socket.emit("new_words", { words: newWords });
       socket.emit("word_correct", { element, isCharge });
+      
+      // Broadcast element charges to all players in the room
+      const playerCharges = Array.from(room.players.values()).map(p => ({
+        id: p.id,
+        charges: p.elementCharges
+      }));
+      io.to(roomId).emit("element_charges_update", { playerCharges });
+      
+      // If non-charge word provided small boost, notify team
+      if (!isCharge) {
+        io.to(roomId).emit("small_boost", {
+          team: player.team,
+          blueTeam: room.blueTeam,
+          redTeam: room.redTeam
+        });
+      }
     });
 
     socket.on("use_element", ({ roomId, element, action }: { roomId: string; element: Element; action: 'attack' | 'barrier' }) => {
@@ -643,6 +684,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const player = room.players.get(socket.id);
       if (!player) return;
+
+      // Check if player has enough charge
+      if (player.elementCharges[element] < 100) {
+        socket.emit("not_enough_charge", { element, current: player.elementCharges[element] });
+        return;
+      }
+
+      // Consume the charge
+      player.elementCharges[element] = 0;
 
       if (action === 'attack') {
         const enemyTeam = player.team === "blue" ? "red" : "blue";
@@ -729,6 +779,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           redTeam: room.redTeam
         });
       }
+      
+      // Broadcast updated element charges after using an element
+      const playerCharges = Array.from(room.players.values()).map(p => ({
+        id: p.id,
+        charges: p.elementCharges
+      }));
+      io.to(roomId).emit("element_charges_update", { playerCharges });
     });
 
     socket.on("disconnect", () => {
