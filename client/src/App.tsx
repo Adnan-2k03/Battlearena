@@ -84,11 +84,16 @@ function App() {
       setSpectatorData({ players: validPlayers, blueTeam, redTeam, phase });
     });
 
+    socket.on('matched', ({ roomId: matchedRoomId }: { roomId: string }) => {
+      setRoomId(matchedRoomId);
+    });
+
     return () => {
       socket.off('room_update');
       socket.off('match_started');
       socket.off('match_ended');
       socket.off('joined_as_spectator');
+      socket.off('matched');
     };
   }, [socket]);
 
