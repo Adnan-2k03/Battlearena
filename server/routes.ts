@@ -29,6 +29,10 @@ interface Player {
 interface TeamState {
   hp: number;
   shield: number;
+  barrier?: {
+    element: Element;
+    strength: number;
+  } | null;
 }
 
 interface PlayerNickname {
@@ -91,11 +95,35 @@ const POWERUP_WORDS = {
   guardian: ["FORTRESS", "REGENERATE", "BARRIER"]
 };
 
+// Elemental words system
+type Element = "fire" | "water" | "leaf";
+
+const ELEMENT_WORDS = {
+  fire: {
+    charge: ["INFERNO", "BLAZE", "IGNITE"],
+    normal: ["BURN", "FLAME", "HEAT", "EMBER", "TORCH"]
+  },
+  water: {
+    charge: ["TSUNAMI", "TORRENT", "DELUGE"],
+    normal: ["WAVE", "FLOW", "SPLASH", "TIDE", "RAIN"]
+  },
+  leaf: {
+    charge: ["OVERGROW", "SPROUT", "BLOOM"],
+    normal: ["VINE", "ROOT", "GROW", "SEED", "BRANCH"]
+  }
+};
+
 type WordType = "normal" | "double_damage" | "full_shield" | "stun";
 
 interface WordWithType {
   word: string;
   type: WordType;
+}
+
+interface WordWithElement {
+  word: string;
+  element: Element;
+  isCharge: boolean;
 }
 
 function getRandomWords(role: Role, count: number): WordWithType[] {
@@ -122,6 +150,23 @@ function getRandomWords(role: Role, count: number): WordWithType[] {
       const normalWord = normalWords[Math.floor(Math.random() * normalWords.length)];
       words.push({ word: normalWord, type: "normal" });
     }
+  }
+  
+  return words;
+}
+
+function getRandomElementalWords(count: number): WordWithElement[] {
+  const words: WordWithElement[] = [];
+  const elements: Element[] = ["fire", "water", "leaf"];
+  
+  for (let i = 0; i < count; i++) {
+    const element = elements[Math.floor(Math.random() * elements.length)];
+    const isCharge = Math.random() < 0.3;
+    
+    const wordPool = isCharge ? ELEMENT_WORDS[element].charge : ELEMENT_WORDS[element].normal;
+    const word = wordPool[Math.floor(Math.random() * wordPool.length)];
+    
+    words.push({ word, element, isCharge });
   }
   
   return words;
@@ -271,9 +316,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   io.on("connection", (socket) => {
     console.log(`Player connected: ${socket.id}`);
 
-    socket.on("join_queue", ({ nickname }: { nickname: string }) => {
+    socket.on("join_queue", ({ nickname, mode = "team" }: { nickname: string; mode?: "team" | "solo" }) => {
       matchmakingQueue.push({ socketId: socket.id, nickname });
-      console.log(`${nickname} joined matchmaking queue. Queue size: ${matchmakingQueue.length}`);
+      console.log(`${nickname} joined ${mode} matchmaking queue. Queue size: ${matchmakingQueue.length}`);
 
       const timeout = setTimeout(() => {
         const queueIndex = matchmakingQueue.findIndex(p => p.socketId === socket.id);
@@ -281,6 +326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const playerData = matchmakingQueue.splice(0, matchmakingQueue.length);
         const roomId = `auto-${Date.now()}`;
+        const maxPlayers = mode === "solo" ? 2 : 4;
         
         const room: GameRoom = {
           id: roomId,
@@ -295,8 +341,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
         
         playerData.forEach(({ socketId: playerId, nickname: playerNickname }, index) => {
-          const team: Team = index < 2 ? "blue" : "red";
-          const role: Role = index % 2 === 0 ? "striker" : "guardian";
+          const team: Team = mode === "solo" ? (index === 0 ? "blue" : "red") : (index < 2 ? "blue" : "red");
+          const role: Role = mode === "solo" ? "striker" : (index % 2 === 0 ? "striker" : "guardian");
           
           const playerSocket = io.sockets.sockets.get(playerId);
           if (!playerSocket) return;
@@ -324,10 +370,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           playerSocket.emit("matched", { roomId, team, role });
         });
         
-        while (room.players.size < 4) {
+        while (room.players.size < maxPlayers) {
           const index = room.players.size;
-          const team: Team = index < 2 ? "blue" : "red";
-          const role: Role = index % 2 === 0 ? "striker" : "guardian";
+          const team: Team = mode === "solo" ? (index === 0 ? "blue" : "red") : (index < 2 ? "blue" : "red");
+          const role: Role = mode === "solo" ? "striker" : (index % 2 === 0 ? "striker" : "guardian");
           const botId = `bot-${Date.now()}-${index}`;
           const bot = createBot(botId, team, role, roomId);
           room.players.set(botId, bot);
@@ -529,8 +575,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       io.to(roomId).emit("match_started", gameState);
 
       room.players.forEach((player) => {
-        const words = getRandomWords(player.role!, 3);
-        player.currentWords = words;
+        const words = getRandomElementalWords(6);
+        player.currentWords = words as any;
         if (isBot(player)) {
           startBotTyping(player, room, io);
         }
@@ -546,8 +592,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const player = room.players.get(socket.id);
       if (!player) return;
 
+      if (player.currentWords.length === 0) {
+        const words = getRandomElementalWords(6);
+        player.currentWords = words as any;
+      }
+
       socket.emit("new_words", { words: player.currentWords });
-      console.log(`Sent words to ${player.nickname} on ready: ${player.currentWords.map(w => w.word).join(', ')}`);
+      console.log(`Sent words to ${player.nickname} on ready: ${player.currentWords.map((w: any) => w.word).join(', ')}`);
     });
 
     socket.on("word_typed", ({ roomId, word }: { roomId: string; word: string }) => {
@@ -664,6 +715,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
       socket.emit("new_words", { words: newWords });
       socket.emit("word_correct");
     });
+
+    socket.on("word_typed", ({ roomId, word, element, isCharge }: { roomId: string; word: string; element: Element; isCharge: boolean }) => {
+      const room = rooms.get(roomId);
+      if (!room || room.phase !== "playing") return;
+
+      const player = room.players.get(socket.id);
+      if (!player) return;
+
+      const wordUpper = word.toUpperCase().trim();
+      const matchedWord = player.currentWords.find((w: any) => w.word === wordUpper);
+
+      player.stats.wordsTyped++;
+
+      if (!matchedWord) {
+        player.stats.incorrectWords++;
+        socket.emit("word_invalid");
+        return;
+      }
+
+      player.stats.correctWords++;
+
+      const newWords = getRandomElementalWords(6);
+      player.currentWords = newWords as any;
+      socket.emit("new_words", { words: newWords });
+      socket.emit("word_correct", { element, isCharge });
+    });
+
+    socket.on("use_element", ({ roomId, element, action }: { roomId: string; element: Element; action: 'attack' | 'barrier' }) => {
+      const room = rooms.get(roomId);
+      if (!room || room.phase !== "playing") return;
+
+      const player = room.players.get(socket.id);
+      if (!player) return;
+
+      if (action === 'attack') {
+        const enemyTeam = player.team === "blue" ? "red" : "blue";
+        const enemyState = enemyTeam === "blue" ? room.blueTeam : room.redTeam;
+
+        let damage = 30;
+        let isCritical = false;
+
+        if (enemyState.barrier) {
+          const advantage = getElementAdvantage(element, enemyState.barrier.element);
+          if (advantage === 'critical') {
+            damage = 60;
+            isCritical = true;
+          } else if (advantage === 'weak') {
+            damage = 15;
+          }
+
+          const barrierDamage = Math.min(damage, enemyState.barrier.strength);
+          enemyState.barrier.strength -= barrierDamage;
+          damage -= barrierDamage;
+
+          if (enemyState.barrier.strength <= 0) {
+            enemyState.barrier = null;
+          }
+        }
+
+        if (damage > 0) {
+          enemyState.hp = Math.max(0, enemyState.hp - damage);
+        }
+
+        player.stats.damageDealt += damage;
+
+        io.to(roomId).emit("attack_landed", {
+          attackerTeam: player.team,
+          element,
+          blueTeam: room.blueTeam,
+          redTeam: room.redTeam,
+          isCritical
+        });
+
+        if (enemyState.hp <= 0) {
+          room.phase = "ended";
+          room.winner = player.team;
+          
+          const endTime = Date.now();
+          const matchDuration = (endTime - room.matchStartTime) / 60000;
+          const playerStats = Array.from(room.players.values()).map(p => {
+            const wpm = matchDuration > 0 ? Math.round(p.stats.correctWords / matchDuration) : 0;
+            const accuracy = p.stats.wordsTyped > 0 
+              ? Math.round((p.stats.correctWords / p.stats.wordsTyped) * 100) 
+              : 100;
+            
+            return {
+              id: p.id,
+              nickname: p.nickname,
+              team: p.team,
+              role: p.role,
+              wpm,
+              accuracy,
+              damageDealt: p.stats.damageDealt,
+              shieldRestored: p.stats.shieldRestored
+            };
+          });
+
+          io.to(roomId).emit("match_ended", {
+            winner: player.team,
+            blueTeam: room.blueTeam,
+            redTeam: room.redTeam,
+            stats: playerStats
+          });
+          return;
+        }
+      } else if (action === 'barrier') {
+        const myTeamState = player.team === "blue" ? room.blueTeam : room.redTeam;
+        myTeamState.barrier = {
+          element,
+          strength: 100
+        };
+
+        io.to(roomId).emit("barrier_created", {
+          team: player.team,
+          element,
+          blueTeam: room.blueTeam,
+          redTeam: room.redTeam
+        });
+      }
+    });
+
+    function getElementAdvantage(attacker: Element, defender: Element): 'critical' | 'normal' | 'weak' {
+      if (attacker === 'fire' && defender === 'leaf') return 'critical';
+      if (attacker === 'water' && defender === 'fire') return 'critical';
+      if (attacker === 'leaf' && defender === 'water') return 'critical';
+      
+      if (attacker === 'fire' && defender === 'water') return 'weak';
+      if (attacker === 'water' && defender === 'leaf') return 'weak';
+      if (attacker === 'leaf' && defender === 'fire') return 'weak';
+      
+      return 'normal';
+    }
 
     socket.on("disconnect", () => {
       console.log(`Player disconnected: ${socket.id}`);

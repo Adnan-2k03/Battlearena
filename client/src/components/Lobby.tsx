@@ -18,9 +18,10 @@ interface LobbyProps {
   onRoomJoined?: (roomId: string) => void;
   initialNickname?: string;
   onNicknameSet?: (nickname: string) => void;
+  onModeSelect?: (mode: 'team' | 'solo') => void;
 }
 
-export function Lobby({ socket, onMatchStart, onRoomJoined, initialNickname = '', onNicknameSet }: LobbyProps) {
+export function Lobby({ socket, onMatchStart, onRoomJoined, initialNickname = '', onNicknameSet, onModeSelect }: LobbyProps) {
   const [nickname, setNickname] = useState(initialNickname);
   const [roomId, setRoomId] = useState('');
   const [hasJoined, setHasJoined] = useState(!!initialNickname);
@@ -30,7 +31,7 @@ export function Lobby({ socket, onMatchStart, onRoomJoined, initialNickname = ''
   const [isSearching, setIsSearching] = useState(!!initialNickname);
   const [queuePosition, setQueuePosition] = useState(0);
   const [useManualRoom, setUseManualRoom] = useState(false);
-  const [gameMode, setGameMode] = useState<'team' | 'solo'>('team');
+  const [gameMode, setGameMode] = useState<'team' | 'solo'>('solo');
 
   useEffect(() => {
     if (!socket) return;
@@ -85,6 +86,7 @@ export function Lobby({ socket, onMatchStart, onRoomJoined, initialNickname = ''
     setError('');
     setIsSearching(true);
     onNicknameSet?.(nickname.trim());
+    onModeSelect?.(gameMode);
     socket.emit('join_queue', { nickname: nickname.trim(), mode: gameMode });
   };
 

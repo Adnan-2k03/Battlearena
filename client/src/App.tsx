@@ -3,6 +3,7 @@ import "@fontsource/inter";
 import { useSocket } from "./hooks/useSocket";
 import { Lobby } from "./components/Lobby";
 import { GameArena } from "./components/GameArena";
+import { ElementalArena } from "./components/ElementalArena";
 import { VictoryModal } from "./components/VictoryModal";
 import { SoundManager } from "./components/SoundManager";
 import { SpectatorView } from "./components/SpectatorView";
@@ -50,6 +51,7 @@ function App() {
   const [winner, setWinner] = useState<'blue' | 'red' | null>(null);
   const [matchStats, setMatchStats] = useState<PlayerStat[]>([]);
   const [nickname, setNickname] = useState<string>('');
+  const [gameMode, setGameMode] = useState<'team' | 'solo'>('solo');
   const [spectatorData, setSpectatorData] = useState<{
     players: AssignedPlayer[];
     blueTeam: TeamState;
@@ -115,7 +117,7 @@ function App() {
     setRoomId('');
     
     if (nickname) {
-      socket.emit('join_queue', { nickname, mode: 'team' });
+      socket.emit('join_queue', { nickname, mode: gameMode });
     }
   };
 
@@ -159,11 +161,12 @@ function App() {
               onRoomJoined={setRoomId}
               initialNickname={nickname}
               onNicknameSet={setNickname}
+              onModeSelect={setGameMode}
             />
           )}
 
           {gamePhase === 'playing' && myTeam && myRole && roomId && (
-            <GameArena 
+            <ElementalArena 
               socket={socket}
               roomId={roomId}
               myTeam={myTeam}
