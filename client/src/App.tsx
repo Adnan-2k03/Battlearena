@@ -84,8 +84,10 @@ function App() {
       setSpectatorData({ players: validPlayers, blueTeam, redTeam, phase });
     });
 
-    socket.on('matched', ({ roomId: matchedRoomId }: { roomId: string }) => {
+    socket.on('matched', ({ roomId: matchedRoomId, team, role }: { roomId: string; team: 'blue' | 'red'; role: 'striker' | 'guardian' }) => {
       setRoomId(matchedRoomId);
+      setMyTeam(team);
+      setMyRole(role);
     });
 
     return () => {
