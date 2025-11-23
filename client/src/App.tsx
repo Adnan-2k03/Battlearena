@@ -4,8 +4,11 @@ import { useSocket } from "./hooks/useSocket";
 import { Lobby } from "./components/Lobby";
 import { GameArena } from "./components/GameArena";
 import { VictoryModal } from "./components/VictoryModal";
+import { SoundManager } from "./components/SoundManager";
+import { SpectatorView } from "./components/SpectatorView";
 
 type GamePhase = 'lobby' | 'playing' | 'ended';
+type UserMode = 'player' | 'spectator';
 
 interface Player {
   id: string;
@@ -14,13 +17,37 @@ interface Player {
   role: 'striker' | 'guardian' | null;
 }
 
+interface PlayerStat {
+  id: string;
+  nickname: string;
+  team: 'blue' | 'red';
+  role: 'striker' | 'guardian';
+  wpm: number;
+  accuracy: number;
+  damageDealt: number;
+  shieldRestored: number;
+}
+
+interface TeamState {
+  hp: number;
+  shield: number;
+}
+
 function App() {
   const socket = useSocket();
+  const [userMode, setUserMode] = useState<UserMode>('player');
   const [gamePhase, setGamePhase] = useState<GamePhase>('lobby');
   const [roomId, setRoomId] = useState('');
   const [myTeam, setMyTeam] = useState<'blue' | 'red' | null>(null);
   const [myRole, setMyRole] = useState<'striker' | 'guardian' | null>(null);
   const [winner, setWinner] = useState<'blue' | 'red' | null>(null);
+  const [matchStats, setMatchStats] = useState<PlayerStat[]>([]);
+  const [spectatorData, setSpectatorData] = useState<{
+    players: Player[];
+    blueTeam: TeamState;
+    redTeam: TeamState;
+    phase: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!socket) return;
@@ -37,15 +64,23 @@ function App() {
       setGamePhase('playing');
     });
 
-    socket.on('match_ended', ({ winner: winningTeam }: { winner: 'blue' | 'red' }) => {
+    socket.on('match_ended', ({ winner: winningTeam, stats }: { winner: 'blue' | 'red'; stats: PlayerStat[] }) => {
       setWinner(winningTeam);
+      setMatchStats(stats || []);
       setGamePhase('ended');
+    });
+
+    socket.on('joined_as_spectator', ({ roomId: specRoomId, players, blueTeam, redTeam, phase }: any) => {
+      setUserMode('spectator');
+      setRoomId(specRoomId);
+      setSpectatorData({ players, blueTeam, redTeam, phase });
     });
 
     return () => {
       socket.off('room_update');
       socket.off('match_started');
       socket.off('match_ended');
+      socket.off('joined_as_spectator');
     };
   }, [socket]);
 
@@ -77,25 +112,41 @@ function App() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
-      {gamePhase === 'lobby' && (
-        <Lobby socket={socket} onMatchStart={handleMatchStart} />
-      )}
-
-      {gamePhase === 'playing' && myTeam && myRole && (
-        <GameArena 
+      <SoundManager />
+      
+      {userMode === 'spectator' && spectatorData ? (
+        <SpectatorView
           socket={socket}
           roomId={roomId}
-          myTeam={myTeam}
-          myRole={myRole}
+          initialPlayers={spectatorData.players}
+          initialBlueTeam={spectatorData.blueTeam}
+          initialRedTeam={spectatorData.redTeam}
+          initialPhase={spectatorData.phase}
         />
-      )}
+      ) : (
+        <>
+          {gamePhase === 'lobby' && (
+            <Lobby socket={socket} onMatchStart={handleMatchStart} />
+          )}
 
-      {gamePhase === 'ended' && winner && myTeam && (
-        <VictoryModal 
-          winner={winner}
-          myTeam={myTeam}
-          onPlayAgain={handlePlayAgain}
-        />
+          {gamePhase === 'playing' && myTeam && myRole && (
+            <GameArena 
+              socket={socket}
+              roomId={roomId}
+              myTeam={myTeam}
+              myRole={myRole}
+            />
+          )}
+
+          {gamePhase === 'ended' && winner && myTeam && (
+            <VictoryModal 
+              winner={winner}
+              myTeam={myTeam}
+              stats={matchStats}
+              onPlayAgain={handlePlayAgain}
+            />
+          )}
+        </>
       )}
     </div>
   );

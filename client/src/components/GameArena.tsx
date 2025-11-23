@@ -22,10 +22,17 @@ interface Projectile {
   startTime: number;
 }
 
+type WordType = 'normal' | 'double_damage' | 'full_shield' | 'stun';
+
+interface WordWithType {
+  word: string;
+  type: WordType;
+}
+
 export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
   const [blueTeam, setBlueTeam] = useState<TeamState>({ hp: 100, shield: 0 });
   const [redTeam, setRedTeam] = useState<TeamState>({ hp: 100, shield: 0 });
-  const [words, setWords] = useState<string[]>([]);
+  const [words, setWords] = useState<WordWithType[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
   const [shieldFlash, setShieldFlash] = useState<'blue' | 'red' | null>(null);
@@ -39,7 +46,7 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('new_words', ({ words: newWords }: { words: string[] }) => {
+    socket.on('new_words', ({ words: newWords }: { words: WordWithType[] }) => {
       setWords(newWords);
     });
 
@@ -96,7 +103,14 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
     e.preventDefault();
     if (!inputValue.trim() || !socket) return;
 
-    socket.emit('word_typed', { roomId, word: inputValue.trim() });
+    const typedWord = inputValue.trim().toUpperCase();
+    const matchedWord = words.find(w => w.word === typedWord);
+
+    socket.emit('word_typed', { 
+      roomId, 
+      word: inputValue.trim(),
+      wordType: matchedWord?.type || 'normal'
+    });
   };
 
   const getHealthBarColor = (hp: number) => {
@@ -223,18 +237,24 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
           <div className="bg-slate-700/50 rounded-lg p-3 md:p-4">
             <h3 className="text-white font-bold mb-2 text-sm md:text-base">Available Words:</h3>
             <div className="flex flex-wrap gap-2">
-              {words.map((word, index) => (
-                <div
-                  key={index}
-                  className={`px-3 py-2 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base ${
-                    myRole === 'striker' 
-                      ? 'bg-red-600 text-white' 
-                      : 'bg-blue-600 text-white'
-                  }`}
-                >
-                  {word}
-                </div>
-              ))}
+              {words.map((wordObj, index) => {
+                const isPowerUp = wordObj.type !== 'normal';
+                return (
+                  <div
+                    key={index}
+                    className={`px-3 py-2 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base ${
+                      isPowerUp
+                        ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white animate-pulse shadow-lg'
+                        : myRole === 'striker' 
+                          ? 'bg-red-600 text-white' 
+                          : 'bg-blue-600 text-white'
+                    }`}
+                  >
+                    {wordObj.word}
+                    {isPowerUp && <span className="ml-1">⚡</span>}
+                  </div>
+                );
+              })}
             </div>
           </div>
 

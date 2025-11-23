@@ -24,6 +24,9 @@ export function Lobby({ socket, onMatchStart }: LobbyProps) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [canStart, setCanStart] = useState(false);
   const [error, setError] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [queuePosition, setQueuePosition] = useState(0);
+  const [useManualRoom, setUseManualRoom] = useState(false);
 
   useEffect(() => {
     if (!socket) return;
@@ -31,23 +34,53 @@ export function Lobby({ socket, onMatchStart }: LobbyProps) {
     socket.on('room_update', ({ players: updatedPlayers, canStart: canStartMatch }) => {
       setPlayers(updatedPlayers);
       setCanStart(canStartMatch);
+      setIsSearching(false);
     });
 
     socket.on('room_full', () => {
       setError('Room is full (max 4 players)');
       setHasJoined(false);
+      setIsSearching(false);
     });
 
     socket.on('match_started', () => {
       onMatchStart();
     });
 
+    socket.on('queue_update', ({ position }: { position: number }) => {
+      setQueuePosition(position);
+    });
+
+    socket.on('matched', ({ roomId: matchedRoomId }: { roomId: string }) => {
+      setRoomId(matchedRoomId);
+      setHasJoined(true);
+      setIsSearching(false);
+    });
+
     return () => {
       socket.off('room_update');
       socket.off('room_full');
       socket.off('match_started');
+      socket.off('queue_update');
+      socket.off('matched');
     };
   }, [socket, onMatchStart]);
+
+  const handleQuickMatch = () => {
+    if (!nickname.trim()) {
+      setError('Please enter your nickname');
+      return;
+    }
+
+    if (!socket) {
+      setError('Connection not ready');
+      return;
+    }
+
+    setError('');
+    setIsSearching(true);
+    socket.emit('join_queue', { nickname: nickname.trim() });
+  };
 
   const handleJoin = () => {
     if (!nickname.trim() || !roomId.trim()) {
@@ -88,7 +121,7 @@ export function Lobby({ socket, onMatchStart }: LobbyProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {!hasJoined ? (
+          {!hasJoined && !isSearching ? (
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Nickname</label>
@@ -97,34 +130,75 @@ export function Lobby({ socket, onMatchStart }: LobbyProps) {
                   placeholder="Enter your nickname"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+                  onKeyDown={(e) => e.key === 'Enter' && !useManualRoom && handleQuickMatch()}
                   className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
                   autoComplete="off"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Room ID</label>
-                <Input
-                  type="text"
-                  placeholder="Enter room ID (e.g., room123)"
-                  value={roomId}
-                  onChange={(e) => setRoomId(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
-                  autoComplete="off"
-                />
-              </div>
+              
+              {useManualRoom && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">Room ID</label>
+                  <Input
+                    type="text"
+                    placeholder="Enter room ID (e.g., room123)"
+                    value={roomId}
+                    onChange={(e) => setRoomId(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                    autoComplete="off"
+                  />
+                </div>
+              )}
+              
               {error && (
                 <div className="text-red-400 text-sm bg-red-900/30 p-3 rounded">
                   {error}
                 </div>
               )}
-              <Button 
-                onClick={handleJoin}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 text-lg"
-              >
-                Join Room
-              </Button>
+              
+              {!useManualRoom ? (
+                <div className="space-y-2">
+                  <Button 
+                    onClick={handleQuickMatch}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-6 text-lg"
+                  >
+                    Quick Match (Auto-Find Players)
+                  </Button>
+                  <button
+                    onClick={() => setUseManualRoom(true)}
+                    className="w-full text-slate-400 hover:text-white text-sm underline"
+                  >
+                    Or join a specific room
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Button 
+                    onClick={handleJoin}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 text-lg"
+                  >
+                    Join Room
+                  </Button>
+                  <button
+                    onClick={() => setUseManualRoom(false)}
+                    className="w-full text-slate-400 hover:text-white text-sm underline"
+                  >
+                    Back to Quick Match
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : isSearching ? (
+            <div className="space-y-4 text-center">
+              <div className="animate-spin mx-auto w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full" />
+              <h3 className="text-xl font-bold">Searching for Players...</h3>
+              <p className="text-slate-400">
+                Players in queue: {queuePosition}
+              </p>
+              <p className="text-sm text-slate-500">
+                Waiting for 4 players to start a match
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
