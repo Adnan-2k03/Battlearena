@@ -26,6 +26,13 @@ interface Projectile {
   startTime: number;
 }
 
+interface FloatingText {
+  id: string;
+  text: string;
+  type: 'hp' | 'shield';
+  startTime: number;
+}
+
 type Element = 'fire' | 'water' | 'leaf';
 
 interface WordWithElement {
@@ -57,6 +64,8 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
   const [myElementCharges, setMyElementCharges] = useState<ElementCharges>({ fire: 0, water: 0, leaf: 0 });
   const [enemyElementCharges, setEnemyElementCharges] = useState<ElementCharges>({ fire: 0, water: 0, leaf: 0 });
   const [keyboardFlash, setKeyboardFlash] = useState<string | null>(null);
+  const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
+  const [typedKeys, setTypedKeys] = useState<Set<number>>(new Set());
   const inputRef = useRef<HTMLInputElement>(null);
   const { playHit, playSuccess, playCharge, playBarrier, playAttack } = useAudio();
 
@@ -137,9 +146,24 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
       setTimeout(() => setKeyboardFlash(null), 500);
     });
 
-    socket.on('small_boost', ({ blueTeam: blue, redTeam: red }: any) => {
+    socket.on('small_boost', ({ blueTeam: blue, redTeam: red, team }: any) => {
       setBlueTeam(blue);
       setRedTeam(red);
+      
+      // Show floating text indicators for the boost
+      if (team === myTeam) {
+        const hpId = `hp-${Date.now()}`;
+        const shieldId = `shield-${Date.now()}-1`;
+        
+        setFloatingTexts(prev => [...prev, 
+          { id: hpId, text: '+2 HP', type: 'hp', startTime: Date.now() },
+          { id: shieldId, text: '+3 Shield', type: 'shield', startTime: Date.now() }
+        ]);
+        
+        setTimeout(() => {
+          setFloatingTexts(prev => prev.filter(t => t.id !== hpId && t.id !== shieldId));
+        }, 1500);
+      }
     });
 
     socket.on('shield_restored', ({ team, blueTeam: blue, redTeam: red }: any) => {
@@ -192,6 +216,66 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
       word: inputValue.trim()
     });
   };
+  
+  // Track actual key presses for keyboard animation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only track alphanumeric and space keys
+      if (e.key.length === 1 || e.key === ' ') {
+        const keyCode = e.key.toUpperCase().charCodeAt(0);
+        // Map keys to visual keyboard positions (0-19)
+        let keyIndex = -1;
+        
+        if (keyCode >= 65 && keyCode <= 90) { // A-Z
+          keyIndex = keyCode - 65; // Map A-Z to 0-19
+          if (keyIndex > 19) keyIndex = keyIndex % 20;
+        } else if (e.key === ' ') {
+          keyIndex = 19; // Spacebar
+        }
+        
+        if (keyIndex >= 0) {
+          setTypedKeys(prev => new Set(Array.from(prev).concat(keyIndex)));
+        }
+      }
+    };
+    
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key.length === 1 || e.key === ' ') {
+        const keyCode = e.key.toUpperCase().charCodeAt(0);
+        let keyIndex = -1;
+        
+        if (keyCode >= 65 && keyCode <= 90) {
+          keyIndex = keyCode - 65;
+          if (keyIndex > 19) keyIndex = keyIndex % 20;
+        } else if (e.key === ' ') {
+          keyIndex = 19;
+        }
+        
+        if (keyIndex >= 0) {
+          setTypedKeys(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(keyIndex);
+            return newSet;
+          });
+        }
+      }
+    };
+    
+    // Clear all keys on blur
+    const handleBlur = () => {
+      setTypedKeys(new Set());
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, []);
 
   const getHealthBarColor = (hp: number) => {
     if (hp > 60) return 'bg-green-500';
@@ -255,25 +339,43 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
               </div>
             </div>
             
-            {/* Enemy Element Charges */}
-            <div>
-              <span className="text-white text-xs font-medium mb-1 block">Enemy Element Charges:</span>
-              <div className="flex gap-2">
+            {/* Enemy Element Charges - Enhanced with glow */}
+            <div className="bg-slate-700/30 rounded-lg p-3">
+              <span className="text-white text-sm font-bold mb-2 block flex items-center gap-2">
+                ⚡ Enemy Charging Energy
+              </span>
+              <div className="flex gap-3">
                 {(['fire', 'water', 'leaf'] as Element[]).map(element => (
                   <div key={element} className="flex-1">
-                    <div className="flex items-center gap-1 mb-1">
-                      {getElementIcon(element, "w-3 h-3")}
-                      <span className="text-white text-xs">{enemyElementCharges[element]}%</span>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1">
+                        {getElementIcon(element, "w-4 h-4")}
+                        <span className="text-white text-xs font-bold capitalize">{element}</span>
+                      </div>
+                      <span className="text-white text-xs font-bold">{enemyElementCharges[element]}%</span>
                     </div>
-                    <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden border border-slate-600 relative">
                       <div 
-                        className={`h-full transition-all duration-300 ${getElementColor(element)}`}
-                        style={{ width: `${enemyElementCharges[element]}%` }}
+                        className={`h-full transition-all duration-500 ${getElementColor(element)} ${
+                          enemyElementCharges[element] >= 80 ? 'animate-pulse shadow-lg' : ''
+                        }`}
+                        style={{ 
+                          width: `${enemyElementCharges[element]}%`,
+                          boxShadow: enemyElementCharges[element] >= 80 ? '0 0 10px currentColor' : 'none'
+                        }}
                       />
+                      {enemyElementCharges[element] >= 100 && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-white text-xs font-bold animate-pulse">READY!</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
+              {Object.values(enemyElementCharges).some(v => v >= 80) && (
+                <p className="text-yellow-400 text-xs mt-2 animate-pulse font-bold">⚠️ Enemy attack incoming!</p>
+              )}
             </div>
             
             {/* Enemy Barrier Display */}
@@ -292,20 +394,45 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
 
       {/* Arena - Middle */}
       <div className="flex-1 relative overflow-hidden flex items-center justify-center p-4">
-        {/* Projectiles */}
+        {/* Improved Projectiles with trails */}
         {projectiles.map((projectile) => (
+          <div key={projectile.id} className="absolute" style={{ bottom: '20%', left: '50%' }}>
+            <div
+              className={`w-12 h-12 md:w-16 md:h-16 rounded-full ${
+                projectile.team === 'blue' ? 'bg-blue-500' : 'bg-red-500'
+              }`}
+              style={{
+                transform: 'translateX(-50%)',
+                animation: 'projectileUp 1s ease-out forwards',
+                boxShadow: projectile.team === 'blue' 
+                  ? '0 0 20px rgba(59, 130, 246, 0.8), 0 0 40px rgba(59, 130, 246, 0.4)' 
+                  : '0 0 20px rgba(239, 68, 68, 0.8), 0 0 40px rgba(239, 68, 68, 0.4)'
+              }}
+            >
+              <div className="absolute inset-0 rounded-full animate-ping opacity-75" 
+                style={{ backgroundColor: projectile.team === 'blue' ? '#3b82f6' : '#ef4444' }} 
+              />
+            </div>
+          </div>
+        ))}
+        
+        {/* Floating Text Indicators */}
+        {floatingTexts.map((floating) => (
           <div
-            key={projectile.id}
-            className={`absolute w-8 h-8 md:w-12 md:h-12 rounded-full animate-ping ${
-              projectile.team === 'blue' ? 'bg-blue-500' : 'bg-red-500'
+            key={floating.id}
+            className={`absolute text-lg md:text-xl font-bold pointer-events-none ${
+              floating.type === 'hp' ? 'text-green-400' : 'text-blue-400'
             }`}
             style={{
-              bottom: '20%',
+              bottom: '60%',
               left: '50%',
               transform: 'translateX(-50%)',
-              animation: 'projectileUp 1s ease-out forwards'
+              animation: 'floatUp 1.5s ease-out forwards',
+              textShadow: '0 0 10px rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,0.5)'
             }}
-          />
+          >
+            {floating.text}
+          </div>
         ))}
         
         <div className="text-center">
@@ -324,27 +451,29 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
               keyboardFlash === 'barrier' ? 'border-blue-400 shadow-blue-400/50' :
               'border-slate-600'
             }`}>
-              {/* Keyboard Keys - 3 rows */}
+              {/* Keyboard Keys - 3 rows with better animation */}
               <div className="space-y-2">
                 {/* Row 1 */}
                 <div className="flex gap-1 justify-center">
                   {[...Array(10)].map((_, i) => (
-                    <div key={`row1-${i}`} className={`w-6 h-6 md:w-8 md:h-8 rounded ${
-                      Math.random() > 0.7 && inputValue.length > 0 ? 'bg-slate-500' : 'bg-slate-700'
-                    } transition-colors`} />
+                    <div key={`row1-${i}`} className={`w-6 h-6 md:w-8 md:h-8 rounded transition-all duration-100 ${
+                      typedKeys.has(i) ? 'bg-slate-400 scale-95 shadow-inner' : 'bg-slate-700 shadow-md'
+                    }`} />
                   ))}
                 </div>
                 {/* Row 2 */}
                 <div className="flex gap-1 justify-center">
                   {[...Array(9)].map((_, i) => (
-                    <div key={`row2-${i}`} className={`w-6 h-6 md:w-8 md:h-8 rounded ${
-                      Math.random() > 0.6 && inputValue.length > 0 ? 'bg-slate-500' : 'bg-slate-700'
-                    } transition-colors`} />
+                    <div key={`row2-${i}`} className={`w-6 h-6 md:w-8 md:h-8 rounded transition-all duration-100 ${
+                      typedKeys.has(i + 10) ? 'bg-slate-400 scale-95 shadow-inner' : 'bg-slate-700 shadow-md'
+                    }`} />
                   ))}
                 </div>
                 {/* Row 3 - Spacebar */}
                 <div className="flex gap-1 justify-center">
-                  <div className="w-40 h-6 md:w-48 md:h-8 rounded bg-slate-700" />
+                  <div className={`w-40 h-6 md:w-48 md:h-8 rounded transition-all duration-100 ${
+                    typedKeys.has(19) ? 'bg-slate-400 scale-95 shadow-inner' : 'bg-slate-700 shadow-md'
+                  }`} />
                 </div>
               </div>
               
@@ -513,7 +642,24 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
           100% {
             bottom: 80%;
             opacity: 0;
-            transform: translateX(-50%) scale(0.5);
+            transform: translateX(-50%) scale(0.3);
+          }
+        }
+        
+        @keyframes floatUp {
+          0% {
+            bottom: 60%;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0) scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-20px) scale(1.2);
+          }
+          100% {
+            bottom: 70%;
+            opacity: 0;
+            transform: translateX(-50%) translateY(-40px) scale(0.8);
           }
         }
       `}</style>
