@@ -15,9 +15,10 @@ interface Player {
 interface LobbyProps {
   socket: Socket | null;
   onMatchStart: () => void;
+  onRoomJoined?: (roomId: string) => void;
 }
 
-export function Lobby({ socket, onMatchStart }: LobbyProps) {
+export function Lobby({ socket, onMatchStart, onRoomJoined }: LobbyProps) {
   const [nickname, setNickname] = useState('');
   const [roomId, setRoomId] = useState('');
   const [hasJoined, setHasJoined] = useState(false);
@@ -55,6 +56,7 @@ export function Lobby({ socket, onMatchStart }: LobbyProps) {
       setRoomId(matchedRoomId);
       setHasJoined(true);
       setIsSearching(false);
+      onRoomJoined?.(matchedRoomId);
     });
 
     return () => {
@@ -64,7 +66,7 @@ export function Lobby({ socket, onMatchStart }: LobbyProps) {
       socket.off('queue_update');
       socket.off('matched');
     };
-  }, [socket, onMatchStart]);
+  }, [socket, onMatchStart, onRoomJoined]);
 
   const handleQuickMatch = () => {
     if (!nickname.trim()) {
@@ -96,6 +98,7 @@ export function Lobby({ socket, onMatchStart }: LobbyProps) {
     setError('');
     socket.emit('join_room', { nickname: nickname.trim(), roomId: roomId.trim() });
     setHasJoined(true);
+    onRoomJoined?.(roomId.trim());
   };
 
   const handleStartMatch = () => {
