@@ -1,0 +1,75 @@
+Build a multiplayer, real-time 2v2 Battle Game using Node.js, Express, and Socket.io.
+
+1. Project Structure
+
+Server: index.js (Handles rooms, team assignment, roles, and game loop).
+
+Client: public/index.html (Single file containing HTML, CSS, and Client JS).
+
+2. The Lobby System
+
+Screen 1: Login. Inputs for "Nickname" and "Room ID".
+
+Logic:
+
+Players join a specific Room ID.
+
+Matchmaking: The first 2 players to join are Team Blue. The next 2 are Team Red.
+
+If a 5th player tries to join, show "Room Full".
+
+Once 4 players are present (or 2 for testing), unlock the "Start Match" button.
+
+3. The 2v2 Combat Mechanics (The Core Loop)
+
+Inside a Team, assign roles automatically:
+
+Player 1: Role = STRIKER (Attacker).
+
+Player 2: Role = GUARDIAN (Defender).
+
+The UI Layout (Split View)
+
+Top Bar: Enemy Team HP and Shield Bar.
+
+Middle: The Arena (Visual representation of projectiles).
+
+Bottom Dashboard:
+
+My Role (Text: "YOU ARE THE STRIKER" or "YOU ARE THE GUARDIAN").
+
+My Team HP and Shield Bar.
+
+The Word Deck: Display 3 random words based on role.
+
+Input Box: Fixed at the bottom (Mobile friendly).
+
+The Mechanics
+
+Striker Logic:
+
+Words: Aggressive verbs (e.g., ATTACK, BURST, SHOOT, CRUSH).
+
+Effect: When typed correctly, send damage_event to server. Server reduces Enemy Shield first. If Shield is 0, reduce Enemy HP.
+
+Guardian Logic:
+
+Words: Defensive terms (e.g., PROTECT, SHIELD, HOLD, REPAIR).
+
+Effect: When typed correctly, send heal_event to server. Server adds +10 to Team Shield (Max cap 100).
+
+Shared State: Team HP and Shield are shared between the two teammates.
+
+4. Visual Feedback & Mobile Responsiveness
+
+Projectile Animation: When a Striker types a word, animate a small colored ball flying from bottom to top.
+
+Shield Effect: When a Guardian types, flash the Health Bar Blue.
+
+Mobile Opt-in: Ensure the input field has autocomplete="off" and autocorrect="off". Use a layout that keeps the game visible when the virtual keyboard is open (use min-height and flexbox).
+
+5. Win Condition
+
+When a Team's HP reaches 0, the game ends.
+
+Show a "Team Blue Wins" or "Team Red Wins" modal with a "Play Again" button.
