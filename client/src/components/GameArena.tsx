@@ -46,6 +46,8 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
   useEffect(() => {
     if (!socket) return;
 
+    socket.emit('player_ready', { roomId });
+
     socket.on('new_words', ({ words: newWords }: { words: WordWithType[] }) => {
       setWords(newWords);
     });
@@ -97,7 +99,7 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
       socket.off('word_correct');
       socket.off('word_invalid');
     };
-  }, [socket, playHit, playSuccess]);
+  }, [socket, roomId, playHit, playSuccess]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

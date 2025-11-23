@@ -23,6 +23,7 @@ interface Player {
   role: Role | null;
   roomId: string;
   stats: PlayerStats;
+  currentWords: WordWithType[];
 }
 
 interface TeamState {
@@ -313,7 +314,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               damageDealt: 0,
               shieldRestored: 0,
               startTime: 0
-            }
+            },
+            currentWords: []
           };
           
           room.players.set(playerId, player);
@@ -377,12 +379,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           room.players.forEach((player) => {
             const words = getRandomWords(player.role!, 3);
+            player.currentWords = words;
             if (isBot(player)) {
-              player.currentWords = words;
               startBotTyping(player, room, io);
-            } else {
-              io.to(player.id).emit("new_words", { words });
-              console.log(`Sent words to ${player.nickname}: ${words.map(w => w.word).join(', ')}`);
             }
           });
 
@@ -467,7 +466,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           damageDealt: 0,
           shieldRestored: 0,
           startTime: 0
-        }
+        },
+        currentWords: []
       };
 
       room.players.set(socket.id, player);
@@ -530,18 +530,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       room.players.forEach((player) => {
         const words = getRandomWords(player.role!, 3);
+        player.currentWords = words;
         if (isBot(player)) {
-          player.currentWords = words;
           startBotTyping(player, room, io);
-        } else {
-          io.to(player.id).emit("new_words", { words });
         }
       });
 
       console.log(`Match started in room ${roomId}`);
     });
 
-    socket.on("word_typed", ({ roomId, word, wordType }: { roomId: string; word: string; wordType?: WordType }) => {
+    socket.on("player_ready", ({ roomId }: { roomId: string }) => {
+      const room = rooms.get(roomId);
+      if (!room) return;
+
+      const player = room.players.get(socket.id);
+      if (!player) return;
+
+      socket.emit("new_words", { words: player.currentWords });
+      console.log(`Sent words to ${player.nickname} on ready: ${player.currentWords.map(w => w.word).join(', ')}`);
+    });
+
+    socket.on("word_typed", ({ roomId, word }: { roomId: string; word: string }) => {
       const room = rooms.get(roomId);
       if (!room || room.phase !== "playing") return;
 
@@ -549,19 +558,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!player) return;
 
       const wordUpper = word.toUpperCase().trim();
-      const allValidWords = [
-        ...(player.role === "striker" ? STRIKER_WORDS : GUARDIAN_WORDS),
-        ...(player.role === "striker" ? POWERUP_WORDS.striker : POWERUP_WORDS.guardian)
-      ];
+      const matchedWord = player.currentWords.find(w => w.word === wordUpper);
 
       player.stats.wordsTyped++;
 
-      if (!allValidWords.includes(wordUpper)) {
+      if (!matchedWord) {
         player.stats.incorrectWords++;
         socket.emit("word_invalid");
         return;
       }
 
+      const wordType = matchedWord.type;
       player.stats.correctWords++;
 
       if (player.role === "striker") {
@@ -653,6 +660,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const newWords = getRandomWords(player.role!, 3);
+      player.currentWords = newWords;
       socket.emit("new_words", { words: newWords });
       socket.emit("word_correct");
     });
