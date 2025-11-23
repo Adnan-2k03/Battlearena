@@ -64,6 +64,13 @@ function App() {
 
     console.log('Setting up socket listeners, socket.id:', socket.id);
 
+    socket.on('matched', ({ roomId: matchedRoomId, team, role }: { roomId: string; team: 'blue' | 'red'; role: 'striker' | 'guardian' }) => {
+      console.log('Matched event received - roomId:', matchedRoomId, 'team:', team, 'role:', role);
+      setRoomId(matchedRoomId);
+      setMyTeam(team);
+      setMyRole(role);
+    });
+
     socket.on('room_update', ({ players }: { players: Player[] }) => {
       console.log('Room update event received, players:', players, 'my socket.id:', socket.id);
       const me = players.find(p => p.id === socket.id);
@@ -98,19 +105,12 @@ function App() {
       console.log('Socket event received:', eventName, args);
     });
 
-    socket.on('matched', ({ roomId: matchedRoomId, team, role }: { roomId: string; team: 'blue' | 'red'; role: 'striker' | 'guardian' }) => {
-      console.log('Matched event received - roomId:', matchedRoomId, 'team:', team, 'role:', role);
-      setRoomId(matchedRoomId);
-      setMyTeam(team);
-      setMyRole(role);
-    });
-
     return () => {
+      socket.off('matched');
       socket.off('room_update');
       socket.off('match_started');
       socket.off('match_ended');
       socket.off('joined_as_spectator');
-      socket.off('matched');
     };
   }, [socket]);
 
@@ -179,13 +179,25 @@ function App() {
             />
           )}
 
-          {gamePhase === 'playing' && myTeam && myRole && roomId && (
-            <ElementalArena 
-              socket={socket}
-              roomId={roomId}
-              myTeam={myTeam}
-              myRole={myRole}
-            />
+          {gamePhase === 'playing' && (
+            <>
+              {myTeam && myRole && roomId ? (
+                <ElementalArena 
+                  socket={socket}
+                  roomId={roomId}
+                  myTeam={myTeam}
+                  myRole={myRole}
+                />
+              ) : (
+                <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+                  <div className="text-center text-white">
+                    <div className="text-6xl mb-4 animate-pulse">⚔️</div>
+                    <h2 className="text-2xl font-bold mb-2">Starting Match...</h2>
+                    <p className="text-slate-400">Preparing the arena</p>
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {gamePhase === 'ended' && winner && myTeam && (
