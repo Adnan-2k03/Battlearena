@@ -159,11 +159,30 @@ interface BarrierSphereProps {
 
 function BarrierSphere({ team, position, element, strength, visible }: BarrierSphereProps) {
   const meshRef = useRef<THREE.Mesh>(null);
+  const wingRef1 = useRef<THREE.Mesh>(null);
+  const wingRef2 = useRef<THREE.Mesh>(null);
+  const shieldRingRef = useRef<THREE.Mesh>(null);
   
   useFrame(({ clock }) => {
+    const time = clock.getElapsedTime();
     if (meshRef.current && visible) {
-      meshRef.current.rotation.y = clock.getElapsedTime() * 0.5;
-      meshRef.current.scale.setScalar(1 + Math.sin(clock.getElapsedTime() * 2) * 0.05);
+      meshRef.current.rotation.y = time * 0.5;
+      meshRef.current.scale.setScalar(1 + Math.sin(time * 2) * 0.05);
+    }
+    
+    // Animate wings
+    if (wingRef1.current && visible) {
+      wingRef1.current.rotation.y = time * 0.3;
+      wingRef1.current.position.y = Math.sin(time * 1.5) * 0.2;
+    }
+    if (wingRef2.current && visible) {
+      wingRef2.current.rotation.y = -time * 0.3;
+      wingRef2.current.position.y = Math.sin(time * 1.5 + Math.PI) * 0.2;
+    }
+    
+    // Rotate shield ring
+    if (shieldRingRef.current && visible) {
+      shieldRingRef.current.rotation.z = time * 0.4;
     }
   });
 
@@ -183,40 +202,101 @@ function BarrierSphere({ team, position, element, strength, visible }: BarrierSp
   };
 
   const opacity = strength ? strength / 100 : 1;
+  const color = getBarrierColor();
 
   return (
     <group position={position}>
+      {/* Main Barrier Sphere */}
       <mesh ref={meshRef}>
         <sphereGeometry args={[3, 32, 32]} />
         <meshStandardMaterial 
-          color={getBarrierColor()}
+          color={color}
           transparent
           opacity={opacity * 0.3}
-          emissive={getBarrierColor()}
+          emissive={color}
           emissiveIntensity={0.5}
         />
       </mesh>
       
-      {/* Inner glow */}
+      {/* Inner glow sphere */}
       <mesh scale={0.9}>
         <sphereGeometry args={[3, 32, 32]} />
         <meshBasicMaterial 
-          color={getBarrierColor()}
+          color={color}
           transparent
           opacity={opacity * 0.2}
         />
       </mesh>
       
-      {/* Particles effect based on element */}
-      {element === 'fire' && (
-        <pointLight color="#ef4444" intensity={3} distance={10} />
-      )}
-      {element === 'water' && (
-        <pointLight color="#3b82f6" intensity={3} distance={10} />
-      )}
-      {element === 'leaf' && (
-        <pointLight color="#22c55e" intensity={3} distance={10} />
-      )}
+      {/* Outer protective ring */}
+      <mesh ref={shieldRingRef} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[3.5, 0.15, 16, 32]} />
+        <meshStandardMaterial 
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.8}
+          transparent
+          opacity={opacity * 0.7}
+        />
+      </mesh>
+      
+      {/* Protective Wings/Shields - Left */}
+      <mesh ref={wingRef1} position={[-3.5, 0, 0]} rotation={[0, Math.PI / 4, 0]}>
+        <boxGeometry args={[0.3, 4, 2.5]} />
+        <meshStandardMaterial 
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.6}
+          transparent
+          opacity={opacity * 0.5}
+        />
+      </mesh>
+      
+      {/* Protective Wings/Shields - Right */}
+      <mesh ref={wingRef2} position={[3.5, 0, 0]} rotation={[0, -Math.PI / 4, 0]}>
+        <boxGeometry args={[0.3, 4, 2.5]} />
+        <meshStandardMaterial 
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.6}
+          transparent
+          opacity={opacity * 0.5}
+        />
+      </mesh>
+      
+      {/* Front Shield Panel */}
+      <mesh position={[0, 0, 3.5]} rotation={[0, 0, 0]}>
+        <boxGeometry args={[3, 3, 0.2]} />
+        <meshStandardMaterial 
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.7}
+          transparent
+          opacity={opacity * 0.4}
+        />
+      </mesh>
+      
+      {/* Energy Particles */}
+      {[...Array(8)].map((_, i) => {
+        const angle = (i / 8) * Math.PI * 2;
+        const radius = 4;
+        return (
+          <mesh 
+            key={i}
+            position={[Math.cos(angle) * radius, Math.sin(angle * 0.5) * 2, Math.sin(angle) * radius]}
+          >
+            <sphereGeometry args={[0.2, 8, 8]} />
+            <meshStandardMaterial 
+              color={color}
+              emissive={color}
+              emissiveIntensity={1.5}
+            />
+          </mesh>
+        );
+      })}
+      
+      {/* Central glow light */}
+      <pointLight color={color} intensity={4} distance={15} />
     </group>
   );
 }
@@ -383,6 +463,7 @@ function Scene({ gameState }: { gameState: ReturnType<typeof useGameState> }) {
 export function ElementalArena3D({ socket, roomId, myTeam, myRole }: ElementalArena3DProps) {
   const gameState = useGameState(socket, roomId, myTeam, myRole);
   const [inputValue, setInputValue] = useState('');
+  const [actionMode, setActionMode] = useState<'attack' | 'barrier'>('attack');
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Track keypresses for visual feedback
@@ -441,27 +522,51 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole }: ElementalAr
       {/* HUD Overlay */}
       <div className="absolute inset-0 pointer-events-none">
         {/* Enemy Team Status - Top */}
-        <div className="pointer-events-auto bg-slate-900/80 border-b-2 border-slate-700 p-3">
-          <div className="max-w-4xl mx-auto">
-            <h3 className={`text-base font-bold mb-1 ${gameState.enemyTeam === 'blue' ? 'text-blue-400' : 'text-red-400'}`}>
-              Enemy Team ({gameState.enemyTeam.toUpperCase()})
+        <div className="pointer-events-auto bg-slate-900/90 border-b-4 border-red-900 p-4">
+          <div className="max-w-4xl mx-auto space-y-2">
+            <h3 className={`text-lg font-bold ${gameState.enemyTeam === 'blue' ? 'text-blue-400' : 'text-red-400'}`}>
+              Enemy ({gameState.enemyTeam.toUpperCase()})
             </h3>
-            <div className="flex items-center gap-2">
-              <Heart className="w-4 h-4 text-red-400" />
-              <span className="text-white text-sm">HP: {gameState.enemyTeamState.hp}/100</span>
-              <div className="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden">
+            
+            {/* HP Bar */}
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Heart className="w-5 h-5 text-red-400" />
+                <span className="text-white text-sm font-bold">HP: {gameState.enemyTeamState.hp}/100</span>
+              </div>
+              <div className="w-full bg-slate-700 rounded-full h-6 overflow-hidden border-2 border-slate-600">
                 <div 
                   className="h-full bg-red-500 transition-all duration-300"
                   style={{ width: `${gameState.enemyTeamState.hp}%` }}
                 />
               </div>
             </div>
+            
+            {/* Enemy Barrier */}
             {gameState.enemyTeamState.barrier && (
-              <div className="mt-2 flex items-center gap-2 text-sm text-white">
-                <ShieldIcon className="w-4 h-4" />
-                <span className="capitalize">{gameState.enemyTeamState.barrier.element} Barrier: {gameState.enemyTeamState.barrier.strength}/100</span>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <ShieldIcon className="w-5 h-5" style={{ 
+                    color: gameState.enemyTeamState.barrier.element === 'fire' ? '#ef4444' : 
+                           gameState.enemyTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e' 
+                  }} />
+                  <span className="text-white text-sm font-bold capitalize">
+                    {gameState.enemyTeamState.barrier.element} Barrier: {gameState.enemyTeamState.barrier.strength}/100
+                  </span>
+                </div>
+                <div className="w-full bg-slate-700 rounded-full h-4 overflow-hidden border-2 border-red-900">
+                  <div 
+                    className="h-full transition-all duration-300"
+                    style={{ 
+                      width: `${gameState.enemyTeamState.barrier.strength}%`,
+                      backgroundColor: gameState.enemyTeamState.barrier.element === 'fire' ? '#ef4444' : 
+                                     gameState.enemyTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e'
+                    }}
+                  />
+                </div>
               </div>
             )}
+            
           </div>
         </div>
 
@@ -480,70 +585,162 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole }: ElementalAr
           </form>
           
           {/* Words display */}
-          <div className="mt-2 flex flex-wrap gap-2 justify-center">
-            {gameState.words.slice(0, 6).map((word, idx) => (
-              <div 
-                key={idx}
-                className={`px-3 py-1 rounded text-sm font-bold ${
-                  word.isCharge ? 'bg-yellow-500 text-black' : 'bg-slate-700 text-white'
-                }`}
-              >
-                {getElementIcon(word.element)}
-                <span className="ml-1">{word.word}</span>
-              </div>
-            ))}
+          <div className="mt-3">
+            <h3 className="text-white font-bold mb-2 text-sm text-center">Available Words:</h3>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {gameState.words.slice(0, 6).map((word, idx) => {
+                const getElementBgColor = () => {
+                  switch (word.element) {
+                    case 'fire': return 'bg-red-600';
+                    case 'water': return 'bg-blue-600';
+                    case 'leaf': return 'bg-green-600';
+                  }
+                };
+                
+                return (
+                  <div 
+                    key={idx}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold text-white flex items-center gap-1 ${getElementBgColor()} ${
+                      word.isCharge ? 'ring-2 ring-yellow-400 shadow-lg shadow-yellow-400/50 animate-pulse' : 'shadow-md'
+                    }`}
+                  >
+                    {getElementIcon(word.element)}
+                    <span className="uppercase">{word.word}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
         {/* My Team Status - Bottom */}
-        <div className="absolute bottom-0 left-0 right-0 pointer-events-auto bg-slate-900/80 border-t-2 border-slate-700 p-3">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className={`text-base font-bold ${myTeam === 'blue' ? 'text-blue-400' : 'text-red-400'}`}>
+        <div className="absolute bottom-0 left-0 right-0 pointer-events-auto bg-slate-900/90 border-t-4 border-slate-700 p-4">
+          <div className="max-w-4xl mx-auto space-y-3">
+            {/* Team Header */}
+            <div className="text-center">
+              <h3 className={`text-xl font-bold ${myTeam === 'blue' ? 'text-blue-400' : 'text-red-400'}`}>
                 Your Team ({myTeam.toUpperCase()})
               </h3>
-              <div className="flex items-center gap-2">
-                {myRole === 'striker' ? <Swords className="w-4 h-4 text-red-400" /> : <ShieldIcon className="w-4 h-4 text-blue-400" />}
-                <span className="text-sm text-white capitalize">{myRole}</span>
+              <div className="flex items-center justify-center gap-2 mt-1">
+                {myRole === 'striker' ? <Swords className="w-5 h-5 text-red-400" /> : <ShieldIcon className="w-5 h-5 text-blue-400" />}
+                <span className="text-sm text-white capitalize font-bold">{myRole}</span>
               </div>
             </div>
-            <div className="flex items-center gap-2 mb-2">
-              <Heart className="w-4 h-4 text-red-400" />
-              <span className="text-white text-sm">HP: {gameState.myTeamState.hp}/100</span>
-              <div className="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden">
+
+            {/* HP Bar */}
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Heart className="w-5 h-5 text-red-400" />
+                <span className="text-white text-sm font-bold">HP: {gameState.myTeamState.hp}/100</span>
+              </div>
+              <div className="w-full bg-slate-700 rounded-full h-6 overflow-hidden border-2 border-slate-600">
                 <div 
                   className="h-full bg-green-500 transition-all duration-300"
                   style={{ width: `${gameState.myTeamState.hp}%` }}
                 />
               </div>
             </div>
-            
-            {/* Element Charges */}
-            <div className="grid grid-cols-3 gap-2">
-              {(['fire', 'water', 'leaf'] as Element[]).map((element) => (
-                <div key={element} className="flex items-center gap-1">
-                  {getElementIcon(element)}
-                  <div className="flex-1 bg-slate-700 rounded-full h-2 overflow-hidden">
-                    <div 
-                      className={`h-full transition-all duration-300 ${
-                        element === 'fire' ? 'bg-orange-500' :
-                        element === 'water' ? 'bg-blue-500' : 'bg-green-500'
-                      }`}
-                      style={{ width: `${gameState.myCharges[element]}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-white">{gameState.myCharges[element]}%</span>
-                  {gameState.myCharges[element] >= 100 && (
-                    <Button
-                      size="sm"
-                      onClick={() => gameState.useElement(element, 'attack')}
-                      className="ml-1 h-6 px-2 text-xs"
-                    >
-                      Attack
-                    </Button>
-                  )}
+
+            {/* Fire Barrier (if exists) */}
+            {gameState.myTeamState.barrier && (
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <ShieldIcon className="w-5 h-5" style={{ 
+                    color: gameState.myTeamState.barrier.element === 'fire' ? '#ef4444' : 
+                           gameState.myTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e' 
+                  }} />
+                  <span className="text-white text-sm font-bold capitalize">
+                    {gameState.myTeamState.barrier.element} Barrier: {gameState.myTeamState.barrier.strength}/100
+                  </span>
                 </div>
-              ))}
+                <div className="w-full bg-slate-700 rounded-full h-4 overflow-hidden border-2 border-red-900">
+                  <div 
+                    className="h-full transition-all duration-300"
+                    style={{ 
+                      width: `${gameState.myTeamState.barrier.strength}%`,
+                      backgroundColor: gameState.myTeamState.barrier.element === 'fire' ? '#ef4444' : 
+                                     gameState.myTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Element Energy */}
+            <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+              <h4 className="text-white font-bold mb-2 text-sm flex items-center gap-2">
+                <Flame className="w-4 h-4 text-orange-500" />
+                Element Energy:
+              </h4>
+              <div className="space-y-2">
+                {(['fire', 'water', 'leaf'] as Element[]).map((element) => {
+                  const Icon = element === 'fire' ? Flame : element === 'water' ? Droplet : Leaf;
+                  const color = element === 'fire' ? '#ef4444' : element === 'water' ? '#3b82f6' : '#22c55e';
+                  
+                  return (
+                    <div key={element} className="flex items-center gap-2">
+                      <Icon className="w-5 h-5" style={{ color }} />
+                      <span className="text-white text-sm font-bold capitalize w-12">{element}</span>
+                      <div className="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden border border-slate-600">
+                        <div 
+                          className="h-full transition-all duration-300"
+                          style={{ width: `${gameState.myCharges[element]}%`, backgroundColor: color }}
+                        />
+                      </div>
+                      <span className="text-white text-sm font-bold w-12 text-right">{gameState.myCharges[element]}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Attack Mode / Barrier Mode Buttons */}
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                onClick={() => setActionMode('attack')}
+                className={`h-12 text-base font-bold flex items-center justify-center gap-2 ${
+                  actionMode === 'attack' 
+                    ? 'bg-red-600 hover:bg-red-700 text-white' 
+                    : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                }`}
+              >
+                <Swords className="w-5 h-5" />
+                Attack Mode
+              </Button>
+              <Button
+                onClick={() => setActionMode('barrier')}
+                className={`h-12 text-base font-bold flex items-center justify-center gap-2 ${
+                  actionMode === 'barrier' 
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                    : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                }`}
+              >
+                <ShieldIcon className="w-5 h-5" />
+                Barrier Mode
+              </Button>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-3 gap-2">
+              {(['fire', 'water', 'leaf'] as Element[]).map((element) => {
+                const Icon = element === 'fire' ? Flame : element === 'water' ? Droplet : Leaf;
+                const color = element === 'fire' ? 'bg-red-600' : element === 'water' ? 'bg-blue-600' : 'bg-green-600';
+                const isReady = gameState.myCharges[element] >= 100;
+                
+                return (
+                  <Button
+                    key={element}
+                    onClick={() => gameState.useElement(element, actionMode)}
+                    disabled={!isReady}
+                    className={`h-10 font-bold capitalize ${
+                      isReady ? `${color} hover:opacity-90 text-white` : 'bg-slate-700 text-slate-500'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 mr-1" />
+                    {actionMode === 'attack' ? 'Attack' : 'Protect'}
+                  </Button>
+                );
+              })}
             </div>
           </div>
         </div>
