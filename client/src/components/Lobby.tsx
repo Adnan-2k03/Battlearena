@@ -16,18 +16,21 @@ interface LobbyProps {
   socket: Socket | null;
   onMatchStart: () => void;
   onRoomJoined?: (roomId: string) => void;
+  initialNickname?: string;
+  onNicknameSet?: (nickname: string) => void;
 }
 
-export function Lobby({ socket, onMatchStart, onRoomJoined }: LobbyProps) {
-  const [nickname, setNickname] = useState('');
+export function Lobby({ socket, onMatchStart, onRoomJoined, initialNickname = '', onNicknameSet }: LobbyProps) {
+  const [nickname, setNickname] = useState(initialNickname);
   const [roomId, setRoomId] = useState('');
-  const [hasJoined, setHasJoined] = useState(false);
+  const [hasJoined, setHasJoined] = useState(!!initialNickname);
   const [players, setPlayers] = useState<Player[]>([]);
   const [canStart, setCanStart] = useState(false);
   const [error, setError] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
+  const [isSearching, setIsSearching] = useState(!!initialNickname);
   const [queuePosition, setQueuePosition] = useState(0);
   const [useManualRoom, setUseManualRoom] = useState(false);
+  const [gameMode, setGameMode] = useState<'team' | 'solo'>('team');
 
   useEffect(() => {
     if (!socket) return;
@@ -81,7 +84,8 @@ export function Lobby({ socket, onMatchStart, onRoomJoined }: LobbyProps) {
 
     setError('');
     setIsSearching(true);
-    socket.emit('join_queue', { nickname: nickname.trim() });
+    onNicknameSet?.(nickname.trim());
+    socket.emit('join_queue', { nickname: nickname.trim(), mode: gameMode });
   };
 
   const handleJoin = () => {
@@ -96,6 +100,7 @@ export function Lobby({ socket, onMatchStart, onRoomJoined }: LobbyProps) {
     }
 
     setError('');
+    onNicknameSet?.(nickname.trim());
     socket.emit('join_room', { nickname: nickname.trim(), roomId: roomId.trim() });
     setHasJoined(true);
     onRoomJoined?.(roomId.trim());
@@ -126,6 +131,35 @@ export function Lobby({ socket, onMatchStart, onRoomJoined }: LobbyProps) {
         <CardContent className="space-y-6">
           {!hasJoined && !isSearching ? (
             <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Game Mode</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setGameMode('team')}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      gameMode === 'team'
+                        ? 'bg-purple-600 border-purple-400 text-white'
+                        : 'bg-slate-700 border-slate-600 text-slate-300 hover:border-slate-500'
+                    }`}
+                  >
+                    <Users className="w-6 h-6 mx-auto mb-2" />
+                    <div className="font-bold">Team 2v2</div>
+                    <div className="text-xs opacity-75">4 Players</div>
+                  </button>
+                  <button
+                    onClick={() => setGameMode('solo')}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      gameMode === 'solo'
+                        ? 'bg-orange-600 border-orange-400 text-white'
+                        : 'bg-slate-700 border-slate-600 text-slate-300 hover:border-slate-500'
+                    }`}
+                  >
+                    <Swords className="w-6 h-6 mx-auto mb-2" />
+                    <div className="font-bold">Solo 1v1</div>
+                    <div className="text-xs opacity-75">2 Players</div>
+                  </button>
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Nickname</label>
                 <Input

@@ -49,6 +49,7 @@ function App() {
   const [myRole, setMyRole] = useState<'striker' | 'guardian' | null>(null);
   const [winner, setWinner] = useState<'blue' | 'red' | null>(null);
   const [matchStats, setMatchStats] = useState<PlayerStat[]>([]);
+  const [nickname, setNickname] = useState<string>('');
   const [spectatorData, setSpectatorData] = useState<{
     players: AssignedPlayer[];
     blueTeam: TeamState;
@@ -104,7 +105,18 @@ function App() {
   };
 
   const handlePlayAgain = () => {
-    window.location.reload();
+    if (!socket) return;
+    
+    setGamePhase('lobby');
+    setMyTeam(null);
+    setMyRole(null);
+    setWinner(null);
+    setMatchStats([]);
+    setRoomId('');
+    
+    if (nickname) {
+      socket.emit('join_queue', { nickname, mode: 'team' });
+    }
   };
 
   useEffect(() => {
@@ -145,6 +157,8 @@ function App() {
               socket={socket} 
               onMatchStart={handleMatchStart}
               onRoomJoined={setRoomId}
+              initialNickname={nickname}
+              onNicknameSet={setNickname}
             />
           )}
 
