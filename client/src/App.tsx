@@ -61,6 +61,8 @@ function App() {
     phase: string;
   } | null>(null);
   
+  const isAdminMode = nickname.toLowerCase().startsWith('admin');
+  
   const { initializeAudio, toggleMute, isMuted, initialized } = useAudio();
 
   useEffect(() => {
@@ -206,6 +208,7 @@ function App() {
                     roomId={roomId}
                     myTeam={myTeam}
                     myRole={myRole}
+                    isAdminMode={isAdminMode}
                   />
                   
                   {/* Audio toggle button */}

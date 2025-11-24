@@ -13,6 +13,7 @@ interface ElementalArena3DProps {
   roomId: string;
   myTeam: 'blue' | 'red';
   myRole: 'striker' | 'guardian';
+  isAdminMode?: boolean;
 }
 
 // Terrain component
@@ -587,8 +588,8 @@ function Scene({ gameState }: { gameState: ReturnType<typeof useGameState> }) {
 }
 
 // Main Component
-export function ElementalArena3D({ socket, roomId, myTeam, myRole }: ElementalArena3DProps) {
-  const gameState = useGameState(socket, roomId, myTeam, myRole);
+export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode = false }: ElementalArena3DProps) {
+  const gameState = useGameState(socket, roomId, myTeam, myRole, isAdminMode);
   const [inputValue, setInputValue] = useState('');
   const [actionMode, setActionMode] = useState<'attack' | 'barrier'>('attack');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -733,6 +734,14 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole }: ElementalAr
         {/* Left Side Panel - Element Controls */}
         <div className="absolute left-2 top-20 w-56 pointer-events-auto bg-slate-900/95 border-2 border-slate-700 rounded-lg p-2">
           <div className="space-y-3">
+            {/* Admin Mode Indicator */}
+            {isAdminMode && (
+              <div className="text-center p-2 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-lg border-2 border-yellow-400 animate-pulse">
+                <h3 className="text-sm font-bold text-white">⚡ ADMIN MODE ⚡</h3>
+                <span className="text-xs text-yellow-100">Unlimited Energy</span>
+              </div>
+            )}
+
             {/* Your Role */}
             <div className="text-center p-2 bg-slate-800/50 rounded-lg border border-slate-700">
               <h3 className={`text-sm font-bold ${myTeam === 'blue' ? 'text-blue-400' : 'text-red-400'}`}>

@@ -57,7 +57,8 @@ export function useGameState(
   socket: Socket | null,
   roomId: string,
   myTeam: Team,
-  myRole: Role
+  myRole: Role,
+  isAdminMode: boolean = false
 ) {
   const [blueTeam, setBlueTeam] = useState<TeamState>({ hp: 100, shield: 0, barrier: null });
   const [redTeam, setRedTeam] = useState<TeamState>({ hp: 100, shield: 0, barrier: null });
@@ -65,7 +66,7 @@ export function useGameState(
   const [words, setWords] = useState<WordWithElement[]>([]);
   const [attackEvents, setAttackEvents] = useState<AttackEvent[]>([]);
   const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
-  const [myCharges, setMyCharges] = useState<ElementCharges>({ fire: 0, water: 0, leaf: 0 });
+  const [myCharges, setMyCharges] = useState<ElementCharges>({ fire: 100, water: 100, leaf: 100 });
   
   const { playHit, playSuccess, playCharge, playBarrier, playAttack } = useAudio();
 
@@ -98,7 +99,11 @@ export function useGameState(
       // Update my charges
       const myData = playerCharges.find((p: any) => p.id === socket.id);
       if (myData) {
-        setMyCharges(myData.charges);
+        if (isAdminMode) {
+          setMyCharges({ fire: 100, water: 100, leaf: 100 });
+        } else {
+          setMyCharges(myData.charges);
+        }
       }
     });
 
@@ -236,6 +241,10 @@ export function useGameState(
       element,
       action
     });
+
+    if (isAdminMode) {
+      setTimeout(() => setMyCharges({ fire: 100, water: 100, leaf: 100 }), 100);
+    }
   };
 
   return {
