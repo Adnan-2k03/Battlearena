@@ -3,7 +3,8 @@ import { Socket } from 'socket.io-client';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Users, Swords, Shield } from 'lucide-react';
+import { Users, Swords, Shield, Volume2, VolumeX } from 'lucide-react';
+import { useAudio } from '@/lib/stores/useAudio';
 
 interface Player {
   id: string;
@@ -32,6 +33,8 @@ export function Lobby({ socket, onMatchStart, onRoomJoined, initialNickname = ''
   const [queuePosition, setQueuePosition] = useState(0);
   const [useManualRoom, setUseManualRoom] = useState(false);
   const [gameMode, setGameMode] = useState<'team' | 'solo'>('solo');
+  
+  const { initializeAudio, toggleMute, isMuted, initialized } = useAudio();
 
   useEffect(() => {
     if (!socket) return;
@@ -121,8 +124,33 @@ export function Lobby({ socket, onMatchStart, onRoomJoined, initialNickname = ''
     return role === 'striker' ? <Swords className="w-4 h-4" /> : <Shield className="w-4 h-4" />;
   };
 
+  const handleSoundToggle = () => {
+    if (!initialized) {
+      initializeAudio();
+    } else {
+      toggleMute();
+    }
+  };
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+      {/* Audio Toggle Button */}
+      <div className="fixed top-4 right-4 z-50">
+        <Button
+          onClick={handleSoundToggle}
+          variant="outline"
+          size="icon"
+          className="bg-slate-900/80 border-slate-700 hover:bg-slate-800"
+          title={!initialized ? "Enable sound" : isMuted ? "Unmute" : "Mute"}
+        >
+          {!initialized || isMuted ? (
+            <VolumeX className="w-5 h-5 text-white" />
+          ) : (
+            <Volume2 className="w-5 h-5 text-white" />
+          )}
+        </Button>
+      </div>
+      
       <Card className="w-full max-w-2xl bg-slate-800/90 border-slate-700 text-white">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center flex items-center justify-center gap-2">

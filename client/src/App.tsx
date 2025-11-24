@@ -199,48 +199,14 @@ function App() {
 
           {gamePhase === 'playing' && (
             <>
-              {!initialized ? (
-                <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-                  <div className="text-center text-white">
-                    <div className="text-6xl mb-4 animate-pulse">🎮</div>
-                    <h2 className="text-2xl font-bold mb-4">Ready to Battle!</h2>
-                    <p className="text-slate-400 mb-6">Click to enable sounds and start playing</p>
-                    <Button 
-                      onClick={initializeAudio}
-                      size="lg"
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      <Volume2 className="w-5 h-5 mr-2" />
-                      Start Game with Sound
-                    </Button>
-                  </div>
-                </div>
-              ) : myTeam && myRole && roomId ? (
-                <>
-                  <ElementalArena3D 
-                    socket={socket}
-                    roomId={roomId}
-                    myTeam={myTeam}
-                    myRole={myRole}
-                    isAdminMode={isAdminMode}
-                  />
-                  
-                  {/* Audio toggle button */}
-                  <div className="fixed top-4 right-4 z-50">
-                    <Button
-                      onClick={toggleMute}
-                      variant="outline"
-                      size="icon"
-                      className="bg-slate-900/80 border-slate-700 hover:bg-slate-800"
-                    >
-                      {isMuted ? (
-                        <VolumeX className="w-5 h-5 text-white" />
-                      ) : (
-                        <Volume2 className="w-5 h-5 text-white" />
-                      )}
-                    </Button>
-                  </div>
-                </>
+              {myTeam && myRole && roomId ? (
+                <ElementalArena3D 
+                  socket={socket}
+                  roomId={roomId}
+                  myTeam={myTeam}
+                  myRole={myRole}
+                  isAdminMode={isAdminMode}
+                />
               ) : (
                 <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
                   <div className="text-center text-white">
