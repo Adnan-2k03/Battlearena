@@ -307,50 +307,116 @@ function Room() {
         />
       </mesh>
 
-      {/* Premium Reading Corner - BOOKSHELF LEFT SIDE */}
+      {/* Premium Reading Corner - BOOKSHELF LEFT SIDE - IMPROVED DESIGN */}
       <group position={[-3, 0, -5.5]}>
-        {/* Bookshelf Frame - vertical wood supports */}
-        {[-1.3, 1.3].map((x) => (
-          <mesh key={`frame-${x}`} position={[x, 0.35, -0.15]} castShadow>
-            <boxGeometry args={[0.12, 0.95, 0.45]} />
-            <meshStandardMaterial color="#1a1410" roughness={0.5} metalness={0.25} />
-          </mesh>
-        ))}
-
-        {/* Bookshelf backing - mahogany wood */}
-        <mesh position={[0, 0.35, -0.42]} castShadow receiveShadow>
-          <boxGeometry args={[2.56, 0.95, 0.12]} />
-          <meshStandardMaterial color="#2a1f15" roughness={0.6} metalness={0.12} />
+        {/* Outer frame - dark wood */}
+        {/* Left side */}
+        <mesh position={[-1.4, 0.4, -0.15]} castShadow>
+          <boxGeometry args={[0.2, 2, 0.45]} />
+          <meshStandardMaterial color="#3a2a1a" roughness={0.6} metalness={0.15} />
+        </mesh>
+        {/* Right side */}
+        <mesh position={[1.4, 0.4, -0.15]} castShadow>
+          <boxGeometry args={[0.2, 2, 0.45]} />
+          <meshStandardMaterial color="#3a2a1a" roughness={0.6} metalness={0.15} />
+        </mesh>
+        {/* Top */}
+        <mesh position={[0, 1.35, -0.15]} castShadow>
+          <boxGeometry args={[2.8, 0.2, 0.45]} />
+          <meshStandardMaterial color="#3a2a1a" roughness={0.6} metalness={0.15} />
+        </mesh>
+        {/* Bottom */}
+        <mesh position={[0, -0.55, -0.15]} castShadow>
+          <boxGeometry args={[2.8, 0.2, 0.45]} />
+          <meshStandardMaterial color="#3a2a1a" roughness={0.6} metalness={0.15} />
         </mesh>
 
-        {/* Shelves - polished mahogany */}
-        {[0.85, 0.3, -0.25].map((y) => (
-          <mesh key={y} position={[0, y, 0]} receiveShadow castShadow>
-            <boxGeometry args={[2.48, 0.14, 0.35]} />
-            <meshStandardMaterial 
-              color="#6d5a45" 
-              roughness={0.3}
-              metalness={0.25}
-            />
+        {/* Shelves - 5 levels */}
+        {[1.0, 0.6, 0.2, -0.2, -0.6].map((y) => (
+          <mesh key={`shelf-${y}`} position={[0, y, 0]} receiveShadow castShadow>
+            <boxGeometry args={[2.6, 0.12, 0.35]} />
+            <meshStandardMaterial color="#5d4a36" roughness={0.35} metalness={0.2} />
           </mesh>
         ))}
 
-        {/* Books - premium 3D books */}
+        {/* SHELF 1 - TOP (Red, Yellow, Lime, Red, Blue, Gray, Gray, Orange books) */}
         {[
-          { pos: [-0.95, 0.62, 0.05], color: '#b71c1c', w: 0.28 },
-          { pos: [-0.65, 0.62, 0.02], color: '#1565c0', w: 0.32 },
-          { pos: [-0.3, 0.62, 0.04], color: '#e65100', w: 0.3 },
-          { pos: [0.1, 0.62, 0.02], color: '#2e7d32', w: 0.31 },
-          { pos: [0.5, 0.62, 0.05], color: '#6a1b9a', w: 0.3 },
-          { pos: [0.85, 0.62, 0.01], color: '#c62828', w: 0.29 },
-          { pos: [-0.8, 0.12, 0.03], color: '#8b0000', w: 0.35 },
-          { pos: [-0.35, 0.12, 0.04], color: '#00205b', w: 0.33 },
-          { pos: [0.15, 0.12, 0.02], color: '#bf360c', w: 0.34 },
-          { pos: [0.65, 0.12, 0.05], color: '#1b5e20', w: 0.32 },
+          { pos: [-1.0, 1.15, 0], color: '#c41e3a', rot: 0, w: 0.24 },
+          { pos: [-0.72, 1.15, 0], color: '#ffd700', rot: -0.1, w: 0.22 },
+          { pos: [-0.45, 1.15, 0], color: '#ccff00', rot: 0.08, w: 0.23 },
+          { pos: [-0.15, 1.15, 0], color: '#e63946', rot: 0, w: 0.25 },
+          { pos: [0.15, 1.15, 0], color: '#0077be', rot: -0.12, w: 0.24 },
+          { pos: [0.45, 1.15, 0], color: '#696969', rot: 0.05, w: 0.23 },
+          { pos: [0.72, 1.15, 0], color: '#808080', rot: 0, w: 0.22 },
+          { pos: [1.0, 1.15, 0], color: '#ff8c00', rot: 0.1, w: 0.24 },
         ].map((book, i) => (
-          <mesh key={i} position={book.pos as [number, number, number]} castShadow>
-            <boxGeometry args={[book.w, 0.65, 0.28]} />
-            <meshPhongMaterial color={book.color} shininess={80} />
+          <mesh key={`s1-${i}`} position={book.pos as [number, number, number]} rotation={[0, 0, book.rot]} castShadow>
+            <boxGeometry args={[book.w, 0.42, 0.25]} />
+            <meshPhongMaterial color={book.color} shininess={70} />
+          </mesh>
+        ))}
+
+        {/* SHELF 2 (Cyan, Teal, Teal, Red, Mint, Blue, Dark) */}
+        {[
+          { pos: [-1.0, 0.75, 0], color: '#0099cc', rot: 0, w: 0.22 },
+          { pos: [-0.72, 0.75, 0], color: '#1b9a9a', rot: 0.08, w: 0.23 },
+          { pos: [-0.42, 0.75, 0], color: '#20b2aa', rot: -0.1, w: 0.24 },
+          { pos: [-0.1, 0.75, 0], color: '#d32f2f', rot: 0.12, w: 0.22 },
+          { pos: [0.25, 0.75, 0], color: '#90ee90', rot: 0, w: 0.23 },
+          { pos: [0.58, 0.75, 0], color: '#1e90ff', rot: -0.08, w: 0.24 },
+          { pos: [0.92, 0.75, 0], color: '#2c3e50', rot: 0.1, w: 0.22 },
+        ].map((book, i) => (
+          <mesh key={`s2-${i}`} position={book.pos as [number, number, number]} rotation={[0, 0, book.rot]} castShadow>
+            <boxGeometry args={[book.w, 0.42, 0.25]} />
+            <meshPhongMaterial color={book.color} shininess={70} />
+          </mesh>
+        ))}
+
+        {/* SHELF 3 (Gray, Orange, Teal, Blue, Lime, Lime, Lime books) */}
+        {[
+          { pos: [-1.0, 0.35, 0], color: '#505050', rot: 0, w: 0.22 },
+          { pos: [-0.72, 0.35, 0], color: '#ff9500', rot: -0.12, w: 0.24 },
+          { pos: [-0.42, 0.35, 0], color: '#17a2b8', rot: 0.08, w: 0.23 },
+          { pos: [-0.08, 0.35, 0], color: '#1565c0', rot: 0.1, w: 0.22 },
+          { pos: [0.25, 0.35, 0], color: '#9acd32', rot: -0.08, w: 0.23 },
+          { pos: [0.58, 0.35, 0], color: '#adff2f', rot: 0, w: 0.24 },
+          { pos: [0.92, 0.35, 0], color: '#ccff00', rot: 0.1, w: 0.22 },
+        ].map((book, i) => (
+          <mesh key={`s3-${i}`} position={book.pos as [number, number, number]} rotation={[0, 0, book.rot]} castShadow>
+            <boxGeometry args={[book.w, 0.42, 0.25]} />
+            <meshPhongMaterial color={book.color} shininess={70} />
+          </mesh>
+        ))}
+
+        {/* SHELF 4 (Mint, Mint, Gray, Red, Teal, Yellow, Orange books) */}
+        {[
+          { pos: [-1.0, -0.05, 0], color: '#7fffd4', rot: 0.08, w: 0.23 },
+          { pos: [-0.7, -0.05, 0], color: '#98ff98', rot: -0.1, w: 0.22 },
+          { pos: [-0.4, -0.05, 0], color: '#707070', rot: 0.12, w: 0.24 },
+          { pos: [-0.08, -0.05, 0], color: '#ff6b6b', rot: 0, w: 0.23 },
+          { pos: [0.25, -0.05, 0], color: '#48d1cc', rot: -0.08, w: 0.22 },
+          { pos: [0.58, -0.05, 0], color: '#ffeb3b', rot: 0.1, w: 0.24 },
+          { pos: [0.92, -0.05, 0], color: '#ff9800', rot: 0, w: 0.23 },
+        ].map((book, i) => (
+          <mesh key={`s4-${i}`} position={book.pos as [number, number, number]} rotation={[0, 0, book.rot]} castShadow>
+            <boxGeometry args={[book.w, 0.42, 0.25]} />
+            <meshPhongMaterial color={book.color} shininess={70} />
+          </mesh>
+        ))}
+
+        {/* SHELF 5 - BOTTOM (Mint boxes, Red, Teal, Teal, Yellow, Yellow books) */}
+        {[
+          { pos: [-1.05, -0.45, 0], color: '#7fffd4', rot: 0, w: 0.18 },
+          { pos: [-0.8, -0.45, 0], color: '#7fffd4', rot: 0, w: 0.18 },
+          { pos: [-0.52, -0.45, 0], color: '#d64545', rot: -0.15, w: 0.24 },
+          { pos: [-0.18, -0.45, 0], color: '#20b2aa', rot: 0.08, w: 0.23 },
+          { pos: [0.15, -0.45, 0], color: '#48d1cc', rot: 0.1, w: 0.22 },
+          { pos: [0.48, -0.45, 0], color: '#ffff00', rot: -0.1, w: 0.23 },
+          { pos: [0.82, -0.45, 0], color: '#ffd700', rot: 0.12, w: 0.24 },
+        ].map((book, i) => (
+          <mesh key={`s5-${i}`} position={book.pos as [number, number, number]} rotation={[0, 0, book.rot]} castShadow>
+            <boxGeometry args={[book.w, 0.42, 0.25]} />
+            <meshPhongMaterial color={book.color} shininess={70} />
           </mesh>
         ))}
       </group>
