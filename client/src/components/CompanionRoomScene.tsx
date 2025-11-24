@@ -450,8 +450,8 @@ function Room() {
           <meshStandardMaterial color="#b8a89a" roughness={0.75} metalness={0.01} />
         </mesh>
         
-        {/* Back cushion - angled */}
-        <mesh position={[0, 0.85, -0.42]} castShadow rotation={[0.4, 0, 0]}>
+        {/* Back cushion - upright */}
+        <mesh position={[0, 0.85, -0.5]} castShadow rotation={[0, 0, 0]}>
           <boxGeometry args={[1, 0.7, 0.32]} />
           <meshStandardMaterial color="#a89880" roughness={0.78} metalness={0.01} />
         </mesh>
