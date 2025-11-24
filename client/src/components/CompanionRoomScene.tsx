@@ -295,101 +295,97 @@ function Room() {
 
       {/* Premium Reading Corner - BOOKSHELF LEFT SIDE */}
       <group position={[-3, 0, -5.5]}>
-        {/* Floor cushion */}
-        <mesh position={[0, -0.9, -0.2]} castShadow>
-          <boxGeometry args={[2.6, 0.2, 0.4]} />
-          <meshStandardMaterial color="#9b8b7e" roughness={0.8} metalness={0.05} />
-        </mesh>
-
-        {/* Bookshelf Frame - vertical supports */}
+        {/* Bookshelf Frame - vertical wood supports */}
         {[-1.3, 1.3].map((x) => (
           <mesh key={`frame-${x}`} position={[x, 0.35, -0.15]} castShadow>
-            <boxGeometry args={[0.1, 0.9, 0.4]} />
-            <meshStandardMaterial color="#2d2318" roughness={0.55} metalness={0.2} />
+            <boxGeometry args={[0.12, 0.95, 0.45]} />
+            <meshStandardMaterial color="#1a1410" roughness={0.5} metalness={0.25} />
           </mesh>
         ))}
 
-        {/* Bookshelf backing - premium wood */}
-        <mesh position={[0, 0.35, -0.4]} castShadow receiveShadow>
-          <boxGeometry args={[2.6, 0.9, 0.1]} />
-          <meshStandardMaterial color="#3a2f24" roughness={0.65} metalness={0.08} />
+        {/* Bookshelf backing - mahogany wood */}
+        <mesh position={[0, 0.35, -0.42]} castShadow receiveShadow>
+          <boxGeometry args={[2.56, 0.95, 0.12]} />
+          <meshStandardMaterial color="#2a1f15" roughness={0.6} metalness={0.12} />
         </mesh>
 
-        {/* Shelves - polished wood */}
-        {[0.85, 0.35, -0.15].map((y) => (
+        {/* Shelves - polished mahogany */}
+        {[0.85, 0.3, -0.25].map((y) => (
           <mesh key={y} position={[0, y, 0]} receiveShadow castShadow>
-            <boxGeometry args={[2.5, 0.12, 0.32]} />
+            <boxGeometry args={[2.48, 0.14, 0.35]} />
             <meshStandardMaterial 
-              color="#5d4e3a" 
-              roughness={0.35}
-              metalness={0.2}
+              color="#6d5a45" 
+              roughness={0.3}
+              metalness={0.25}
             />
           </mesh>
         ))}
 
-        {/* Books - premium arrangement */}
+        {/* Books - premium 3D books */}
         {[
-          { pos: [-0.95, 0.6, 0], color: '#c5121c' },
-          { pos: [-0.55, 0.6, 0], color: '#1554b0' },
-          { pos: [-0.1, 0.6, 0], color: '#d97706' },
-          { pos: [0.35, 0.6, 0], color: '#30a46c' },
-          { pos: [0.8, 0.6, 0], color: '#5e1ba9' },
-          { pos: [-0.75, 0.1, 0], color: '#a41e34' },
-          { pos: [-0.2, 0.1, 0], color: '#0c3ca6' },
-          { pos: [0.55, 0.1, 0], color: '#b45309' },
+          { pos: [-0.95, 0.62, 0.05], color: '#b71c1c', w: 0.28 },
+          { pos: [-0.65, 0.62, 0.02], color: '#1565c0', w: 0.32 },
+          { pos: [-0.3, 0.62, 0.04], color: '#e65100', w: 0.3 },
+          { pos: [0.1, 0.62, 0.02], color: '#2e7d32', w: 0.31 },
+          { pos: [0.5, 0.62, 0.05], color: '#6a1b9a', w: 0.3 },
+          { pos: [0.85, 0.62, 0.01], color: '#c62828', w: 0.29 },
+          { pos: [-0.8, 0.12, 0.03], color: '#8b0000', w: 0.35 },
+          { pos: [-0.35, 0.12, 0.04], color: '#00205b', w: 0.33 },
+          { pos: [0.15, 0.12, 0.02], color: '#bf360c', w: 0.34 },
+          { pos: [0.65, 0.12, 0.05], color: '#1b5e20', w: 0.32 },
         ].map((book, i) => (
           <mesh key={i} position={book.pos as [number, number, number]} castShadow>
-            <boxGeometry args={[0.36, 0.6, 0.25]} />
-            <meshPhongMaterial color={book.color} shininess={70} />
+            <boxGeometry args={[book.w, 0.65, 0.28]} />
+            <meshPhongMaterial color={book.color} shininess={80} />
           </mesh>
         ))}
       </group>
 
       {/* Premium Reading Chair - RIGHT SIDE */}
       <group position={[0, -0.5, -5]}>
-        {/* Front left leg - premium wood */}
-        <mesh position={[-0.4, -0.35, 0.4]} castShadow>
-          <boxGeometry args={[0.12, 0.42, 0.12]} />
-          <meshStandardMaterial color="#2d2318" roughness={0.65} metalness={0.1} />
+        {/* Front left leg - walnut wood */}
+        <mesh position={[-0.42, -0.36, 0.42]} castShadow>
+          <boxGeometry args={[0.14, 0.45, 0.14]} />
+          <meshStandardMaterial color="#1a1410" roughness={0.6} metalness={0.12} />
         </mesh>
         {/* Front right leg */}
-        <mesh position={[0.4, -0.35, 0.4]} castShadow>
-          <boxGeometry args={[0.12, 0.42, 0.12]} />
-          <meshStandardMaterial color="#2d2318" roughness={0.65} metalness={0.1} />
+        <mesh position={[0.42, -0.36, 0.42]} castShadow>
+          <boxGeometry args={[0.14, 0.45, 0.14]} />
+          <meshStandardMaterial color="#1a1410" roughness={0.6} metalness={0.12} />
         </mesh>
         {/* Back left leg */}
-        <mesh position={[-0.4, -0.35, -0.4]} castShadow>
-          <boxGeometry args={[0.12, 0.42, 0.12]} />
-          <meshStandardMaterial color="#2d2318" roughness={0.65} metalness={0.1} />
+        <mesh position={[-0.42, -0.36, -0.42]} castShadow>
+          <boxGeometry args={[0.14, 0.45, 0.14]} />
+          <meshStandardMaterial color="#1a1410" roughness={0.6} metalness={0.12} />
         </mesh>
         {/* Back right leg */}
-        <mesh position={[0.4, -0.35, -0.4]} castShadow>
-          <boxGeometry args={[0.12, 0.42, 0.12]} />
-          <meshStandardMaterial color="#2d2318" roughness={0.65} metalness={0.1} />
+        <mesh position={[0.42, -0.36, -0.42]} castShadow>
+          <boxGeometry args={[0.14, 0.45, 0.14]} />
+          <meshStandardMaterial color="#1a1410" roughness={0.6} metalness={0.12} />
         </mesh>
 
-        {/* Seat cushion - premium fabric */}
-        <mesh position={[0, 0.15, 0]} castShadow>
-          <boxGeometry args={[0.95, 0.35, 0.9]} />
-          <meshStandardMaterial color="#a89a8a" roughness={0.8} metalness={0.02} />
+        {/* Seat cushion - premium linen fabric */}
+        <mesh position={[0, 0.12, 0]} castShadow>
+          <boxGeometry args={[1, 0.4, 0.95]} />
+          <meshStandardMaterial color="#b8a89a" roughness={0.75} metalness={0.01} />
         </mesh>
         
-        {/* Back cushion - angled for comfort */}
-        <mesh position={[0, 0.8, -0.4]} castShadow rotation={[0.35, 0, 0]}>
-          <boxGeometry args={[0.95, 0.65, 0.28]} />
-          <meshStandardMaterial color="#9a8a7a" roughness={0.82} metalness={0.02} />
+        {/* Back cushion - angled */}
+        <mesh position={[0, 0.85, -0.42]} castShadow rotation={[0.4, 0, 0]}>
+          <boxGeometry args={[1, 0.7, 0.32]} />
+          <meshStandardMaterial color="#a89880" roughness={0.78} metalness={0.01} />
         </mesh>
 
-        {/* Left armrest - premium */}
-        <mesh position={[-0.55, 0.4, 0]} castShadow>
-          <boxGeometry args={[0.18, 0.55, 0.85]} />
-          <meshStandardMaterial color="#6d5b45" roughness={0.75} metalness={0.08} />
+        {/* Left armrest */}
+        <mesh position={[-0.58, 0.38, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.6, 0.9]} />
+          <meshStandardMaterial color="#7a6855" roughness={0.7} metalness={0.1} />
         </mesh>
 
-        {/* Right armrest - premium */}
-        <mesh position={[0.55, 0.4, 0]} castShadow>
-          <boxGeometry args={[0.18, 0.55, 0.85]} />
-          <meshStandardMaterial color="#6d5b45" roughness={0.75} metalness={0.08} />
+        {/* Right armrest */}
+        <mesh position={[0.58, 0.38, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.6, 0.9]} />
+          <meshStandardMaterial color="#7a6855" roughness={0.7} metalness={0.1} />
         </mesh>
       </group>
 
@@ -435,80 +431,141 @@ function Room() {
         </mesh>
       </group>
 
-      {/* Premium Sofa */}
+      {/* Premium Sofa - Luxury Design */}
       <group position={[-4, -0.5, 3]}>
-        <mesh position={[0, 0, 0]} receiveShadow castShadow>
-          <boxGeometry args={[3.2, 0.85, 1.5]} />
-          <meshStandardMaterial color="#4a3a2a" roughness={0.8} metalness={0.03} />
+        {/* Main seat cushion */}
+        <mesh position={[0, 0.08, 0]} receiveShadow castShadow>
+          <boxGeometry args={[3.4, 0.95, 1.6]} />
+          <meshStandardMaterial color="#5a4a3a" roughness={0.75} metalness={0.02} />
         </mesh>
-        <mesh position={[0, 0.75, -0.8]} receiveShadow castShadow>
-          <boxGeometry args={[3.2, 0.85, 0.35]} />
-          <meshStandardMaterial color="#3a2f24" roughness={0.8} metalness={0.03} />
+        {/* Back cushion */}
+        <mesh position={[0, 0.85, -0.85]} receiveShadow castShadow>
+          <boxGeometry args={[3.4, 0.9, 0.4]} />
+          <meshStandardMaterial color="#4a3a2a" roughness={0.78} metalness={0.02} />
         </mesh>
-        {[-1.7, 1.7].map((x) => (
-          <mesh key={x} position={[x, 0.35, 0]} castShadow>
-            <boxGeometry args={[0.4, 0.85, 1.5]} />
-            <meshStandardMaterial color="#2d2318" roughness={0.8} metalness={0.05} />
+        {/* Left armrest */}
+        <mesh position={[-1.8, 0.4, 0]} castShadow>
+          <boxGeometry args={[0.45, 0.9, 1.6]} />
+          <meshStandardMaterial color="#1a1410" roughness={0.65} metalness={0.1} />
+        </mesh>
+        {/* Right armrest */}
+        <mesh position={[1.8, 0.4, 0]} castShadow>
+          <boxGeometry args={[0.45, 0.9, 1.6]} />
+          <meshStandardMaterial color="#1a1410" roughness={0.65} metalness={0.1} />
+        </mesh>
+        {/* Legs */}
+        {[[-1.5, -0.85], [1.5, -0.85], [-1.5, 0.85], [1.5, 0.85]].map((pos, i) => (
+          <mesh key={i} position={[pos[0], pos[1], 0]} castShadow>
+            <boxGeometry args={[0.15, 0.3, 0.15]} />
+            <meshStandardMaterial color="#1a1410" roughness={0.6} metalness={0.12} />
           </mesh>
         ))}
       </group>
 
-      {/* Premium Coffee Table */}
+      {/* Premium Coffee Table - Glass & Walnut */}
       <group position={[1, -0.8, 2]}>
-        <mesh position={[0, 0, 0]} receiveShadow castShadow>
-          <boxGeometry args={[1.6, 0.14, 1.1]} />
+        {/* Glass top surface */}
+        <mesh position={[0, 0.08, 0]} receiveShadow castShadow>
+          <boxGeometry args={[1.8, 0.08, 1.2]} />
           <meshStandardMaterial 
-            color="#7a6655" 
-            roughness={0.35}
-            metalness={0.15}
+            color="#f0f8ff" 
+            roughness={0.1}
+            metalness={0.2}
+            transparent={true}
+            opacity={0.85}
           />
         </mesh>
-        {[[-0.7, -0.4], [0.7, -0.4], [-0.7, 0.4], [0.7, 0.4]].map((pos, i) => (
+        {/* Wood frame under glass */}
+        <mesh position={[0, 0.02, 0]} receiveShadow castShadow>
+          <boxGeometry args={[1.75, 0.04, 1.15]} />
+          <meshStandardMaterial color="#3a2f24" roughness={0.5} metalness={0.15} />
+        </mesh>
+        {/* Premium walnut legs */}
+        {[[-0.75, -0.4], [0.75, -0.4], [-0.75, 0.45], [0.75, 0.45]].map((pos, i) => (
           <mesh key={i} position={[pos[0], pos[1], 0]} castShadow>
-            <cylinderGeometry args={[0.1, 0.1, 0.4, 16]} />
+            <cylinderGeometry args={[0.12, 0.12, 0.45, 16]} />
             <meshStandardMaterial 
-              color="#2d2318" 
-              roughness={0.65}
-              metalness={0.1}
+              color="#1a1410" 
+              roughness={0.6}
+              metalness={0.12}
             />
           </mesh>
         ))}
       </group>
 
-      {/* Premium Floor Lamp */}
+      {/* Premium Designer Floor Lamp */}
       <group position={[6, -0.8, 1]}>
-        <mesh position={[0, 0.5, 0]} castShadow>
-          <cylinderGeometry args={[0.12, 0.12, 1, 16]} />
-          <meshStandardMaterial color="#0d0a08" roughness={0.25} metalness={0.3} />
+        {/* Base */}
+        <mesh position={[0, -0.3, 0]} castShadow>
+          <cylinderGeometry args={[0.25, 0.25, 0.15, 16]} />
+          <meshStandardMaterial color="#0d0a08" roughness={0.5} metalness={0.2} />
         </mesh>
-        <mesh position={[0, 1.15, 0]} castShadow>
-          <coneGeometry args={[0.4, 0.45, 24]} />
+        {/* Pole - brushed metal */}
+        <mesh position={[0, 0.5, 0]} castShadow>
+          <cylinderGeometry args={[0.08, 0.08, 1.1, 16]} />
+          <meshStandardMaterial color="#1a1410" roughness={0.3} metalness={0.4} />
+        </mesh>
+        {/* Lamp shade - cone */}
+        <mesh position={[0, 1.2, 0]} castShadow>
+          <coneGeometry args={[0.45, 0.5, 32]} />
           <meshStandardMaterial 
-            color="#fffef0" 
-            roughness={0.15}
-            emissive="#ffedd5"
-            emissiveIntensity={0.5}
+            color="#fef9e7" 
+            roughness={0.2}
+            emissive="#ffe8b3"
+            emissiveIntensity={0.6}
           />
         </mesh>
-        <pointLight position={[0, 1.15, 0]} intensity={1.8} color="#ffefd5" castShadow />
+        {/* Bright warm glow */}
+        <pointLight position={[0, 1.15, 0]} intensity={2.2} color="#ffd580" castShadow />
       </group>
 
-      {/* Decorative Plant - Premium */}
+      {/* Premium Decorative Plant */}
       <group position={[-6, -0.8, -4]}>
+        {/* Ceramic pot */}
         <mesh position={[0, 0, 0]} castShadow>
-          <cylinderGeometry args={[0.3, 0.35, 0.5, 12]} />
+          <cylinderGeometry args={[0.32, 0.38, 0.55, 16]} />
           <meshStandardMaterial 
-            color="#8b7355" 
-            roughness={0.8}
+            color="#a0826d" 
+            roughness={0.75}
             metalness={0.05}
           />
         </mesh>
-        <mesh position={[0, 0.75, 0]} castShadow>
-          <sphereGeometry args={[0.5, 16, 16]} />
+        {/* Pot rim */}
+        <mesh position={[0, 0.28, 0]} castShadow>
+          <cylinderGeometry args={[0.33, 0.33, 0.08, 16]} />
+          <meshStandardMaterial color="#8b6f4e" roughness={0.7} metalness={0.08} />
+        </mesh>
+        {/* Soil */}
+        <mesh position={[0, 0.32, 0]} castShadow>
+          <cylinderGeometry args={[0.3, 0.3, 0.06, 16]} />
+          <meshStandardMaterial color="#5a4a3a" roughness={0.85} />
+        </mesh>
+        {/* Plant foliage - full bushy shape */}
+        <mesh position={[0, 0.85, 0]} castShadow>
+          <sphereGeometry args={[0.6, 24, 24]} />
           <meshStandardMaterial 
-            color="#2d5016"
-            roughness={0.7}
-            emissive="#1a3a0a"
+            color="#1b4d0e"
+            roughness={0.65}
+            emissive="#0d3606"
+            emissiveIntensity={0.2}
+          />
+        </mesh>
+        {/* Secondary leaves for depth */}
+        <mesh position={[-0.35, 0.7, 0.25]} castShadow>
+          <sphereGeometry args={[0.35, 16, 16]} />
+          <meshStandardMaterial 
+            color="#2d6b1f"
+            roughness={0.68}
+            emissive="#1a3f0d"
+            emissiveIntensity={0.15}
+          />
+        </mesh>
+        <mesh position={[0.35, 0.75, -0.2]} castShadow>
+          <sphereGeometry args={[0.4, 16, 16]} />
+          <meshStandardMaterial 
+            color="#235d15"
+            roughness={0.67}
+            emissive="#123508"
             emissiveIntensity={0.15}
           />
         </mesh>
