@@ -532,12 +532,18 @@ function Scene({ gameState, selectedLaptop, mySocketId, selectedMap }: { gameSta
 
   // Position blue team keyboards (bottom of screen)
   bluePlayers.forEach((player, idx) => {
-    playerPositions.set(player.id, [idx === 0 ? -5 : 5, 0, 10]);
+    // For 1v1 (solo), center the laptop. For 2v2+, spread them left/right
+    const isSolo = bluePlayers.length === 1 && redPlayers.length === 1;
+    const xPos = isSolo ? 0 : (idx === 0 ? -5 : 5);
+    playerPositions.set(player.id, [xPos, 0, 10]);
   });
 
   // Position red team keyboards (top of screen)
   redPlayers.forEach((player, idx) => {
-    playerPositions.set(player.id, [idx === 0 ? -5 : 5, 0, -10]);
+    // For 1v1 (solo), center the laptop. For 2v2+, spread them left/right
+    const isSolo = bluePlayers.length === 1 && redPlayers.length === 1;
+    const xPos = isSolo ? 0 : (idx === 0 ? -5 : 5);
+    playerPositions.set(player.id, [xPos, 0, -10]);
   });
 
   return (
