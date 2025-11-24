@@ -81,7 +81,8 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
         position: 'fixed',
         top: '10px',
         right: '10px',
-        zIndex: 1000
+        zIndex: 1000,
+        pointerEvents: 'auto'
       }}>
         <button
           onClick={() => {
@@ -97,7 +98,8 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
             cursor: 'pointer',
             fontSize: '14px',
             fontWeight: 'bold',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)'
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
+            pointerEvents: 'auto'
           }}
         >
           ⚡ Admin Controls
@@ -120,7 +122,8 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
       overflowY: 'auto',
       zIndex: 1000,
       boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
-      color: '#fff'
+      color: '#fff',
+      pointerEvents: 'auto'
     }}>
       <div style={{
         display: 'flex',

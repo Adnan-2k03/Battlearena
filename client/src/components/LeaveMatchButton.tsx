@@ -38,7 +38,8 @@ export function LeaveMatchButton({ socket, roomId, onLeave }: LeaveMatchButtonPr
         fontWeight: 'bold',
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
         zIndex: 999,
-        transition: 'all 0.2s'
+        transition: 'all 0.2s',
+        pointerEvents: 'auto'
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = 'rgba(220, 38, 38, 0.95)';
