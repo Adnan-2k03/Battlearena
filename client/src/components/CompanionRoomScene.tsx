@@ -1,14 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { PerspectiveCamera, MapControls, Sparkles, KeyboardControls, useKeyboardControls, useTexture } from '@react-three/drei';
+import { PerspectiveCamera, MapControls, Sparkles, KeyboardControls, useKeyboardControls, useTexture, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { Button } from './ui/button';
 import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
 import { getPersonality } from '@/lib/data/laptop-personalities';
 import { LAPTOPS } from '@/lib/data/laptops';
 
-type Activity = 'idle' | 'reading' | 'sleeping' | 'hiding' | 'playing' | 'jumping' | 'biking';
-type Controls = 'forward' | 'back' | 'left' | 'right';
+type Activity = 'idle' | 'reading' | 'sleeping' | 'hiding' | 'playing' | 'jumping';
+type Controls = 'forward' | 'back' | 'left' | 'right' | 'mount';
 
 interface CompanionRoomSceneProps {
   laptopId: string;
@@ -22,17 +22,18 @@ const ACTIVITY_POSITIONS: Record<Activity, { pos: [number, number, number]; rot:
   hiding: { pos: [-3.5, 0.2, 3.5], rot: [0, -Math.PI / 4, -0.3] },
   playing: { pos: [0, 0, 1], rot: [0, 0, 0] },
   jumping: { pos: [0, 0, 0], rot: [0, 0, 0] },
-  biking: { pos: [0, 0, 8], rot: [0, 0, 0] },
 };
 
 function AnimatedLaptop({ 
   laptopId, 
   activity, 
   userPos,
+  isRidingBike = false,
 }: { 
   laptopId: string; 
   activity: Activity;
   userPos: [number, number, number];
+  isRidingBike?: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const bodyRef = useRef<THREE.Mesh>(null);
@@ -53,13 +54,23 @@ function AnimatedLaptop({
     const target = ACTIVITY_POSITIONS[activity];
     const targetPos = new THREE.Vector3(userPos[0], userPos[1], userPos[2]);
     
-    if (!['idle', 'playing', 'jumping', 'biking'].includes(activity)) {
+    if (!['idle', 'playing', 'jumping'].includes(activity)) {
       targetPos.x = target.pos[0];
       targetPos.y = target.pos[1];
       targetPos.z = target.pos[2];
     }
 
     groupRef.current.position.lerp(targetPos, 0.05);
+
+    if (isRidingBike) {
+      groupRef.current.rotation.set(0, Math.PI, 0);
+      groupRef.current.scale.set(1, 1, 1);
+      if (leftArmRef.current) leftArmRef.current.rotation.z = -0.4;
+      if (rightArmRef.current) rightArmRef.current.rotation.z = 0.4;
+      if (leftLegRef.current) leftLegRef.current.rotation.x = Math.sin(t * 4) * 1.2;
+      if (rightLegRef.current) rightLegRef.current.rotation.x = Math.sin(t * 4 + Math.PI) * 1.2;
+      return;
+    }
 
     if (activity === 'sleeping') {
       groupRef.current.rotation.z = target.rot[2];
@@ -121,13 +132,6 @@ function AnimatedLaptop({
       if (rightArmRef.current) rightArmRef.current.rotation.z = Math.sin(t * 3 + Math.PI) * 1.5 + 1;
       if (leftLegRef.current) leftLegRef.current.position.y = -0.85 - jumpH * 0.3;
       if (rightLegRef.current) rightLegRef.current.position.y = -0.85 - jumpH * 0.3;
-    } else if (activity === 'biking') {
-      groupRef.current.rotation.set(0, 0, 0);
-      groupRef.current.scale.set(1, 1, 1);
-      if (leftArmRef.current) leftArmRef.current.rotation.z = -0.4;
-      if (rightArmRef.current) rightArmRef.current.rotation.z = 0.4;
-      if (leftLegRef.current) leftLegRef.current.rotation.x = Math.sin(t * 4) * 1.2;
-      if (rightLegRef.current) rightLegRef.current.rotation.x = Math.sin(t * 4 + Math.PI) * 1.2;
     } else {
       groupRef.current.rotation.set(0, Math.sin(t * 0.8) * 0.1, 0);
       groupRef.current.scale.set(1, 1, 1);
@@ -288,13 +292,41 @@ function Room() {
         <meshStandardMaterial color="#3a2a1a" roughness={0.65} />
       </mesh>
 
-      {/* Wall gradient - warmer tones */}
-      <mesh position={[0, 1.5, -8]} receiveShadow>
-        <boxGeometry args={[24, 3.5, 0.5]} />
+      {/* Back wall with door - warmer tones */}
+      <mesh position={[-7, 1.5, -8]} receiveShadow>
+        <boxGeometry args={[10, 3.5, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
         />
+      </mesh>
+      <mesh position={[7, 1.5, -8]} receiveShadow>
+        <boxGeometry args={[10, 3.5, 0.5]} />
+        <meshStandardMaterial 
+          color="#daa55b" 
+          roughness={0.7}
+        />
+      </mesh>
+      <mesh position={[0, 2.8, -8]} receiveShadow>
+        <boxGeometry args={[4, 0.9, 0.5]} />
+        <meshStandardMaterial 
+          color="#daa55b" 
+          roughness={0.7}
+        />
+      </mesh>
+      
+      {/* Door frame */}
+      <mesh position={[-2, 0.5, -7.8]} castShadow>
+        <boxGeometry args={[0.2, 2.5, 0.2]} />
+        <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
+      </mesh>
+      <mesh position={[2, 0.5, -7.8]} castShadow>
+        <boxGeometry args={[0.2, 2.5, 0.2]} />
+        <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 2.3, -7.8]} castShadow>
+        <boxGeometry args={[4.4, 0.2, 0.2]} />
+        <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
       </mesh>
 
       {/* Left wall - warmer accent */}
@@ -656,14 +688,7 @@ function Room() {
   );
 }
 
-function Bike({ position }: { position: [number, number, number] }) {
-  const timeRef = useRef(0);
-
-  useFrame((state, delta) => {
-    timeRef.current += delta;
-  });
-
-  const wheelRotation = timeRef.current * 3;
+function Bike({ position, wheelRotation }: { position: [number, number, number]; wheelRotation: number }) {
 
   return (
     <group position={position}>
@@ -732,7 +757,7 @@ function Bike({ position }: { position: [number, number, number] }) {
       </mesh>
 
       {/* Pedals */}
-      <group position={[0.5, -0.2, 0]} rotation={[Math.sin(timeRef.current * 2) * Math.PI, 0, 0]}>
+      <group position={[0.5, -0.2, 0]} rotation={[wheelRotation * 0.5, 0, 0]}>
         <mesh position={[0, 0, 0.3]} castShadow>
           <boxGeometry args={[0.3, 0.08, 0.08]} />
           <meshStandardMaterial color="#333333" />
@@ -746,27 +771,49 @@ function Bike({ position }: { position: [number, number, number] }) {
   );
 }
 
-function Road() {
+function OutdoorWorld() {
   const asphaltTexture = useTexture('/textures/asphalt.png');
-  asphaltTexture.repeat.set(4, 8);
+  const grassTexture = useTexture('/textures/grass.png');
+  
+  asphaltTexture.repeat.set(2, 20);
   asphaltTexture.wrapS = THREE.RepeatWrapping;
   asphaltTexture.wrapT = THREE.RepeatWrapping;
+  
+  grassTexture.repeat.set(10, 10);
+  grassTexture.wrapS = THREE.RepeatWrapping;
+  grassTexture.wrapT = THREE.RepeatWrapping;
 
   return (
     <>
-      {/* Road base */}
-      <mesh position={[0, -1.2, 8]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[6, 30]} />
+      {/* Sky background */}
+      <mesh position={[0, 10, -30]}>
+        <planeGeometry args={[100, 40]} />
+        <meshBasicMaterial color="#87ceeb" />
+      </mesh>
+
+      {/* Grass ground outside */}
+      <mesh position={[0, -1.2, -25]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[50, 50]} />
+        <meshStandardMaterial map={grassTexture} roughness={0.95} />
+      </mesh>
+
+      {/* Road outside the room */}
+      <mesh position={[0, -1.19, -20]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[6, 40]} />
         <meshStandardMaterial map={asphaltTexture} roughness={0.9} metalness={0.05} />
       </mesh>
 
-      {/* Lane markings - dashed lines */}
-      {[...Array(15)].map((_, i) => (
-        <mesh key={`lane-mark-${i}`} position={[-1.5, -1.19, 8 - i * 2.5]} receiveShadow>
+      {/* Lane markings */}
+      {[...Array(20)].map((_, i) => (
+        <mesh key={`lane-${i}`} position={[0, -1.18, -5 - i * 2]} receiveShadow>
           <boxGeometry args={[0.15, 0.01, 1]} />
           <meshStandardMaterial color="#ffff00" emissive="#ffff00" emissiveIntensity={0.3} />
         </mesh>
       ))}
+
+      {/* Outdoor lighting */}
+      <directionalLight position={[10, 20, -15]} intensity={1.2} castShadow color="#ffffff" />
+      <hemisphereLight args={['#87ceeb', '#6b8e23', 0.6]} />
     </>
   );
 }
@@ -782,34 +829,102 @@ function RoomSceneContent({
 }) {
   const [subscribe, getState] = useKeyboardControls<Controls>();
   const posRef = useRef<[number, number, number]>([0, 0, 0]);
+  const [isRidingBike, setIsRidingBike] = useState(false);
+  const [bikePos, setBikePos] = useState<[number, number, number]>([0, 0, -12]);
+  const [wheelRotation, setWheelRotation] = useState(0);
+  const [showMountPrompt, setShowMountPrompt] = useState(false);
 
   useFrame((state, delta) => {
     const controls = getState();
-    const speed = 0.08;
     
-    if (controls.forward) posRef.current[2] -= speed;
-    if (controls.back) posRef.current[2] += speed;
-    if (controls.left) posRef.current[0] -= speed;
-    if (controls.right) posRef.current[0] += speed;
+    if (isRidingBike) {
+      const speed = 0.15;
+      let moved = false;
+      
+      if (controls.forward) {
+        bikePos[2] -= speed;
+        setWheelRotation(prev => prev + speed * 3);
+        moved = true;
+      }
+      if (controls.back) {
+        bikePos[2] += speed;
+        setWheelRotation(prev => prev - speed * 3);
+        moved = true;
+      }
+      if (controls.left) {
+        bikePos[0] -= speed * 0.7;
+        moved = true;
+      }
+      if (controls.right) {
+        bikePos[0] += speed * 0.7;
+        moved = true;
+      }
+      
+      bikePos[0] = Math.max(-2.5, Math.min(2.5, bikePos[0]));
+      bikePos[2] = Math.max(-40, Math.min(-8, bikePos[2]));
+      
+      if (moved) {
+        setBikePos([...bikePos]);
+        posRef.current = [bikePos[0], bikePos[1] + 0.3, bikePos[2] + 0.5];
+        onPositionChange([...posRef.current]);
+      }
+      
+      if (controls.mount) {
+        setIsRidingBike(false);
+        posRef.current = [bikePos[0], 0, bikePos[2] + 1.5];
+      }
+    } else {
+      const speed = 0.08;
+      
+      if (controls.forward) posRef.current[2] -= speed;
+      if (controls.back) posRef.current[2] += speed;
+      if (controls.left) posRef.current[0] -= speed;
+      if (controls.right) posRef.current[0] += speed;
 
-    posRef.current[0] = Math.max(-5, Math.min(5, posRef.current[0]));
-    posRef.current[2] = Math.max(-5, Math.min(5, posRef.current[2]));
+      posRef.current[0] = Math.max(-11, Math.min(11, posRef.current[0]));
+      posRef.current[2] = Math.max(-40, Math.min(7, posRef.current[2]));
 
-    onPositionChange([...posRef.current]);
+      onPositionChange([...posRef.current]);
+
+      const distToBike = Math.sqrt(
+        Math.pow(posRef.current[0] - bikePos[0], 2) +
+        Math.pow(posRef.current[2] - bikePos[2], 2)
+      );
+
+      if (distToBike < 2) {
+        setShowMountPrompt(true);
+        if (controls.mount) {
+          setIsRidingBike(true);
+          posRef.current = [bikePos[0], bikePos[1] + 0.3, bikePos[2] + 0.5];
+        }
+      } else {
+        setShowMountPrompt(false);
+      }
+    }
   });
 
   return (
     <>
-      {activity === 'biking' ? (
-        <>
-          <Road />
-          <Bike position={[0, 0, 8]} />
-        </>
-      ) : (
-        <Room />
-      )}
-      <AnimatedLaptop laptopId={laptopId} activity={activity} userPos={posRef.current} />
+      <Room />
+      <OutdoorWorld />
+      <Bike position={bikePos} wheelRotation={wheelRotation} />
+      <AnimatedLaptop laptopId={laptopId} activity={activity} userPos={posRef.current} isRidingBike={isRidingBike} />
       {activity === 'playing' && <Sparkles count={40} scale={4} size={4} speed={0.6} />}
+      
+      {showMountPrompt && (
+        <Html position={[bikePos[0], bikePos[1] + 1.5, bikePos[2]]} center>
+          <div style={{ 
+            background: 'rgba(0,0,0,0.8)', 
+            color: 'white', 
+            padding: '8px 16px', 
+            borderRadius: '8px',
+            fontSize: '14px',
+            whiteSpace: 'nowrap'
+          }}>
+            Press E to {isRidingBike ? 'get off' : 'ride'} bike
+          </div>
+        </Html>
+      )}
     </>
   );
 }
@@ -823,6 +938,7 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
     { name: 'back' as Controls, keys: ['ArrowDown', 'KeyS'] },
     { name: 'left' as Controls, keys: ['ArrowLeft', 'KeyA'] },
     { name: 'right' as Controls, keys: ['ArrowRight', 'KeyD'] },
+    { name: 'mount' as Controls, keys: ['KeyE'] },
   ];
 
   useEffect(() => {
@@ -993,7 +1109,6 @@ const ACTIVITIES: { name: Activity; label: string; description: string }[] = [
   { name: 'hiding', label: '👀', description: 'Hide' },
   { name: 'playing', label: '🎮', description: 'Game' },
   { name: 'jumping', label: '🎉', description: 'Jump' },
-  { name: 'biking', label: '🚴', description: 'Bike' },
 ];
 
 export function CompanionRoomScene({ laptopId, onBack }: CompanionRoomSceneProps) {
@@ -1034,7 +1149,6 @@ export function CompanionRoomScene({ laptopId, onBack }: CompanionRoomSceneProps
       hiding: 'Peek-a-boo!',
       playing: 'Game time!',
       jumping: 'Wheeeee!',
-      biking: 'Time to ride my bike!',
     };
     speakText(messages[newActivity]);
   };
@@ -1091,7 +1205,7 @@ export function CompanionRoomScene({ laptopId, onBack }: CompanionRoomSceneProps
               </button>
             ))}
           </div>
-          <p className="text-slate-400 text-xs mt-2">Use WASD/Arrow Keys to move or tap joystick on mobile</p>
+          <p className="text-slate-400 text-xs mt-2">Use WASD/Arrow Keys to move • Press E near bike to ride • Go outside through the door!</p>
         </div>
       </div>
 
