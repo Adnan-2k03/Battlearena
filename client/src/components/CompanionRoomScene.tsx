@@ -17,10 +17,10 @@ interface CompanionRoomSceneProps {
 
 const ACTIVITY_POSITIONS: Record<Activity, { pos: [number, number, number]; rot: [number, number, number] }> = {
   idle: { pos: [0, 0, 0], rot: [0, 0, 0] },
-  reading: { pos: [1.2, -0.2, -3.8], rot: [-0.5, 0.1, 0.15] },
-  sleeping: { pos: [3, -0.6, -1.5], rot: [0, 0, Math.PI / 2.5] },
-  hiding: { pos: [-2.2, 0.2, 2], rot: [0, -Math.PI / 4, -0.3] },
-  playing: { pos: [0, 0, 0.5], rot: [0, 0, 0] },
+  reading: { pos: [-2, -0.2, -5.5], rot: [-0.5, 0.1, 0.15] },
+  sleeping: { pos: [7.8, 0.3, -1.5], rot: [0, 0, Math.PI / 2.5] },
+  hiding: { pos: [-3.5, 0.2, 3.5], rot: [0, -Math.PI / 4, -0.3] },
+  playing: { pos: [0, 0, 1], rot: [0, 0, 0] },
   jumping: { pos: [0, 0, 0], rot: [0, 0, 0] },
 };
 
@@ -224,9 +224,9 @@ function AnimatedLaptop({
 function Room() {
   return (
     <>
-      {/* Floor - polished wood */}
+      {/* Floor - polished wood - LARGER */}
       <mesh position={[0, -1.2, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[16, 16]} />
+        <planeGeometry args={[24, 24]} />
         <meshStandardMaterial 
           color="#8b6f47" 
           roughness={0.6}
@@ -235,40 +235,40 @@ function Room() {
       </mesh>
 
       {/* Floor Trim - hardwood baseboard */}
-      <mesh position={[0, -1.15, -6]} receiveShadow castShadow>
-        <boxGeometry args={[16, 0.15, 0.15]} />
+      <mesh position={[0, -1.15, -8]} receiveShadow castShadow>
+        <boxGeometry args={[24, 0.15, 0.15]} />
         <meshStandardMaterial color="#4a3a2a" roughness={0.6} />
       </mesh>
-      <mesh position={[-8, -1.15, 0]} receiveShadow castShadow>
-        <boxGeometry args={[0.15, 0.15, 16]} />
+      <mesh position={[-12, -1.15, 0]} receiveShadow castShadow>
+        <boxGeometry args={[0.15, 0.15, 24]} />
         <meshStandardMaterial color="#4a3a2a" roughness={0.6} />
       </mesh>
-      <mesh position={[8, -1.15, 0]} receiveShadow castShadow>
-        <boxGeometry args={[0.15, 0.15, 16]} />
+      <mesh position={[12, -1.15, 0]} receiveShadow castShadow>
+        <boxGeometry args={[0.15, 0.15, 24]} />
         <meshStandardMaterial color="#4a3a2a" roughness={0.6} />
       </mesh>
 
       {/* Corner trim at floor-wall junctions */}
-      <mesh position={[-8, -1.08, -6]} receiveShadow castShadow>
+      <mesh position={[-12, -1.08, -8]} receiveShadow castShadow>
         <boxGeometry args={[0.25, 0.3, 0.25]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.65} />
       </mesh>
-      <mesh position={[8, -1.08, -6]} receiveShadow castShadow>
+      <mesh position={[12, -1.08, -8]} receiveShadow castShadow>
         <boxGeometry args={[0.25, 0.3, 0.25]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.65} />
       </mesh>
-      <mesh position={[-8, -1.08, 6]} receiveShadow castShadow>
+      <mesh position={[-12, -1.08, 8]} receiveShadow castShadow>
         <boxGeometry args={[0.25, 0.3, 0.25]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.65} />
       </mesh>
-      <mesh position={[8, -1.08, 6]} receiveShadow castShadow>
+      <mesh position={[12, -1.08, 8]} receiveShadow castShadow>
         <boxGeometry args={[0.25, 0.3, 0.25]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.65} />
       </mesh>
 
       {/* Wall gradient - warmer tones */}
-      <mesh position={[0, 1.5, -6]} receiveShadow>
-        <boxGeometry args={[16, 3.5, 0.5]} />
+      <mesh position={[0, 1.5, -8]} receiveShadow>
+        <boxGeometry args={[24, 3.5, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
@@ -276,8 +276,8 @@ function Room() {
       </mesh>
 
       {/* Left wall - warmer accent */}
-      <mesh position={[-8, 1.5, 0]} receiveShadow>
-        <boxGeometry args={[0.5, 3.5, 16]} />
+      <mesh position={[-12, 1.5, 0]} receiveShadow>
+        <boxGeometry args={[0.5, 3.5, 24]} />
         <meshStandardMaterial 
           color="#d4a574"
           roughness={0.7}
@@ -285,8 +285,8 @@ function Room() {
       </mesh>
 
       {/* Right wall - ambient lighting surface */}
-      <mesh position={[8, 1.5, 0]} receiveShadow>
-        <boxGeometry args={[0.5, 3.5, 16]} />
+      <mesh position={[12, 1.5, 0]} receiveShadow>
+        <boxGeometry args={[0.5, 3.5, 24]} />
         <meshStandardMaterial 
           color="#c99a6e"
           roughness={0.7}
@@ -294,7 +294,7 @@ function Room() {
       </mesh>
 
       {/* Premium Reading Corner - BOOKSHELF LEFT SIDE */}
-      <group position={[-1.8, 0, -3.8]}>
+      <group position={[-3, 0, -5.5]}>
         {/* Floor cushion */}
         <mesh position={[0, -0.9, -0.2]} castShadow>
           <boxGeometry args={[2.6, 0.2, 0.4]} />
@@ -346,7 +346,7 @@ function Room() {
       </group>
 
       {/* Premium Reading Chair - RIGHT SIDE */}
-      <group position={[2.2, -0.5, -3.3]}>
+      <group position={[0, -0.5, -5]}>
         {/* Front left leg - premium wood */}
         <mesh position={[-0.4, -0.35, 0.4]} castShadow>
           <boxGeometry args={[0.12, 0.42, 0.12]} />
@@ -418,7 +418,7 @@ function Room() {
       </group>
 
       {/* Premium Sofa */}
-      <group position={[-2.5, -0.5, 2]}>
+      <group position={[-4, -0.5, 3]}>
         <mesh position={[0, 0, 0]} receiveShadow castShadow>
           <boxGeometry args={[3.2, 0.85, 1.5]} />
           <meshStandardMaterial color="#4a3a2a" roughness={0.8} metalness={0.03} />
@@ -436,7 +436,7 @@ function Room() {
       </group>
 
       {/* Premium Coffee Table */}
-      <group position={[0, -0.8, 1.2]}>
+      <group position={[1, -0.8, 2]}>
         <mesh position={[0, 0, 0]} receiveShadow castShadow>
           <boxGeometry args={[1.6, 0.14, 1.1]} />
           <meshStandardMaterial 
@@ -458,7 +458,7 @@ function Room() {
       </group>
 
       {/* Premium Floor Lamp */}
-      <group position={[4.5, -0.8, 0.5]}>
+      <group position={[6, -0.8, 1]}>
         <mesh position={[0, 0.5, 0]} castShadow>
           <cylinderGeometry args={[0.12, 0.12, 1, 16]} />
           <meshStandardMaterial color="#0d0a08" roughness={0.25} metalness={0.3} />
@@ -476,7 +476,7 @@ function Room() {
       </group>
 
       {/* Decorative Plant - Premium */}
-      <group position={[-4.5, -0.8, -2.5]}>
+      <group position={[-6, -0.8, -4]}>
         <mesh position={[0, 0, 0]} castShadow>
           <cylinderGeometry args={[0.3, 0.35, 0.5, 12]} />
           <meshStandardMaterial 
@@ -497,7 +497,7 @@ function Room() {
       </group>
 
       {/* Window - ambient light source */}
-      <mesh position={[-7.8, 1, -4]} castShadow>
+      <mesh position={[-11.5, 1, -6]} castShadow>
         <boxGeometry args={[0.4, 1.5, 2]} />
         <meshStandardMaterial 
           color="#87ceeb" 
