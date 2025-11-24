@@ -148,46 +148,49 @@ function LaptopCharacter({ laptopId, onClick }: LaptopCharacterProps) {
         </>
       )}
 
-      {/* Mouth - Simple & Clean */}
+      {/* Mouth - Cartoonish Style */}
       {personality.mouthType === 'smile' && (
         <>
-          {/* Simple smile curve */}
-          <mesh position={[0, -0.18, 0.08]} rotation={[0, 0, Math.PI]}>
-            <torusGeometry args={[0.22, 0.035, 16, 32, Math.PI]} />
-            <meshStandardMaterial 
-              color="#ff6b9d"
-              emissive="#ff1493"
-              emissiveIntensity={0.4}
-            />
+          {/* Pink curved mouth shape */}
+          <mesh position={[0, -0.185, 0.08]}>
+            <boxGeometry args={[0.26, 0.08, 0.04]} />
+            <meshStandardMaterial color="#ff6b9d" emissive="#ff1493" emissiveIntensity={0.3} />
           </mesh>
-          {/* Two cute teeth */}
-          <mesh position={[-0.1, -0.16, 0.09]}>
-            <sphereGeometry args={[0.038, 16, 16]} />
-            <meshStandardMaterial color="#ffffff" roughness={0.2} />
+          {/* Smile curve indentation */}
+          <mesh position={[0, -0.155, 0.12]} rotation={[Math.PI / 8, 0, 0]}>
+            <boxGeometry args={[0.24, 0.04, 0.03]} />
+            <meshStandardMaterial color="#1a1a1a" />
           </mesh>
-          <mesh position={[0.1, -0.16, 0.09]}>
-            <sphereGeometry args={[0.038, 16, 16]} />
-            <meshStandardMaterial color="#ffffff" roughness={0.2} />
+          {/* One tooth left */}
+          <mesh position={[-0.08, -0.165, 0.11]}>
+            <boxGeometry args={[0.04, 0.05, 0.03]} />
+            <meshStandardMaterial color="#ffffff" />
+          </mesh>
+          {/* One tooth right */}
+          <mesh position={[0.08, -0.165, 0.11]}>
+            <boxGeometry args={[0.04, 0.05, 0.03]} />
+            <meshStandardMaterial color="#ffffff" />
           </mesh>
         </>
       )}
 
       {personality.mouthType === 'grin' && (
         <>
-          {/* Wide happy grin */}
-          <mesh position={[0, -0.17, 0.08]} rotation={[0, 0, Math.PI]}>
-            <torusGeometry args={[0.27, 0.04, 16, 32, Math.PI]} />
-            <meshStandardMaterial 
-              color="#ff3d7f"
-              emissive="#ff1493"
-              emissiveIntensity={0.5}
-            />
+          {/* Big happy grin shape */}
+          <mesh position={[0, -0.18, 0.08]}>
+            <boxGeometry args={[0.32, 0.09, 0.04]} />
+            <meshStandardMaterial color="#ff5588" emissive="#ff1493" emissiveIntensity={0.4} />
           </mesh>
-          {/* Three teeth on each side */}
-          {[-0.15, -0.05, 0.05, 0.15].map((x, i) => (
-            <mesh key={i} position={[x, -0.155, 0.095]}>
-              <sphereGeometry args={[0.04, 16, 16]} />
-              <meshStandardMaterial color="#fffaf0" roughness={0.18} />
+          {/* Smile curve */}
+          <mesh position={[0, -0.145, 0.12]} rotation={[Math.PI / 6, 0, 0]}>
+            <boxGeometry args={[0.3, 0.05, 0.03]} />
+            <meshStandardMaterial color="#2a0a2a" />
+          </mesh>
+          {/* Three teeth */}
+          {[-0.1, 0, 0.1].map((x, i) => (
+            <mesh key={i} position={[x, -0.16, 0.11]}>
+              <boxGeometry args={[0.035, 0.06, 0.03]} />
+              <meshStandardMaterial color="#fffcf0" />
             </mesh>
           ))}
         </>
@@ -195,33 +198,30 @@ function LaptopCharacter({ laptopId, onClick }: LaptopCharacterProps) {
       
       {personality.mouthType === 'smirk' && (
         <>
-          {/* Smirk - one-sided curve */}
-          <mesh position={[0.08, -0.18, 0.08]} rotation={[0, 0, -0.3]}>
-            <torusGeometry args={[0.16, 0.034, 14, 28, Math.PI * 0.85]} />
-            <meshStandardMaterial 
-              color="#ff6b9d"
-              emissive="#ff1493"
-              emissiveIntensity={0.35}
-            />
+          {/* Confident smirk */}
+          <mesh position={[0.05, -0.185, 0.08]} rotation={[0, 0, -0.15]}>
+            <boxGeometry args={[0.2, 0.075, 0.04]} />
+            <meshStandardMaterial color="#ff6b9d" emissive="#ff1493" emissiveIntensity={0.3} />
           </mesh>
-          {/* One peeking tooth */}
-          <mesh position={[0.12, -0.15, 0.09]}>
-            <sphereGeometry args={[0.035, 14, 14]} />
-            <meshStandardMaterial color="#fffaf0" roughness={0.2} />
+          {/* Smirk curve */}
+          <mesh position={[0.1, -0.155, 0.12]} rotation={[Math.PI / 10, 0, -0.1]}>
+            <boxGeometry args={[0.18, 0.04, 0.03]} />
+            <meshStandardMaterial color="#2a0a1a" />
+          </mesh>
+          {/* One visible tooth */}
+          <mesh position={[0.1, -0.165, 0.11]}>
+            <boxGeometry args={[0.03, 0.045, 0.03]} />
+            <meshStandardMaterial color="#fffcf0" />
           </mesh>
         </>
       )}
       
       {personality.mouthType === 'neutral' && (
         <>
-          {/* Simple line mouth */}
+          {/* Simple neutral mouth */}
           <mesh position={[0, -0.18, 0.08]}>
-            <boxGeometry args={[0.28, 0.035, 0.025]} />
-            <meshStandardMaterial 
-              color="#ff6b9d"
-              emissive="#ff1493"
-              emissiveIntensity={0.2}
-            />
+            <boxGeometry args={[0.25, 0.06, 0.035]} />
+            <meshStandardMaterial color="#ff8ab8" emissive="#ff1493" emissiveIntensity={0.15} />
           </mesh>
         </>
       )}
