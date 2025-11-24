@@ -88,20 +88,28 @@ function LaptopCharacter({ laptopId, onClick }: LaptopCharacterProps) {
       {personality.eyeType === 'round' && (
         <>
           <mesh position={[-0.25, 0.15, 0.06]}>
-            <sphereGeometry args={[0.12, 16, 16]} />
+            <sphereGeometry args={[0.15, 32, 32]} />
             <meshStandardMaterial color="#ffffff" />
           </mesh>
           <mesh position={[-0.25, 0.15, 0.12]}>
-            <sphereGeometry args={[0.06, 16, 16]} />
-            <meshStandardMaterial color="#000000" />
+            <sphereGeometry args={[0.08, 32, 32]} />
+            <meshStandardMaterial color="#1a1a1a" />
+          </mesh>
+          <mesh position={[-0.22, 0.18, 0.15]}>
+            <sphereGeometry args={[0.03, 16, 16]} />
+            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.5} />
           </mesh>
           <mesh position={[0.25, 0.15, 0.06]}>
-            <sphereGeometry args={[0.12, 16, 16]} />
+            <sphereGeometry args={[0.15, 32, 32]} />
             <meshStandardMaterial color="#ffffff" />
           </mesh>
           <mesh position={[0.25, 0.15, 0.12]}>
-            <sphereGeometry args={[0.06, 16, 16]} />
-            <meshStandardMaterial color="#000000" />
+            <sphereGeometry args={[0.08, 32, 32]} />
+            <meshStandardMaterial color="#1a1a1a" />
+          </mesh>
+          <mesh position={[0.28, 0.18, 0.15]}>
+            <sphereGeometry args={[0.03, 16, 16]} />
+            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.5} />
           </mesh>
         </>
       )}
@@ -142,16 +150,58 @@ function LaptopCharacter({ laptopId, onClick }: LaptopCharacterProps) {
 
       {/* Mouth */}
       {personality.mouthType === 'smile' && (
-        <mesh position={[0, -0.15, 0.06]}>
-          <torusGeometry args={[0.2, 0.03, 8, 16, Math.PI]} />
-          <meshStandardMaterial color="#ffffff" />
-        </mesh>
+        <>
+          <mesh position={[0, -0.15, 0.06]} rotation={[0, 0, Math.PI]}>
+            <torusGeometry args={[0.25, 0.04, 16, 32, Math.PI]} />
+            <meshStandardMaterial color="#ff6b9d" emissive="#ff1493" emissiveIntensity={0.3} />
+          </mesh>
+          <mesh position={[-0.15, -0.12, 0.08]}>
+            <sphereGeometry args={[0.04, 16, 16]} />
+            <meshStandardMaterial color="#ffffff" />
+          </mesh>
+          <mesh position={[0.15, -0.12, 0.08]}>
+            <sphereGeometry args={[0.04, 16, 16]} />
+            <meshStandardMaterial color="#ffffff" />
+          </mesh>
+        </>
       )}
 
       {personality.mouthType === 'grin' && (
+        <>
+          <mesh position={[0, -0.15, 0.06]} rotation={[0, 0, Math.PI]}>
+            <torusGeometry args={[0.28, 0.05, 16, 32, Math.PI]} />
+            <meshStandardMaterial color="#ff6b9d" emissive="#ff1493" emissiveIntensity={0.4} />
+          </mesh>
+          <mesh position={[-0.2, -0.12, 0.08]}>
+            <boxGeometry args={[0.06, 0.08, 0.02]} />
+            <meshStandardMaterial color="#ffffff" />
+          </mesh>
+          <mesh position={[-0.1, -0.12, 0.08]}>
+            <boxGeometry args={[0.06, 0.08, 0.02]} />
+            <meshStandardMaterial color="#ffffff" />
+          </mesh>
+          <mesh position={[0.1, -0.12, 0.08]}>
+            <boxGeometry args={[0.06, 0.08, 0.02]} />
+            <meshStandardMaterial color="#ffffff" />
+          </mesh>
+          <mesh position={[0.2, -0.12, 0.08]}>
+            <boxGeometry args={[0.06, 0.08, 0.02]} />
+            <meshStandardMaterial color="#ffffff" />
+          </mesh>
+        </>
+      )}
+      
+      {personality.mouthType === 'smirk' && (
+        <mesh position={[0.1, -0.15, 0.06]} rotation={[0, 0, -0.3]}>
+          <torusGeometry args={[0.15, 0.04, 16, 32, Math.PI]} />
+          <meshStandardMaterial color="#ff6b9d" emissive="#ff1493" emissiveIntensity={0.3} />
+        </mesh>
+      )}
+      
+      {personality.mouthType === 'neutral' && (
         <mesh position={[0, -0.15, 0.06]}>
-          <boxGeometry args={[0.4, 0.05, 0.02]} />
-          <meshStandardMaterial color="#ffffff" />
+          <boxGeometry args={[0.3, 0.03, 0.02]} />
+          <meshStandardMaterial color="#ff6b9d" />
         </mesh>
       )}
 
@@ -198,6 +248,20 @@ function LaptopCharacter({ laptopId, onClick }: LaptopCharacterProps) {
   );
 }
 
+const getBackgroundGradient = (laptopId: string): string => {
+  const gradients: Record<string, string> = {
+    default: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    gaming_beast: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    cyber_laptop: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    neon_edge: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+    crystal_laptop: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+    fire_laptop: 'linear-gradient(135deg, #ff9a56 0%, #ff6a88 100%)',
+    golden_laptop: 'linear-gradient(135deg, #ffd89b 0%, #19547b 100%)',
+    cosmic_laptop: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)'
+  };
+  return gradients[laptopId] || gradients.default;
+};
+
 export function LaptopCharacterStage({ 
   selectedLaptopId, 
   onCharacterClick 
@@ -207,6 +271,7 @@ export function LaptopCharacterStage({
 }) {
   const [speechBubble, setSpeechBubble] = useState<string>('');
   const personality = getPersonality(selectedLaptopId);
+  const backgroundGradient = getBackgroundGradient(selectedLaptopId);
 
   const handleCharacterClick = () => {
     const randomResponse = personality.clickResponses[
@@ -218,7 +283,7 @@ export function LaptopCharacterStage({
   };
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full rounded-lg overflow-hidden" style={{ background: backgroundGradient }}>
       <Canvas shadows>
         <PerspectiveCamera makeDefault position={[0, 0, 4]} />
         <OrbitControls 
@@ -227,20 +292,21 @@ export function LaptopCharacterStage({
           minPolarAngle={Math.PI / 3}
           maxPolarAngle={Math.PI / 2}
         />
-        <ambientLight intensity={0.5} />
+        <ambientLight intensity={0.6} />
         <spotLight 
           position={[5, 5, 5]} 
           angle={0.3} 
           penumbra={1} 
-          intensity={1}
+          intensity={1.2}
           castShadow
         />
-        <pointLight position={[-5, -5, -5]} intensity={0.5} />
+        <pointLight position={[-5, -5, -5]} intensity={0.7} color="#ffffff" />
+        <pointLight position={[3, 3, 3]} intensity={0.5} color="#ffd700" />
         <LaptopCharacter laptopId={selectedLaptopId} onClick={handleCharacterClick} />
       </Canvas>
 
       {speechBubble && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-4 py-2 rounded-lg shadow-lg text-sm font-medium whitespace-nowrap animate-bounce">
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-4 py-2 rounded-lg shadow-lg text-sm font-medium whitespace-nowrap animate-bounce z-10">
           {speechBubble}
         </div>
       )}

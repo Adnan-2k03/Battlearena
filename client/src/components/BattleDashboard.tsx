@@ -4,10 +4,11 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
-import { Lock, ShoppingCart } from 'lucide-react';
+import { Lock, ShoppingCart, MessageCircle } from 'lucide-react';
 import { GameModeCollapse } from './GameModeCollapse';
 import { MapThumbnailCarousel } from './MapThumbnailCarousel';
 import { LaptopCharacterStage } from './LaptopCharacterStage';
+import { LaptopCompanionChat } from './LaptopCompanionChat';
 import { usePlayerProfile } from '@/lib/stores/usePlayerProfile';
 import { LAPTOPS, getRarityColor } from '@/lib/data/laptops';
 import { cn } from '@/lib/utils';
@@ -23,6 +24,7 @@ export function BattleDashboard({ socket, onStartMatch, isSearching, error }: Ba
   const { profile, selectLaptop, selectMap, purchaseLaptop } = usePlayerProfile();
   const [gameMode, setGameMode] = useState<'team' | 'solo'>('solo');
   const [purchaseError, setPurchaseError] = useState('');
+  const [showChat, setShowChat] = useState(false);
 
   const handleStartMatch = () => {
     onStartMatch(gameMode);
@@ -62,23 +64,49 @@ export function BattleDashboard({ socket, onStartMatch, isSearching, error }: Ba
 
         {/* Main Battle Section */}
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
-          {/* Left: Character Preview */}
+          {/* Left: Character Preview & Chat */}
           <Card className="bg-slate-900/80 border-slate-700 p-6">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <span>💻</span>
-              <span>Your Battle Companion</span>
-            </h2>
-            <div className="h-80 bg-slate-800/50 rounded-lg overflow-hidden">
-              <LaptopCharacterStage selectedLaptopId={profile.selectedLaptop} />
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <span>💻</span>
+                <span>Your Battle Companion</span>
+              </h2>
+              <Button
+                onClick={() => setShowChat(!showChat)}
+                variant={showChat ? "default" : "outline"}
+                size="sm"
+                className={showChat ? "bg-blue-600 hover:bg-blue-700" : "border-slate-600"}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                {showChat ? 'Close Chat' : 'Chat'}
+              </Button>
             </div>
-            <div className="mt-4 text-center">
-              <p className="text-white font-semibold text-lg">
-                {LAPTOPS.find(l => l.id === profile.selectedLaptop)?.name}
-              </p>
-              <p className="text-slate-400 text-sm">
-                {LAPTOPS.find(l => l.id === profile.selectedLaptop)?.description}
-              </p>
-            </div>
+            
+            {showChat ? (
+              <div className="h-[500px]">
+                <LaptopCompanionChat 
+                  laptopId={profile.selectedLaptop}
+                  onClose={() => setShowChat(false)}
+                />
+              </div>
+            ) : (
+              <>
+                <div className="h-80 rounded-lg overflow-hidden">
+                  <LaptopCharacterStage selectedLaptopId={profile.selectedLaptop} />
+                </div>
+                <div className="mt-4 text-center">
+                  <p className="text-white font-semibold text-lg">
+                    {LAPTOPS.find(l => l.id === profile.selectedLaptop)?.name}
+                  </p>
+                  <p className="text-slate-400 text-sm mb-2">
+                    {LAPTOPS.find(l => l.id === profile.selectedLaptop)?.description}
+                  </p>
+                  <p className="text-blue-400 text-xs">
+                    💬 Click "Chat" to talk to your companion!
+                  </p>
+                </div>
+              </>
+            )}
           </Card>
 
           {/* Right: Map Selection & Battle Controls */}
