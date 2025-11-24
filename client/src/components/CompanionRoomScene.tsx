@@ -292,36 +292,27 @@ function Room() {
         <meshStandardMaterial color="#3a2a1a" roughness={0.65} />
       </mesh>
 
-      {/* Back wall - LEFT SIDE (full height from x=-12 to x=2) */}
-      <mesh position={[-5, 1.5, -8]} receiveShadow>
-        <boxGeometry args={[14, 3.5, 0.5]} />
+      {/* Back wall - MAIN SECTION (full height, most of wall) */}
+      <mesh position={[0, 1.5, -8]} receiveShadow>
+        <boxGeometry args={[18, 3.5, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
         />
       </mesh>
 
-      {/* Back wall - RIGHT SIDE (full height from x=10 to x=12) */}
-      <mesh position={[11, 1.5, -8]} receiveShadow>
-        <boxGeometry args={[2, 3.5, 0.5]} />
+      {/* Back wall - TOP SECTION (above small door from x=9 to x=12) */}
+      <mesh position={[10.5, 2.7, -8]} receiveShadow>
+        <boxGeometry args={[3, 1.1, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
         />
       </mesh>
 
-      {/* Back wall - TOP SECTION (above door opening from x=2 to x=10) */}
-      <mesh position={[6, 2.7, -8]} receiveShadow>
-        <boxGeometry args={[8, 1.1, 0.5]} />
-        <meshStandardMaterial 
-          color="#daa55b" 
-          roughness={0.7}
-        />
-      </mesh>
-
-      {/* Back wall - BOTTOM SECTION (below door opening from x=2 to x=10) */}
-      <mesh position={[6, -0.2, -8]} receiveShadow>
-        <boxGeometry args={[8, 0.5, 0.5]} />
+      {/* Back wall - BOTTOM SECTION (below small door from x=9 to x=12) */}
+      <mesh position={[10.5, -0.2, -8]} receiveShadow>
+        <boxGeometry args={[3, 0.5, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
@@ -329,20 +320,20 @@ function Room() {
       </mesh>
       
       {/* Door frame - LEFT SIDE */}
-      <mesh position={[2, 1.0, -7.75]} castShadow>
+      <mesh position={[9, 1.0, -7.75]} castShadow>
         <boxGeometry args={[0.2, 2.2, 0.1]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
       </mesh>
 
       {/* Door frame - RIGHT SIDE */}
-      <mesh position={[10, 1.0, -7.75]} castShadow>
+      <mesh position={[12, 1.0, -7.75]} castShadow>
         <boxGeometry args={[0.2, 2.2, 0.1]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
       </mesh>
 
       {/* Door frame - BOTTOM */}
-      <mesh position={[6, -0.1, -7.75]} castShadow>
-        <boxGeometry args={[8.2, 0.2, 0.1]} />
+      <mesh position={[10.5, -0.1, -7.75]} castShadow>
+        <boxGeometry args={[3.2, 0.2, 0.1]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
       </mesh>
 
@@ -898,7 +889,14 @@ function RoomSceneContent({
       if (controls.left) posRef.current[0] -= speed;
       if (controls.right) posRef.current[0] += speed;
 
-      posRef.current[0] = Math.max(-11, Math.min(11, posRef.current[0]));
+      const isOutsideMovement = posRef.current[2] < -8;
+      if (isOutsideMovement) {
+        // When outside, clamp to road bounds
+        posRef.current[0] = Math.max(-3, Math.min(3, posRef.current[0]));
+      } else {
+        // When inside, use full room bounds
+        posRef.current[0] = Math.max(-11, Math.min(11, posRef.current[0]));
+      }
       posRef.current[2] = Math.max(-60, Math.min(7, posRef.current[2]));
 
       onPositionChange([...posRef.current]);
@@ -924,7 +922,7 @@ function RoomSceneContent({
 
   return (
     <>
-      <Room />
+      {!isOutside && <Room />}
       {isOutside && <OutdoorWorld />}
       {isOutside && <Bike position={bikePos} wheelRotation={wheelRotation} />}
       <AnimatedLaptop laptopId={laptopId} activity={activity} userPos={posRef.current} isRidingBike={isRidingBike} />
