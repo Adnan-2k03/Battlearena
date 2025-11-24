@@ -207,11 +207,32 @@ function startBotTyping(bot: BotPlayer, room: GameRoom, io: SocketIOServer) {
     const chargeIncrease = isCharge ? 30 : 10;
     bot.elementCharges[elementType] = Math.min(100, bot.elementCharges[elementType] + chargeIncrease);
     
-    // Non-elemental boost for bot too
+    // Non-charge words deal small damage to enemy
     const botTeamState = bot.team === 'blue' ? room.blueTeam : room.redTeam;
+    const botEnemyTeam = bot.team === 'blue' ? 'red' : 'blue';
+    const botEnemyState = botEnemyTeam === 'blue' ? room.blueTeam : room.redTeam;
+    
     if (!isCharge) {
-      botTeamState.hp = Math.min(100, botTeamState.hp + 2);
-      botTeamState.shield = Math.min(100, botTeamState.shield + 3);
+      // Small damage: 3 HP to enemy
+      let damage = 3;
+      
+      // If enemy has a barrier, damage it first
+      if (botEnemyState.barrier) {
+        const barrierDamage = Math.min(damage, botEnemyState.barrier.strength);
+        botEnemyState.barrier.strength -= barrierDamage;
+        damage -= barrierDamage;
+        
+        if (botEnemyState.barrier.strength <= 0) {
+          botEnemyState.barrier = null;
+        }
+      }
+      
+      // Apply remaining damage to HP
+      if (damage > 0) {
+        botEnemyState.hp = Math.max(0, botEnemyState.hp - damage);
+      }
+      
+      bot.stats.damageDealt += 3;
     }
     
     // Get new words for the bot
@@ -668,13 +689,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const chargeIncrease = isCharge ? 30 : 10;
       player.elementCharges[elementType] = Math.min(100, player.elementCharges[elementType] + chargeIncrease);
       
-      // Non-elemental boost: small HP/shield restoration based on element
+      // Non-charge words deal small damage to enemy
       const myTeamState = player.team === "blue" ? room.blueTeam : room.redTeam;
+      const enemyTeam = player.team === "blue" ? "red" : "blue";
+      const enemyState = enemyTeam === "blue" ? room.blueTeam : room.redTeam;
+      
       if (!isCharge) {
-        // Small heal: +2 HP
-        myTeamState.hp = Math.min(100, myTeamState.hp + 2);
-        // Small shield: +3 shield
-        myTeamState.shield = Math.min(100, myTeamState.shield + 3);
+        // Small damage: 3 HP to enemy
+        let damage = 3;
+        
+        // If enemy has a barrier, damage it first
+        if (enemyState.barrier) {
+          const barrierDamage = Math.min(damage, enemyState.barrier.strength);
+          enemyState.barrier.strength -= barrierDamage;
+          damage -= barrierDamage;
+          
+          if (enemyState.barrier.strength <= 0) {
+            enemyState.barrier = null;
+          }
+        }
+        
+        // Apply remaining damage to HP
+        if (damage > 0) {
+          enemyState.hp = Math.max(0, enemyState.hp - damage);
+        }
+        
+        player.stats.damageDealt += 3;
       }
 
       const newWords = getRandomElementalWords(6);
@@ -692,13 +732,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }));
       io.to(roomId).emit("element_charges_update", { playerCharges });
       
-      // If non-charge word provided small boost, notify team
+      // If non-charge word dealt damage, notify teams
       if (!isCharge) {
         io.to(roomId).emit("small_boost", {
           team: player.team,
           blueTeam: room.blueTeam,
           redTeam: room.redTeam
         });
+        
+        // Check if enemy HP is now zero
+        if (enemyState.hp <= 0) {
+          room.phase = "ended";
+          room.winner = player.team;
+          
+          const endTime = Date.now();
+          const matchDuration = (endTime - room.matchStartTime) / 60000;
+          const playerStats = Array.from(room.players.values()).map(p => {
+            const wpm = matchDuration > 0 ? Math.round(p.stats.correctWords / matchDuration) : 0;
+            const accuracy = p.stats.wordsTyped > 0 
+              ? Math.round((p.stats.correctWords / p.stats.wordsTyped) * 100) 
+              : 100;
+            
+            return {
+              id: p.id,
+              nickname: p.nickname,
+              team: p.team,
+              role: p.role,
+              wpm,
+              accuracy,
+              damageDealt: p.stats.damageDealt,
+              shieldRestored: p.stats.shieldRestored
+            };
+          });
+          
+          io.to(roomId).emit("match_ended", {
+            winner: player.team,
+            blueTeam: room.blueTeam,
+            redTeam: room.redTeam,
+            stats: playerStats
+          });
+          return;
+        }
       }
     });
 

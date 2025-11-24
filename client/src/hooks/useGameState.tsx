@@ -152,21 +152,21 @@ export function useGameState(
       playBarrier();
     });
 
-    // Small boost
+    // Small boost (chip damage to enemy)
     socket.on('small_boost', ({ blueTeam: blue, redTeam: red, team }: any) => {
       setBlueTeam(blue);
       setRedTeam(red);
       
-      const hpId = `hp-${Date.now()}`;
-      const shieldId = `shield-${Date.now()}`;
+      const damageId = `damage-${Date.now()}`;
+      // Show the damage text over the enemy team, not the attacker's team
+      const enemyTeam = team === 'blue' ? 'red' : 'blue';
       
       setFloatingTexts(prev => [...prev, 
-        { id: hpId, text: '+2 HP', type: 'hp', team, startTime: Date.now() },
-        { id: shieldId, text: '+3 Shield', type: 'shield', team, startTime: Date.now() }
+        { id: damageId, text: '-3 HP', type: 'hp', team: enemyTeam, startTime: Date.now() }
       ]);
       
       setTimeout(() => {
-        setFloatingTexts(prev => prev.filter(t => t.id !== hpId && t.id !== shieldId));
+        setFloatingTexts(prev => prev.filter(t => t.id !== damageId));
       }, 1500);
     });
 

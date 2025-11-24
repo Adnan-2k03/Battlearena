@@ -173,20 +173,16 @@ export function ElementalArena({ socket, roomId, myTeam, myRole }: ElementalAren
       setBlueTeam(blue);
       setRedTeam(red);
       
-      // Show floating text indicators for the boost
-      if (team === myTeam) {
-        const hpId = `hp-${Date.now()}`;
-        const shieldId = `shield-${Date.now()}-1`;
-        
-        setFloatingTexts(prev => [...prev, 
-          { id: hpId, text: '+2 HP', type: 'hp', startTime: Date.now() },
-          { id: shieldId, text: '+3 Shield', type: 'shield', startTime: Date.now() }
-        ]);
-        
-        setTimeout(() => {
-          setFloatingTexts(prev => prev.filter(t => t.id !== hpId && t.id !== shieldId));
-        }, 1500);
-      }
+      // Show floating text indicating chip damage to enemy (always show it, not gated to myTeam)
+      const damageId = `damage-${Date.now()}`;
+      
+      setFloatingTexts(prev => [...prev, 
+        { id: damageId, text: '-3 HP', type: 'hp', startTime: Date.now() }
+      ]);
+      
+      setTimeout(() => {
+        setFloatingTexts(prev => prev.filter(t => t.id !== damageId));
+      }, 1500);
     });
 
     socket.on('word_correct', ({ element, isCharge }: { element: Element; isCharge: boolean }) => {

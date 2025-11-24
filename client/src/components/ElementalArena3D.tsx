@@ -27,10 +27,45 @@ function Terrain() {
   }
 
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-      <planeGeometry args={[100, 100]} />
-      <meshStandardMaterial map={grassTexture || undefined} color={grassTexture ? undefined : '#2d5016'} />
-    </mesh>
+    <group>
+      {/* Main terrain */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+        <planeGeometry args={[100, 100]} />
+        <meshStandardMaterial 
+          map={grassTexture || undefined} 
+          color={grassTexture ? undefined : '#1a4d2e'} 
+          roughness={0.8}
+          metalness={0.1}
+        />
+      </mesh>
+      
+      {/* Arena boundary lines */}
+      <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[18, 19, 64]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
+      </mesh>
+      
+      {/* Center dividing line */}
+      <mesh position={[0, 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[40, 0.3]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.5} />
+      </mesh>
+      
+      {/* Ambient particles */}
+      {[...Array(20)].map((_, i) => {
+        const angle = (i / 20) * Math.PI * 2;
+        const radius = 15 + Math.random() * 5;
+        return (
+          <mesh 
+            key={i}
+            position={[Math.cos(angle) * radius, 0.5, Math.sin(angle) * radius]}
+          >
+            <sphereGeometry args={[0.1, 8, 8]} />
+            <meshBasicMaterial color="#4ade80" transparent opacity={0.6} />
+          </mesh>
+        );
+      })}
+    </group>
   );
 }
 
@@ -208,13 +243,15 @@ function BarrierSphere({ team, position, element, strength, visible }: BarrierSp
     <group position={position}>
       {/* Main Barrier Sphere */}
       <mesh ref={meshRef}>
-        <sphereGeometry args={[3, 32, 32]} />
+        <sphereGeometry args={[3.5, 32, 32]} />
         <meshStandardMaterial 
           color={color}
           transparent
-          opacity={opacity * 0.3}
+          opacity={opacity * 0.4}
           emissive={color}
-          emissiveIntensity={0.5}
+          emissiveIntensity={0.8}
+          metalness={0.3}
+          roughness={0.1}
         />
       </mesh>
       
@@ -296,7 +333,17 @@ function BarrierSphere({ team, position, element, strength, visible }: BarrierSp
       })}
       
       {/* Central glow light */}
-      <pointLight color={color} intensity={4} distance={15} />
+      <pointLight color={color} intensity={6} distance={20} />
+      
+      {/* Pulsing outer glow */}
+      <mesh scale={1.3}>
+        <sphereGeometry args={[3.5, 32, 32]} />
+        <meshBasicMaterial 
+          color={color}
+          transparent
+          opacity={opacity * 0.15}
+        />
+      </mesh>
     </group>
   );
 }
@@ -311,27 +358,44 @@ interface AttackProjectileProps {
 
 function AttackProjectile({ id, element, fromTeam, isCritical }: AttackProjectileProps) {
   const meshRef = useRef<THREE.Mesh>(null);
+  const trailRef1 = useRef<THREE.Mesh>(null);
+  const trailRef2 = useRef<THREE.Mesh>(null);
+  const trailRef3 = useRef<THREE.Mesh>(null);
   const progressRef = useRef(0);
   const startTimeRef = useRef(Date.now());
   
   const startPos: [number, number, number] = fromTeam === 'blue' 
-    ? [0, 2, -10] 
-    : [0, 2, 10];
-  const endPos: [number, number, number] = fromTeam === 'blue' 
     ? [0, 2, 10] 
     : [0, 2, -10];
+  const endPos: [number, number, number] = fromTeam === 'blue' 
+    ? [0, 2, -10] 
+    : [0, 2, 10];
 
   useFrame(() => {
-    const elapsed = (Date.now() - startTimeRef.current) / 1500; // 1.5 second animation
+    const elapsed = (Date.now() - startTimeRef.current) / 1200; // 1.2 second animation (faster)
     progressRef.current = Math.min(elapsed, 1);
     
     if (meshRef.current && progressRef.current < 1) {
       const t = progressRef.current;
       meshRef.current.position.x = startPos[0] + (endPos[0] - startPos[0]) * t;
-      meshRef.current.position.y = startPos[1] + (endPos[1] - startPos[1]) * t + Math.sin(t * Math.PI) * 2;
+      meshRef.current.position.y = startPos[1] + (endPos[1] - startPos[1]) * t + Math.sin(t * Math.PI) * 3;
       meshRef.current.position.z = startPos[2] + (endPos[2] - startPos[2]) * t;
-      meshRef.current.rotation.x += 0.1;
-      meshRef.current.rotation.y += 0.15;
+      meshRef.current.rotation.x += 0.15;
+      meshRef.current.rotation.y += 0.2;
+      
+      // Update trail positions
+      if (trailRef1.current) {
+        trailRef1.current.position.copy(meshRef.current.position);
+        trailRef1.current.scale.setScalar(0.8 + Math.sin(t * 10) * 0.2);
+      }
+      if (trailRef2.current) {
+        trailRef2.current.position.copy(meshRef.current.position);
+        trailRef2.current.scale.setScalar(0.6 + Math.sin(t * 10 + 1) * 0.2);
+      }
+      if (trailRef3.current) {
+        trailRef3.current.position.copy(meshRef.current.position);
+        trailRef3.current.scale.setScalar(0.4 + Math.sin(t * 10 + 2) * 0.2);
+      }
     }
   });
 
@@ -343,21 +407,82 @@ function AttackProjectile({ id, element, fromTeam, isCritical }: AttackProjectil
     }
   };
 
+  const getShape = () => {
+    switch (element) {
+      case 'fire': 
+        return <octahedronGeometry args={[isCritical ? 1.2 : 0.7, 0]} />;
+      case 'water': 
+        return <sphereGeometry args={[isCritical ? 1 : 0.6, 16, 16]} />;
+      case 'leaf': 
+        return <tetrahedronGeometry args={[isCritical ? 1.1 : 0.7, 0]} />;
+    }
+  };
+
+  const color = getColor();
+
   return (
     <group>
+      {/* Main projectile */}
       <mesh ref={meshRef} position={startPos}>
-        <sphereGeometry args={[isCritical ? 1 : 0.6, 16, 16]} />
+        {getShape()}
         <meshStandardMaterial 
-          color={getColor()}
-          emissive={getColor()}
-          emissiveIntensity={isCritical ? 2 : 1}
+          color={color}
+          emissive={color}
+          emissiveIntensity={isCritical ? 3 : 1.5}
+          metalness={0.8}
+          roughness={0.2}
         />
       </mesh>
+      
+      {/* Trail effects */}
+      <mesh ref={trailRef1} position={startPos}>
+        <sphereGeometry args={[isCritical ? 0.8 : 0.5, 16, 16]} />
+        <meshBasicMaterial 
+          color={color}
+          transparent
+          opacity={0.5}
+        />
+      </mesh>
+      <mesh ref={trailRef2} position={startPos}>
+        <sphereGeometry args={[isCritical ? 0.6 : 0.4, 16, 16]} />
+        <meshBasicMaterial 
+          color={color}
+          transparent
+          opacity={0.3}
+        />
+      </mesh>
+      <mesh ref={trailRef3} position={startPos}>
+        <sphereGeometry args={[isCritical ? 0.4 : 0.3, 16, 16]} />
+        <meshBasicMaterial 
+          color={color}
+          transparent
+          opacity={0.1}
+        />
+      </mesh>
+      
+      {/* Energy particles around projectile */}
+      {isCritical && [...Array(6)].map((_, i) => {
+        const angle = (i / 6) * Math.PI * 2;
+        return (
+          <mesh 
+            key={i}
+            position={[
+              startPos[0] + Math.cos(angle) * 0.5,
+              startPos[1] + Math.sin(angle) * 0.5,
+              startPos[2]
+            ]}
+          >
+            <sphereGeometry args={[0.15, 8, 8]} />
+            <meshBasicMaterial color={color} />
+          </mesh>
+        );
+      })}
+      
       <pointLight 
         position={meshRef.current?.position || startPos} 
-        color={getColor()} 
-        intensity={isCritical ? 4 : 2} 
-        distance={isCritical ? 8 : 5} 
+        color={color} 
+        intensity={isCritical ? 8 : 4} 
+        distance={isCritical ? 12 : 7} 
       />
     </group>
   );
@@ -373,23 +498,25 @@ function Scene({ gameState }: { gameState: ReturnType<typeof useGameState> }) {
   const bluePlayers = playersArray.filter(p => p.team === 'blue');
   const redPlayers = playersArray.filter(p => p.team === 'red');
 
-  // Position blue team keyboards
+  // Position blue team keyboards (bottom of screen)
   bluePlayers.forEach((player, idx) => {
-    playerPositions.set(player.id, [idx === 0 ? -5 : 5, 0, -10]);
+    playerPositions.set(player.id, [idx === 0 ? -5 : 5, 0, 10]);
   });
 
-  // Position red team keyboards
+  // Position red team keyboards (top of screen)
   redPlayers.forEach((player, idx) => {
-    playerPositions.set(player.id, [idx === 0 ? -5 : 5, 0, 10]);
+    playerPositions.set(player.id, [idx === 0 ? -5 : 5, 0, -10]);
   });
 
   return (
     <>
       {/* Lighting */}
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[10, 20, 10]} intensity={1} castShadow />
-      <directionalLight position={[-10, 20, -10]} intensity={0.5} />
-      <pointLight position={[0, 10, 0]} intensity={0.5} color="#ffffff" />
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[10, 20, 10]} intensity={1.2} castShadow />
+      <directionalLight position={[-10, 20, -10]} intensity={0.7} />
+      <pointLight position={[0, 15, 0]} intensity={0.8} color="#ffffff" />
+      <pointLight position={[0, 5, 12]} intensity={0.5} color="#3b82f6" />
+      <pointLight position={[0, 5, -12]} intensity={0.5} color="#ef4444" />
       
       {/* Environment */}
       <Environment preset="sunset" />
@@ -422,14 +549,14 @@ function Scene({ gameState }: { gameState: ReturnType<typeof useGameState> }) {
       {/* Barriers */}
       <BarrierSphere
         team="blue"
-        position={[0, 3, -10]}
+        position={[0, 3, 10]}
         element={blueTeam.barrier?.element}
         strength={blueTeam.barrier?.strength}
         visible={!!blueTeam.barrier}
       />
       <BarrierSphere
         team="red"
-        position={[0, 3, 10]}
+        position={[0, 3, -10]}
         element={redTeam.barrier?.element}
         strength={redTeam.barrier?.strength}
         visible={!!redTeam.barrier}
@@ -604,7 +731,7 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole }: ElementalAr
         </div>
 
         {/* Left Side Panel - Element Controls */}
-        <div className="absolute left-2 top-20 w-56 pointer-events-auto bg-slate-900/95 border-2 border-slate-700 rounded-lg p-2 overflow-y-auto max-h-96">
+        <div className="absolute left-2 top-20 w-56 pointer-events-auto bg-slate-900/95 border-2 border-slate-700 rounded-lg p-2">
           <div className="space-y-3">
             {/* Your Role */}
             <div className="text-center p-2 bg-slate-800/50 rounded-lg border border-slate-700">
