@@ -8,6 +8,32 @@ This is a real-time multiplayer typing battle game where two teams (Blue vs Red)
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (November 24, 2025)
+
+### Audio Controls Enhancement
+- Removed the "Start Game with Sound" modal screen
+- Added speaker toggle button directly in the lobby screen (top-right corner)
+- Users can now control audio settings without navigating through a separate screen
+
+### UI Positioning Improvements
+- Moved admin control panel to top-left to prevent overlap with shield/HP displays
+- Moved leave match button to bottom-left for better visibility
+- Both controls are now positioned to avoid hiding critical game information
+
+### Projectile-Based Damage System
+- Implemented delayed damage calculation (1.2 seconds) to match visual projectile travel time
+- Shields are now checked at projectile impact time, not launch time
+- Server validates room state, attacker presence, and team alignment before applying damage
+- Prevents race conditions from player disconnects during projectile flight
+
+### Admin Panel Improvements
+- Added "Reset Match" button to restore HP to 100 and clear all barriers
+- Added "Force Win" button for testing victory conditions
+- Removed game speed multiplier feature
+- Enhanced admin privilege validation for all admin commands
+- God Mode now properly prevents damage to admin's team
+- Unlimited Enemy Health correctly protects enemy team from admin attacks
+
 ## Development Features
 
 ### Admin Mode
