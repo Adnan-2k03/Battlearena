@@ -234,6 +234,20 @@ function Room() {
         />
       </mesh>
 
+      {/* Floor Trim - hardwood baseboard */}
+      <mesh position={[0, -1.15, -6]} receiveShadow castShadow>
+        <boxGeometry args={[16, 0.15, 0.15]} />
+        <meshStandardMaterial color="#4a3a2a" roughness={0.6} />
+      </mesh>
+      <mesh position={[-8, -1.15, 0]} receiveShadow castShadow>
+        <boxGeometry args={[0.15, 0.15, 16]} />
+        <meshStandardMaterial color="#4a3a2a" roughness={0.6} />
+      </mesh>
+      <mesh position={[8, -1.15, 0]} receiveShadow castShadow>
+        <boxGeometry args={[0.15, 0.15, 16]} />
+        <meshStandardMaterial color="#4a3a2a" roughness={0.6} />
+      </mesh>
+
       {/* Wall gradient - warmer tones */}
       <mesh position={[0, 1.5, -6]} receiveShadow>
         <boxGeometry args={[16, 3.5, 0.5]} />
@@ -261,63 +275,104 @@ function Room() {
         />
       </mesh>
 
-      {/* Premium Reading Corner */}
+      {/* Premium Reading Corner - ENHANCED */}
       <group position={[1.5, 0, -3.8]}>
         {/* Floor cushion */}
         <mesh position={[0, -0.9, -0.2]} castShadow>
-          <boxGeometry args={[2.4, 0.2, 0.4]} />
+          <boxGeometry args={[2.6, 0.2, 0.4]} />
           <meshStandardMaterial color="#9b8b7e" roughness={0.8} />
         </mesh>
 
-        {/* Shelving unit - upgraded */}
+        {/* Bookshelf Frame - vertical supports */}
+        {[-1.3, 1.3].map((x) => (
+          <mesh key={`frame-${x}`} position={[x, 0.35, -0.15]} castShadow>
+            <boxGeometry args={[0.08, 0.85, 0.35]} />
+            <meshStandardMaterial color="#3d2f1f" roughness={0.6} metalness={0.15} />
+          </mesh>
+        ))}
+
+        {/* Bookshelf backing - nice wood backing */}
+        <mesh position={[0, 0.35, -0.35]} castShadow receiveShadow>
+          <boxGeometry args={[2.66, 0.85, 0.08]} />
+          <meshStandardMaterial color="#4a3a2a" roughness={0.7} />
+        </mesh>
+
+        {/* Shelves - beautiful wood */}
         {[0.8, 0.4, 0].map((y) => (
-          <mesh key={y} position={[0, y, -0.15]} receiveShadow castShadow>
-            <boxGeometry args={[2.4, 0.12, 0.35]} />
+          <mesh key={y} position={[0, y, 0]} receiveShadow castShadow>
+            <boxGeometry args={[2.6, 0.1, 0.3]} />
             <meshStandardMaterial 
               color="#5d4e3a" 
-              roughness={0.5}
-              metalness={0.1}
+              roughness={0.4}
+              metalness={0.15}
             />
           </mesh>
         ))}
 
-        {/* Books - more colorful and detailed */}
+        {/* Books - beautifully arranged */}
         {[
-          { pos: [-0.8, 0.5, 0], color: '#d32f2f', scale: 0.4 },
-          { pos: [-0.4, 0.5, 0], color: '#1976d2', scale: 0.38 },
-          { pos: [0, 0.5, 0], color: '#f57c00', scale: 0.42 },
-          { pos: [0.4, 0.5, 0], color: '#388e3c', scale: 0.39 },
-          { pos: [0.8, 0.5, 0], color: '#6a1b9a', scale: 0.4 },
-          { pos: [-0.6, 0.1, 0], color: '#c62828', scale: 0.36 },
-          { pos: [0, 0.1, 0], color: '#0d47a1', scale: 0.37 },
-          { pos: [0.6, 0.1, 0], color: '#e65100', scale: 0.38 },
+          { pos: [-0.9, 0.55, -0.08], color: '#d32f2f' },
+          { pos: [-0.5, 0.55, -0.08], color: '#1976d2' },
+          { pos: [-0.05, 0.55, -0.08], color: '#f57c00' },
+          { pos: [0.4, 0.55, -0.08], color: '#388e3c' },
+          { pos: [0.85, 0.55, -0.08], color: '#6a1b9a' },
+          { pos: [-0.7, 0.15, -0.08], color: '#c62828' },
+          { pos: [-0.15, 0.15, -0.08], color: '#0d47a1' },
+          { pos: [0.6, 0.15, -0.08], color: '#e65100' },
         ].map((book, i) => (
           <mesh key={i} position={book.pos as [number, number, number]} castShadow>
-            <boxGeometry args={[0.4, 0.6, book.scale]} />
-            <meshPhongMaterial color={book.color} shininess={50} />
+            <boxGeometry args={[0.35, 0.58, 0.22]} />
+            <meshPhongMaterial color={book.color} shininess={60} />
           </mesh>
         ))}
       </group>
 
-      {/* Premium Reading Chair */}
+      {/* Premium Reading Chair - PERFECT */}
       <group position={[0.8, -0.5, -3.5]}>
-        {/* Seat cushion */}
-        <mesh position={[0, 0.25, 0]} castShadow>
-          <boxGeometry args={[1, 0.4, 0.9]} />
-          <meshStandardMaterial color="#8b7355" roughness={0.8} />
+        {/* Front left leg */}
+        <mesh position={[-0.35, -0.35, 0.35]} castShadow>
+          <boxGeometry args={[0.1, 0.4, 0.1]} />
+          <meshStandardMaterial color="#3d2f1f" roughness={0.7} />
         </mesh>
-        {/* Back cushion */}
-        <mesh position={[0, 0.9, -0.4]} castShadow>
-          <boxGeometry args={[1, 0.7, 0.3]} />
-          <meshStandardMaterial color="#7d6b55" roughness={0.8} />
+        {/* Front right leg */}
+        <mesh position={[0.35, -0.35, 0.35]} castShadow>
+          <boxGeometry args={[0.1, 0.4, 0.1]} />
+          <meshStandardMaterial color="#3d2f1f" roughness={0.7} />
         </mesh>
-        {/* Armrests */}
-        {[-0.55, 0.55].map((x) => (
-          <mesh key={x} position={[x, 0.4, 0]} castShadow>
-            <boxGeometry args={[0.2, 0.6, 0.8]} />
-            <meshStandardMaterial color="#6d5b45" roughness={0.8} />
-          </mesh>
-        ))}
+        {/* Back left leg */}
+        <mesh position={[-0.35, -0.35, -0.35]} castShadow>
+          <boxGeometry args={[0.1, 0.4, 0.1]} />
+          <meshStandardMaterial color="#3d2f1f" roughness={0.7} />
+        </mesh>
+        {/* Back right leg */}
+        <mesh position={[0.35, -0.35, -0.35]} castShadow>
+          <boxGeometry args={[0.1, 0.4, 0.1]} />
+          <meshStandardMaterial color="#3d2f1f" roughness={0.7} />
+        </mesh>
+
+        {/* Seat cushion - perfect proportions */}
+        <mesh position={[0, 0.15, 0]} castShadow>
+          <boxGeometry args={[0.9, 0.3, 0.85]} />
+          <meshStandardMaterial color="#9b8b7e" roughness={0.85} />
+        </mesh>
+        
+        {/* Back cushion - angled */}
+        <mesh position={[0, 0.75, -0.35]} castShadow rotation={[0.3, 0, 0]}>
+          <boxGeometry args={[0.9, 0.6, 0.25]} />
+          <meshStandardMaterial color="#8b7b6e" roughness={0.85} />
+        </mesh>
+
+        {/* Left armrest */}
+        <mesh position={[-0.5, 0.35, 0]} castShadow>
+          <boxGeometry args={[0.15, 0.5, 0.8]} />
+          <meshStandardMaterial color="#6d5b45" roughness={0.8} />
+        </mesh>
+
+        {/* Right armrest */}
+        <mesh position={[0.5, 0.35, 0]} castShadow>
+          <boxGeometry args={[0.15, 0.5, 0.8]} />
+          <meshStandardMaterial color="#6d5b45" roughness={0.8} />
+        </mesh>
       </group>
 
       {/* Charging Station - Premium */}
