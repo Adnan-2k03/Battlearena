@@ -3,7 +3,7 @@ import { Socket } from 'socket.io-client';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { ScrollArea } from './ui/scroll-area';
+import { ScrollArea, ScrollBar } from './ui/scroll-area';
 import { Lock, ShoppingCart, MessageCircle } from 'lucide-react';
 import { GameModeCollapse } from './GameModeCollapse';
 import { MapThumbnailCarousel } from './MapThumbnailCarousel';
@@ -235,6 +235,7 @@ export function BattleDashboard({ socket, onStartMatch, isSearching, error }: Ba
                 );
               })}
             </div>
+            <ScrollBar orientation="horizontal" />
           </ScrollArea>
         </Card>
       </div>
