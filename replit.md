@@ -8,6 +8,19 @@ This is a real-time multiplayer typing battle game where two teams (Blue vs Red)
 
 Preferred communication style: Simple, everyday language.
 
+## Development Features
+
+### Admin Mode
+For testing purposes, an admin mode is available that provides unlimited element energy. To activate admin mode:
+
+1. Enter a nickname starting with "admin" (e.g., "admin", "admin123", "admintest")
+2. Join a game as normal
+3. All three element charges (Fire, Water, Leaf) will be automatically set to 100% and stay maxed out
+4. A visual indicator "⚡ ADMIN MODE ⚡" will appear in the game UI
+5. You can use all element attacks and barriers without typing words to charge them
+
+This mode allows you to test all game features without needing to type words to build up energy.
+
 ## System Architecture
 
 ### Full-Stack Architecture
