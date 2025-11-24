@@ -32,6 +32,13 @@ export function HomePage({ socket, onMatchStart, onRoomJoined }: HomePageProps) 
   const { profile, initProfile, selectLaptop, selectMap, purchaseLaptop, addCurrency } = usePlayerProfile();
 
   useEffect(() => {
+    if (profile?.nickname) {
+      setNicknameSet(true);
+      setNickname(profile.nickname);
+    }
+  }, [profile]);
+
+  useEffect(() => {
     if (!socket) return;
 
     socket.on('matched', ({ roomId }: { roomId: string }) => {
