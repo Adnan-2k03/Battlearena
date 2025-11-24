@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { PerspectiveCamera, MapControls, Sparkles, KeyboardControls, useKeyboardControls } from '@react-three/drei';
+import { PerspectiveCamera, MapControls, Sparkles, KeyboardControls, useKeyboardControls, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import { Button } from './ui/button';
 import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
@@ -656,6 +656,121 @@ function Room() {
   );
 }
 
+function Bike({ position }: { position: [number, number, number] }) {
+  const timeRef = useRef(0);
+
+  useFrame((state, delta) => {
+    timeRef.current += delta;
+  });
+
+  const wheelRotation = timeRef.current * 3;
+
+  return (
+    <group position={position}>
+      {/* Frame - main tubes */}
+      <mesh position={[0.5, -0.4, 0]} rotation={[0, 0, Math.PI / 4]} castShadow>
+        <cylinderGeometry args={[0.08, 0.08, 1, 16]} />
+        <meshStandardMaterial color="#d4423c" roughness={0.4} metalness={0.6} />
+      </mesh>
+      
+      {/* Horizontal frame tube */}
+      <mesh position={[0.5, 0.1, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+        <cylinderGeometry args={[0.08, 0.08, 1.2, 16]} />
+        <meshStandardMaterial color="#d4423c" roughness={0.4} metalness={0.6} />
+      </mesh>
+
+      {/* Left wheel */}
+      <group position={[-0.5, -0.8, 0]} rotation={[wheelRotation, 0, 0]}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.5, 0.5, 0.15, 32]} />
+          <meshStandardMaterial color="#1a1a1a" roughness={0.8} />
+        </mesh>
+        {/* Spokes effect */}
+        {[0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2].map((angle, i) => (
+          <mesh key={`left-spoke-${i}`} position={[Math.cos(angle) * 0.35, 0, Math.sin(angle) * 0.35]} castShadow>
+            <boxGeometry args={[0.05, 0.05, 0.7]} />
+            <meshStandardMaterial color="#888888" />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Right wheel */}
+      <group position={[1.5, -0.8, 0]} rotation={[wheelRotation, 0, 0]}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.5, 0.5, 0.15, 32]} />
+          <meshStandardMaterial color="#1a1a1a" roughness={0.8} />
+        </mesh>
+        {/* Spokes effect */}
+        {[0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2].map((angle, i) => (
+          <mesh key={`right-spoke-${i}`} position={[Math.cos(angle) * 0.35, 0, Math.sin(angle) * 0.35]} castShadow>
+            <boxGeometry args={[0.05, 0.05, 0.7]} />
+            <meshStandardMaterial color="#888888" />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Seat */}
+      <mesh position={[0.5, 0.2, 0]} castShadow>
+        <boxGeometry args={[0.8, 0.15, 0.3]} />
+        <meshStandardMaterial color="#2a2a2a" roughness={0.5} metalness={0.3} />
+      </mesh>
+
+      {/* Handlebars */}
+      <mesh position={[0.3, 0.5, 0]} castShadow>
+        <boxGeometry args={[1.2, 0.12, 0.12]} />
+        <meshStandardMaterial color="#8b4513" roughness={0.5} />
+      </mesh>
+
+      {/* Handlebar grips */}
+      <mesh position={[-0.3, 0.5, 0]} castShadow>
+        <boxGeometry args={[0.25, 0.15, 0.15]} />
+        <meshStandardMaterial color="#444444" roughness={0.4} />
+      </mesh>
+      <mesh position={[0.9, 0.5, 0]} castShadow>
+        <boxGeometry args={[0.25, 0.15, 0.15]} />
+        <meshStandardMaterial color="#444444" roughness={0.4} />
+      </mesh>
+
+      {/* Pedals */}
+      <group position={[0.5, -0.2, 0]} rotation={[Math.sin(timeRef.current * 2) * Math.PI, 0, 0]}>
+        <mesh position={[0, 0, 0.3]} castShadow>
+          <boxGeometry args={[0.3, 0.08, 0.08]} />
+          <meshStandardMaterial color="#333333" />
+        </mesh>
+        <mesh position={[0, 0, -0.3]} castShadow>
+          <boxGeometry args={[0.3, 0.08, 0.08]} />
+          <meshStandardMaterial color="#333333" />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+function Road() {
+  const asphaltTexture = useTexture('/textures/asphalt.png');
+  asphaltTexture.repeat.set(4, 8);
+  asphaltTexture.wrapS = THREE.RepeatWrapping;
+  asphaltTexture.wrapT = THREE.RepeatWrapping;
+
+  return (
+    <>
+      {/* Road base */}
+      <mesh position={[0, -1.2, 8]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[6, 30]} />
+        <meshStandardMaterial map={asphaltTexture} roughness={0.9} metalness={0.05} />
+      </mesh>
+
+      {/* Lane markings - dashed lines */}
+      {[...Array(15)].map((_, i) => (
+        <mesh key={`lane-mark-${i}`} position={[-1.5, -1.19, 8 - i * 2.5]} receiveShadow>
+          <boxGeometry args={[0.15, 0.01, 1]} />
+          <meshStandardMaterial color="#ffff00" emissive="#ffff00" emissiveIntensity={0.3} />
+        </mesh>
+      ))}
+    </>
+  );
+}
+
 function RoomSceneContent({ 
   laptopId, 
   activity,
@@ -685,7 +800,14 @@ function RoomSceneContent({
 
   return (
     <>
-      <Room />
+      {activity === 'biking' ? (
+        <>
+          <Road />
+          <Bike position={[0, 0, 8]} />
+        </>
+      ) : (
+        <Room />
+      )}
       <AnimatedLaptop laptopId={laptopId} activity={activity} userPos={posRef.current} />
       {activity === 'playing' && <Sparkles count={40} scale={4} size={4} speed={0.6} />}
     </>
@@ -871,6 +993,7 @@ const ACTIVITIES: { name: Activity; label: string; description: string }[] = [
   { name: 'hiding', label: '👀', description: 'Hide' },
   { name: 'playing', label: '🎮', description: 'Game' },
   { name: 'jumping', label: '🎉', description: 'Jump' },
+  { name: 'biking', label: '🚴', description: 'Bike' },
 ];
 
 export function CompanionRoomScene({ laptopId, onBack }: CompanionRoomSceneProps) {
