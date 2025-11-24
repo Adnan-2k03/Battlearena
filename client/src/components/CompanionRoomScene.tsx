@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { PerspectiveCamera, OrbitControls, Sparkles, KeyboardControls, useKeyboardControls } from '@react-three/drei';
+import { PerspectiveCamera, MapControls, Sparkles, KeyboardControls, useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { Button } from './ui/button';
 import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
@@ -665,7 +665,7 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
           onPositionChange={setLaptopPos}
         />
       </KeyboardControls>
-      <OrbitControls enableZoom={true} enablePan={true} minDistance={2} maxDistance={50} />
+      <MapControls enableZoom={true} enablePan={true} panSpeed={1} zoomSpeed={0.5} minDistance={0.5} maxDistance={80} autoRotate={false} />
     </Canvas>
   );
 }
