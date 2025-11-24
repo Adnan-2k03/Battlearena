@@ -80,10 +80,22 @@ function AnimatedLaptop({
       groupRef.current.rotation.z = target.rot[2];
       groupRef.current.scale.set(1, 1, 1);
       if (bodyRef.current) bodyRef.current.rotation.x = 0.4;
-      if (leftArmRef.current) leftArmRef.current.rotation.z = -1.1;
-      if (rightArmRef.current) rightArmRef.current.rotation.z = 1.1;
-      if (leftLegRef.current) leftLegRef.current.position.y = -0.95;
-      if (rightLegRef.current) rightLegRef.current.position.y = -0.95;
+      if (leftArmRef.current) {
+        leftArmRef.current.rotation.z = -1.1;
+        leftArmRef.current.rotation.x = -0.4;
+      }
+      if (rightArmRef.current) {
+        rightArmRef.current.rotation.z = 1.1;
+        rightArmRef.current.rotation.x = -0.4;
+      }
+      if (leftLegRef.current) {
+        leftLegRef.current.position.y = -0.4;
+        leftLegRef.current.rotation.x = 0.5;
+      }
+      if (rightLegRef.current) {
+        rightLegRef.current.position.y = -0.4;
+        rightLegRef.current.rotation.x = 0.5;
+      }
     } else if (activity === 'playing') {
       groupRef.current.rotation.set(
         Math.sin(t * 2) * 0.12,
