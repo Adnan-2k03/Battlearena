@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { LAPTOPS } from '../data/laptops';
+import { MAPS } from '../data/maps';
 
 export interface LaptopSkin {
   id: string;
@@ -187,9 +189,6 @@ export const usePlayerProfile = create<PlayerProfileStore>()(
           const profile = createDefaultProfile(nickname);
           
           if (nickname.toLowerCase().startsWith('admin')) {
-            const { LAPTOPS } = require('../data/laptops');
-            const { MAPS } = require('../data/maps');
-            
             profile.ownedLaptops = LAPTOPS.map((l: any) => l.id);
             profile.unlockedMaps = MAPS.map((m: any) => m.id);
             profile.currency = 999999;
