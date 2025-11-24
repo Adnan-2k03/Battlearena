@@ -53,17 +53,25 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
   }, [socket]);
 
   const updateSetting = (key: keyof AdminSettings, value: any) => {
+    console.log('Admin updateSetting called:', key, value, 'roomId:', roomId, 'socket:', !!socket);
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
     
     if (socket && roomId) {
+      console.log('Emitting admin_update_settings event');
       socket.emit('admin_update_settings', { roomId, settings: { [key]: value } });
+    } else {
+      console.error('Cannot update settings - missing socket or roomId');
     }
   };
 
   const controlBot = (botId: string, action: 'trigger_attack' | 'trigger_barrier') => {
+    console.log('Admin controlBot called:', botId, action, 'roomId:', roomId, 'socket:', !!socket);
     if (socket && roomId) {
+      console.log('Emitting admin_control_bot event');
       socket.emit('admin_control_bot', { roomId, botId, action });
+    } else {
+      console.error('Cannot control bot - missing socket or roomId');
     }
   };
 
@@ -76,7 +84,10 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
         zIndex: 1000
       }}>
         <button
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            console.log('Admin Controls button clicked - opening panel');
+            setIsOpen(true);
+          }}
           style={{
             padding: '10px 20px',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',

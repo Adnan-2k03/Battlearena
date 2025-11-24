@@ -12,13 +12,12 @@ export function LeaveMatchButton({ socket, roomId, onLeave }: LeaveMatchButtonPr
     if (!confirmed) return;
 
     if (socket && roomId) {
+      console.log('Emitting leave_match event for roomId:', roomId);
       socket.emit('leave_match', { roomId });
       
-      socket.once('left_match', ({ success }: { success: boolean }) => {
-        if (success && onLeave) {
-          onLeave();
-        }
-      });
+      if (onLeave) {
+        onLeave();
+      }
     }
   };
 
