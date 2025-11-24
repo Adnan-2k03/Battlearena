@@ -7,7 +7,7 @@ import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
 import { getPersonality } from '@/lib/data/laptop-personalities';
 import { LAPTOPS } from '@/lib/data/laptops';
 
-type Activity = 'idle' | 'reading' | 'sleeping' | 'hiding' | 'playing' | 'jumping';
+type Activity = 'idle' | 'reading' | 'sleeping' | 'hiding' | 'playing' | 'jumping' | 'biking';
 type Controls = 'forward' | 'back' | 'left' | 'right';
 
 interface CompanionRoomSceneProps {
@@ -22,6 +22,7 @@ const ACTIVITY_POSITIONS: Record<Activity, { pos: [number, number, number]; rot:
   hiding: { pos: [-3.5, 0.2, 3.5], rot: [0, -Math.PI / 4, -0.3] },
   playing: { pos: [0, 0, 1], rot: [0, 0, 0] },
   jumping: { pos: [0, 0, 0], rot: [0, 0, 0] },
+  biking: { pos: [0, 0, 8], rot: [0, 0, 0] },
 };
 
 function AnimatedLaptop({ 
@@ -52,7 +53,7 @@ function AnimatedLaptop({
     const target = ACTIVITY_POSITIONS[activity];
     const targetPos = new THREE.Vector3(userPos[0], userPos[1], userPos[2]);
     
-    if (!['idle', 'playing', 'jumping'].includes(activity)) {
+    if (!['idle', 'playing', 'jumping', 'biking'].includes(activity)) {
       targetPos.x = target.pos[0];
       targetPos.y = target.pos[1];
       targetPos.z = target.pos[2];
@@ -120,6 +121,13 @@ function AnimatedLaptop({
       if (rightArmRef.current) rightArmRef.current.rotation.z = Math.sin(t * 3 + Math.PI) * 1.5 + 1;
       if (leftLegRef.current) leftLegRef.current.position.y = -0.85 - jumpH * 0.3;
       if (rightLegRef.current) rightLegRef.current.position.y = -0.85 - jumpH * 0.3;
+    } else if (activity === 'biking') {
+      groupRef.current.rotation.set(0, 0, 0);
+      groupRef.current.scale.set(1, 1, 1);
+      if (leftArmRef.current) leftArmRef.current.rotation.z = -0.4;
+      if (rightArmRef.current) rightArmRef.current.rotation.z = 0.4;
+      if (leftLegRef.current) leftLegRef.current.rotation.x = Math.sin(t * 4) * 1.2;
+      if (rightLegRef.current) rightLegRef.current.rotation.x = Math.sin(t * 4 + Math.PI) * 1.2;
     } else {
       groupRef.current.rotation.set(0, Math.sin(t * 0.8) * 0.1, 0);
       groupRef.current.scale.set(1, 1, 1);
@@ -903,6 +911,7 @@ export function CompanionRoomScene({ laptopId, onBack }: CompanionRoomSceneProps
       hiding: 'Peek-a-boo!',
       playing: 'Game time!',
       jumping: 'Wheeeee!',
+      biking: 'Time to ride my bike!',
     };
     speakText(messages[newActivity]);
   };
