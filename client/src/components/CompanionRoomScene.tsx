@@ -292,45 +292,36 @@ function Room() {
         <meshStandardMaterial color="#3a2a1a" roughness={0.65} />
       </mesh>
 
-      {/* Back wall - LOWER LEFT (below door) */}
-      <mesh position={[-5, -0.3, -8]} receiveShadow>
-        <boxGeometry args={[14, 0.4, 0.5]} />
+      {/* Back wall - LEFT SIDE (full height from x=-12 to x=2) */}
+      <mesh position={[-5, 1.5, -8]} receiveShadow>
+        <boxGeometry args={[14, 3.5, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
         />
       </mesh>
 
-      {/* Back wall - UPPER LEFT (above door) */}
-      <mesh position={[-5, 2.8, -8]} receiveShadow>
-        <boxGeometry args={[14, 0.9, 0.5]} />
+      {/* Back wall - RIGHT SIDE (full height from x=10 to x=12) */}
+      <mesh position={[11, 1.5, -8]} receiveShadow>
+        <boxGeometry args={[2, 3.5, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
         />
       </mesh>
 
-      {/* Back wall - LOWER RIGHT (below door) */}
-      <mesh position={[11, -0.3, -8]} receiveShadow>
-        <boxGeometry args={[2, 0.4, 0.5]} />
+      {/* Back wall - TOP SECTION (above door opening from x=2 to x=10) */}
+      <mesh position={[6, 2.7, -8]} receiveShadow>
+        <boxGeometry args={[8, 1.1, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
         />
       </mesh>
 
-      {/* Back wall - UPPER RIGHT (above door) */}
-      <mesh position={[11, 2.8, -8]} receiveShadow>
-        <boxGeometry args={[2, 0.9, 0.5]} />
-        <meshStandardMaterial 
-          color="#daa55b" 
-          roughness={0.7}
-        />
-      </mesh>
-
-      {/* Back wall - TOP CENTER (above door opening) */}
-      <mesh position={[6, 2.8, -8]} receiveShadow>
-        <boxGeometry args={[8, 0.9, 0.5]} />
+      {/* Back wall - BOTTOM SECTION (below door opening from x=2 to x=10) */}
+      <mesh position={[6, -0.2, -8]} receiveShadow>
+        <boxGeometry args={[8, 0.5, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
