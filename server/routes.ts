@@ -31,6 +31,7 @@ interface Player {
   stats: PlayerStats;
   currentWords: WordWithType[];
   elementCharges: ElementCharges;
+  isAdmin: boolean;
 }
 
 interface TeamState {
@@ -92,7 +93,8 @@ function createBot(id: string, team: Team, role: Role, roomId: string): BotPlaye
       damageDealt: 0,
       shieldRestored: 0,
       startTime: 0
-    }
+    },
+    isAdmin: false
   };
 }
 
@@ -339,7 +341,7 @@ function startBotTyping(bot: BotPlayer, room: GameRoom, io: SocketIOServer) {
     const playerCharges = Array.from(room.players.values()).map(p => ({
       id: p.id,
       team: p.team,
-      charges: p.elementCharges
+      charges: p.isAdmin ? { fire: 100, water: 100, leaf: 100 } : p.elementCharges
     }));
     io.to(room.id).emit("element_charges_update", { playerCharges });
     
@@ -405,13 +407,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const playerSocket = io.sockets.sockets.get(playerId);
           if (!playerSocket) return;
           
+          const isAdmin = playerNickname.toLowerCase().startsWith('admin');
           const player: Player = {
             id: playerId,
             nickname: playerNickname,
             team,
             role,
             roomId,
-            elementCharges: { fire: 0, water: 0, leaf: 0 },
+            elementCharges: isAdmin ? { fire: 100, water: 100, leaf: 100 } : { fire: 0, water: 0, leaf: 0 },
             stats: {
               wordsTyped: 0,
               correctWords: 0,
@@ -420,7 +423,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               shieldRestored: 0,
               startTime: 0
             },
-            currentWords: []
+            currentWords: [],
+            isAdmin
           };
           
           room.players.set(playerId, player);
@@ -558,13 +562,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role = playerCount % 2 === 0 ? "striker" : "guardian";
       }
 
+      const isAdmin = nickname.toLowerCase().startsWith('admin');
       const player: Player = {
         id: socket.id,
         nickname,
         team,
         role,
         roomId,
-        elementCharges: { fire: 0, water: 0, leaf: 0 },
+        elementCharges: isAdmin ? { fire: 100, water: 100, leaf: 100 } : { fire: 0, water: 0, leaf: 0 },
         stats: {
           wordsTyped: 0,
           correctWords: 0,
@@ -573,7 +578,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           shieldRestored: 0,
           startTime: 0
         },
-        currentWords: []
+        currentWords: [],
+        isAdmin
       };
 
       room.players.set(socket.id, player);
@@ -685,9 +691,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { element, isCharge } = matchedWord as any;
       const elementType = element as Element;
       
-      // Update element charge
-      const chargeIncrease = isCharge ? 30 : 10;
-      player.elementCharges[elementType] = Math.min(100, player.elementCharges[elementType] + chargeIncrease);
+      // Update element charge (admin mode keeps charges at 100)
+      if (!player.isAdmin) {
+        const chargeIncrease = isCharge ? 30 : 10;
+        player.elementCharges[elementType] = Math.min(100, player.elementCharges[elementType] + chargeIncrease);
+      }
       
       // Non-charge words deal small damage to enemy
       const myTeamState = player.team === "blue" ? room.blueTeam : room.redTeam;
@@ -728,7 +736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         nickname: p.nickname,
         team: p.team,
         role: p.role,
-        charges: p.elementCharges
+        charges: p.isAdmin ? { fire: 100, water: 100, leaf: 100 } : p.elementCharges
       }));
       io.to(roomId).emit("element_charges_update", { playerCharges });
       
@@ -783,14 +791,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const player = room.players.get(socket.id);
       if (!player) return;
 
-      // Check if player has enough charge
-      if (player.elementCharges[element] < 100) {
+      // Check if player has enough charge (skip for admin mode)
+      if (!player.isAdmin && player.elementCharges[element] < 100) {
         socket.emit("not_enough_charge", { element, current: player.elementCharges[element] });
         return;
       }
 
-      // Consume the charge
-      player.elementCharges[element] = 0;
+      // Consume the charge (admin mode keeps charges at 100)
+      if (!player.isAdmin) {
+        player.elementCharges[element] = 0;
+      }
 
       if (action === 'attack') {
         const enemyTeam = player.team === "blue" ? "red" : "blue";
@@ -884,7 +894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         nickname: p.nickname,
         team: p.team,
         role: p.role,
-        charges: p.elementCharges
+        charges: p.isAdmin ? { fire: 100, water: 100, leaf: 100 } : p.elementCharges
       }));
       io.to(roomId).emit("element_charges_update", { playerCharges });
     });
