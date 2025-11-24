@@ -693,16 +693,16 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
       camera.position.copy(target).add(cameraOffset);
 
       // Rotate vertically with gimbal lock prevention
-      pitch += deltaY * rotateSpeed;
+      pitch -= deltaY * rotateSpeed;
       pitch = Math.max(-Math.PI * 0.45, Math.min(Math.PI * 0.45, pitch)); // Limit pitch to ±81 degrees
 
       const verticalQuaternion = new THREE.Quaternion();
       const right = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), cameraOffset).normalize();
-      verticalQuaternion.setFromAxisAngle(right, pitch - (deltaY * rotateSpeed - deltaY * rotateSpeed));
+      verticalQuaternion.setFromAxisAngle(right, pitch + (deltaY * rotateSpeed + deltaY * rotateSpeed));
 
       const newOffset = cameraOffset.clone();
       const verticalRotQuat = new THREE.Quaternion();
-      verticalRotQuat.setFromAxisAngle(right, deltaY * rotateSpeed);
+      verticalRotQuat.setFromAxisAngle(right, -deltaY * rotateSpeed);
       newOffset.applyQuaternion(verticalRotQuat);
       
       // Check if new position is valid (not too close to straight up/down)
