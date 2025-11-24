@@ -663,6 +663,7 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
     let isDragging = false;
     let lastX = 0;
     let lastY = 0;
+    let pitch = 0; // Track pitch angle to prevent gimbal lock
 
     const handleMouseDown = (e: MouseEvent) => {
       isDragging = true;
@@ -681,17 +682,37 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
       const rotateSpeed = 0.008;
       const camera = mapControlsRef.current.object;
       const target = mapControlsRef.current.target;
+      const distance = camera.position.distanceTo(target);
 
-      // Rotate horizontally (around Y axis)
-      const pos = camera.position.sub(target);
-      pos.applyAxisAngle(new THREE.Vector3(0, 1, 0), -deltaX * rotateSpeed);
-      camera.position.copy(pos.add(target));
+      // Rotate horizontally (around world Y axis)
+      const horizontalQuaternion = new THREE.Quaternion();
+      horizontalQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -deltaX * rotateSpeed);
+      
+      const cameraOffset = new THREE.Vector3().subVectors(camera.position, target);
+      cameraOffset.applyQuaternion(horizontalQuaternion);
+      camera.position.copy(target).add(cameraOffset);
 
-      // Rotate vertically (around right axis)
-      const right = new THREE.Vector3().crossVectors(camera.up, pos).normalize();
-      const posForVertical = camera.position.sub(target);
-      posForVertical.applyAxisAngle(right, deltaY * rotateSpeed);
-      camera.position.copy(posForVertical.add(target));
+      // Rotate vertically with gimbal lock prevention
+      pitch += deltaY * rotateSpeed;
+      pitch = Math.max(-Math.PI * 0.45, Math.min(Math.PI * 0.45, pitch)); // Limit pitch to ±81 degrees
+
+      const verticalQuaternion = new THREE.Quaternion();
+      const right = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), cameraOffset).normalize();
+      verticalQuaternion.setFromAxisAngle(right, pitch - (deltaY * rotateSpeed - deltaY * rotateSpeed));
+
+      const newOffset = cameraOffset.clone();
+      const verticalRotQuat = new THREE.Quaternion();
+      verticalRotQuat.setFromAxisAngle(right, deltaY * rotateSpeed);
+      newOffset.applyQuaternion(verticalRotQuat);
+      
+      // Check if new position is valid (not too close to straight up/down)
+      const testCam = target.clone().add(newOffset);
+      const lookDir = new THREE.Vector3().subVectors(target, testCam).normalize();
+      const upDot = Math.abs(lookDir.dot(new THREE.Vector3(0, 1, 0)));
+      
+      if (upDot < 0.98) { // Allow rotation unless nearly vertical
+        camera.position.copy(testCam);
+      }
     };
 
     const handleMouseUp = () => {
