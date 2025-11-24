@@ -665,7 +665,7 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
           onPositionChange={setLaptopPos}
         />
       </KeyboardControls>
-      <MapControls enableZoom={true} enablePan={true} panSpeed={1} zoomSpeed={0.5} minDistance={0.5} maxDistance={80} autoRotate={false} />
+      <MapControls enableZoom={true} enablePan={true} enableRotate={true} panSpeed={1} rotateSpeed={0.5} zoomSpeed={0.5} minDistance={0.5} maxDistance={80} autoRotate={false} />
     </Canvas>
   );
 }
