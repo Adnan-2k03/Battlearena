@@ -104,8 +104,8 @@ function AnimatedLaptop({
       groupRef.current.position.y = userPos[1] + jumpH;
       if (leftArmRef.current) leftArmRef.current.rotation.z = Math.sin(t * 3) * 1.5 - 1;
       if (rightArmRef.current) rightArmRef.current.rotation.z = Math.sin(t * 3 + Math.PI) * 1.5 + 1;
-      if (leftLegRef.current) leftLegRef.current.position.y = -0.4 + jumpH * 0.6;
-      if (rightLegRef.current) rightLegRef.current.position.y = -0.4 + jumpH * 0.6;
+      if (leftLegRef.current) leftLegRef.current.position.y = -0.85 + jumpH * 0.4;
+      if (rightLegRef.current) rightLegRef.current.position.y = -0.85 + jumpH * 0.4;
     } else {
       groupRef.current.rotation.set(0, Math.sin(t * 0.8) * 0.1, 0);
       groupRef.current.scale.set(1, 1, 1);
