@@ -389,11 +389,11 @@ function Room() {
         </mesh>
       </group>
 
-      {/* Charging Station - Test Tube Cylinder at End of Wall */}
-      <group position={[11.3, -0.2, -1.5]}>
-        {/* Test tube cylinder - main body */}
+      {/* Charging Station - Large Test Tube Cylinder at End of Wall */}
+      <group position={[11.3, 0.1, -1.5]}>
+        {/* Test tube cylinder - main body - LARGE */}
         <mesh castShadow>
-          <cylinderGeometry args={[0.35, 0.35, 1.2, 32]} />
+          <cylinderGeometry args={[0.8, 0.8, 1.8, 32]} />
           <meshStandardMaterial 
             color="#e8f4f8" 
             roughness={0.15}
@@ -403,8 +403,8 @@ function Room() {
           />
         </mesh>
         {/* Test tube glass rim - top edge */}
-        <mesh position={[0, 0.6, 0]} castShadow>
-          <cylinderGeometry args={[0.36, 0.36, 0.05, 32]} />
+        <mesh position={[0, 0.9, 0]} castShadow>
+          <cylinderGeometry args={[0.82, 0.82, 0.08, 32]} />
           <meshStandardMaterial 
             color="#7fb3d5" 
             roughness={0.2}
@@ -413,21 +413,21 @@ function Room() {
         </mesh>
         {/* Charging liquid glow inside */}
         <mesh position={[0, 0, 0]} castShadow>
-          <cylinderGeometry args={[0.32, 0.32, 1.15, 32]} />
+          <cylinderGeometry args={[0.75, 0.75, 1.7, 32]} />
           <meshStandardMaterial 
             color="#22ff22" 
             emissive="#22ff22"
-            emissiveIntensity={0.4}
+            emissiveIntensity={0.5}
             transparent={true}
-            opacity={0.3}
+            opacity={0.35}
           />
         </mesh>
-        {/* Charging glow light */}
-        <pointLight position={[0, 0.2, 0]} intensity={1.2} color="#22ff22" />
-        {/* Stand base */}
-        <mesh position={[0, -0.7, 0]} castShadow>
-          <cylinderGeometry args={[0.45, 0.45, 0.1, 32]} />
-          <meshStandardMaterial color="#333" roughness={0.5} metalness={0.15} />
+        {/* Charging glow light - brighter */}
+        <pointLight position={[0, 0.3, 0]} intensity={1.8} color="#22ff22" />
+        {/* Stand base - larger */}
+        <mesh position={[0, -1.0, 0]} castShadow>
+          <cylinderGeometry args={[1.0, 1.0, 0.2, 32]} />
+          <meshStandardMaterial color="#222" roughness={0.4} metalness={0.2} />
         </mesh>
       </group>
 
