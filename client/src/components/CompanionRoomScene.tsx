@@ -432,7 +432,7 @@ function Room() {
       </group>
 
       {/* Premium Sofa - Luxury Design */}
-      <group position={[-4, -0.5, 3]}>
+      <group position={[7, -0.5, 6]}>
         {/* Main seat cushion */}
         <mesh position={[0, 0.08, 0]} receiveShadow castShadow>
           <boxGeometry args={[3.4, 0.95, 1.6]} />
