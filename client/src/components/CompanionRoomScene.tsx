@@ -663,32 +663,35 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!mapControlsRef.current) return;
       
-      const rotateSpeed = 0.05;
+      const panSpeed = 0.3;
       const camera = mapControlsRef.current.object;
       const target = mapControlsRef.current.target;
       
+      // Get camera direction vectors
+      const forward = new THREE.Vector3().subVectors(target, camera).normalize();
+      const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
+      const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+      
       if (e.key === 'q' || e.key === 'Q') {
-        // Rotate left
-        const pos = camera.position.sub(target);
-        pos.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotateSpeed);
-        camera.position.copy(pos.add(target));
+        // Pan left
+        const offset = right.multiplyScalar(-panSpeed);
+        camera.position.add(offset);
+        target.add(offset);
       } else if (e.key === 'e' || e.key === 'E') {
-        // Rotate right
-        const pos = camera.position.sub(target);
-        pos.applyAxisAngle(new THREE.Vector3(0, 1, 0), -rotateSpeed);
-        camera.position.copy(pos.add(target));
+        // Pan right
+        const offset = right.multiplyScalar(panSpeed);
+        camera.position.add(offset);
+        target.add(offset);
       } else if (e.key === 'r' || e.key === 'R') {
-        // Rotate up
-        const pos = camera.position.sub(target);
-        const right = new THREE.Vector3().crossVectors(camera.up, pos).normalize();
-        pos.applyAxisAngle(right, rotateSpeed);
-        camera.position.copy(pos.add(target));
+        // Pan up
+        const offset = up.multiplyScalar(panSpeed);
+        camera.position.add(offset);
+        target.add(offset);
       } else if (e.key === 'f' || e.key === 'F') {
-        // Rotate down
-        const pos = camera.position.sub(target);
-        const right = new THREE.Vector3().crossVectors(camera.up, pos).normalize();
-        pos.applyAxisAngle(right, -rotateSpeed);
-        camera.position.copy(pos.add(target));
+        // Pan down
+        const offset = up.multiplyScalar(-panSpeed);
+        camera.position.add(offset);
+        target.add(offset);
       }
     };
 
@@ -705,7 +708,7 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
           onPositionChange={setLaptopPos}
         />
       </KeyboardControls>
-      <MapControls ref={mapControlsRef} enableZoom={true} enablePan={true} enableRotate={false} panSpeed={1} zoomSpeed={0.5} minDistance={0.5} maxDistance={80} autoRotate={false} />
+      <MapControls ref={mapControlsRef} enableZoom={true} enablePan={false} enableRotate={true} rotateSpeed={0.5} zoomSpeed={0.5} minDistance={0.5} maxDistance={80} autoRotate={false} />
     </Canvas>
   );
 }
