@@ -293,21 +293,21 @@ function Room() {
       </mesh>
 
       {/* Back wall with door - warmer tones */}
-      <mesh position={[-7, 1.5, -8]} receiveShadow>
-        <boxGeometry args={[10, 3.5, 0.5]} />
+      <mesh position={[-3, 1.5, -8]} receiveShadow>
+        <boxGeometry args={[6, 3.5, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
         />
       </mesh>
-      <mesh position={[7, 1.5, -8]} receiveShadow>
-        <boxGeometry args={[10, 3.5, 0.5]} />
+      <mesh position={[10, 1.5, -8]} receiveShadow>
+        <boxGeometry args={[8, 3.5, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
         />
       </mesh>
-      <mesh position={[0, 2.8, -8]} receiveShadow>
+      <mesh position={[6, 2.8, -8]} receiveShadow>
         <boxGeometry args={[4, 0.9, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
@@ -315,16 +315,16 @@ function Room() {
         />
       </mesh>
       
-      {/* Door frame */}
-      <mesh position={[-2, 0.5, -7.8]} castShadow>
+      {/* Door frame - right side */}
+      <mesh position={[4, 0.5, -7.8]} castShadow>
         <boxGeometry args={[0.2, 2.5, 0.2]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
       </mesh>
-      <mesh position={[2, 0.5, -7.8]} castShadow>
+      <mesh position={[8, 0.5, -7.8]} castShadow>
         <boxGeometry args={[0.2, 2.5, 0.2]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
       </mesh>
-      <mesh position={[0, 2.3, -7.8]} castShadow>
+      <mesh position={[6, 2.3, -7.8]} castShadow>
         <boxGeometry args={[4.4, 0.2, 0.2]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
       </mesh>
@@ -786,33 +786,33 @@ function OutdoorWorld() {
   return (
     <>
       {/* Sky background */}
-      <mesh position={[0, 10, -30]}>
-        <planeGeometry args={[100, 40]} />
+      <mesh position={[0, 10, -50]}>
+        <planeGeometry args={[100, 60]} />
         <meshBasicMaterial color="#87ceeb" />
       </mesh>
 
       {/* Grass ground outside */}
-      <mesh position={[0, -1.2, -25]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[50, 50]} />
+      <mesh position={[0, -1.2, -50]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[50, 100]} />
         <meshStandardMaterial map={grassTexture} roughness={0.95} />
       </mesh>
 
       {/* Road outside the room */}
-      <mesh position={[0, -1.19, -20]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[6, 40]} />
+      <mesh position={[0, -1.19, -40]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[6, 60]} />
         <meshStandardMaterial map={asphaltTexture} roughness={0.9} metalness={0.05} />
       </mesh>
 
       {/* Lane markings */}
-      {[...Array(20)].map((_, i) => (
-        <mesh key={`lane-${i}`} position={[0, -1.18, -5 - i * 2]} receiveShadow>
+      {[...Array(30)].map((_, i) => (
+        <mesh key={`lane-${i}`} position={[0, -1.18, -15 - i * 2]} receiveShadow>
           <boxGeometry args={[0.15, 0.01, 1]} />
           <meshStandardMaterial color="#ffff00" emissive="#ffff00" emissiveIntensity={0.3} />
         </mesh>
       ))}
 
       {/* Outdoor lighting */}
-      <directionalLight position={[10, 20, -15]} intensity={1.2} castShadow color="#ffffff" />
+      <directionalLight position={[10, 20, -40]} intensity={1.2} castShadow color="#ffffff" />
       <hemisphereLight args={['#87ceeb', '#6b8e23', 0.6]} />
     </>
   );
@@ -830,7 +830,7 @@ function RoomSceneContent({
   const [subscribe, getState] = useKeyboardControls<Controls>();
   const posRef = useRef<[number, number, number]>([0, 0, 0]);
   const [isRidingBike, setIsRidingBike] = useState(false);
-  const [bikePos, setBikePos] = useState<[number, number, number]>([0, 0, -12]);
+  const [bikePos, setBikePos] = useState<[number, number, number]>([0, 0, -20]);
   const [wheelRotation, setWheelRotation] = useState(0);
   const [showMountPrompt, setShowMountPrompt] = useState(false);
 
@@ -861,7 +861,7 @@ function RoomSceneContent({
       }
       
       bikePos[0] = Math.max(-2.5, Math.min(2.5, bikePos[0]));
-      bikePos[2] = Math.max(-40, Math.min(-8, bikePos[2]));
+      bikePos[2] = Math.max(-60, Math.min(-15, bikePos[2]));
       
       if (moved) {
         setBikePos([...bikePos]);
@@ -882,7 +882,7 @@ function RoomSceneContent({
       if (controls.right) posRef.current[0] += speed;
 
       posRef.current[0] = Math.max(-11, Math.min(11, posRef.current[0]));
-      posRef.current[2] = Math.max(-40, Math.min(7, posRef.current[2]));
+      posRef.current[2] = Math.max(-60, Math.min(7, posRef.current[2]));
 
       onPositionChange([...posRef.current]);
 
