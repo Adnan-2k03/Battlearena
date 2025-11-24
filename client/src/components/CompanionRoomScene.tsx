@@ -334,103 +334,103 @@ function Room() {
         <meshStandardMaterial color="#4a3a2a" roughness={0.65} />
       </mesh>
 
-      {/* Premium Reading Corner - ENHANCED */}
-      <group position={[1.5, 0, -3.8]}>
+      {/* Premium Reading Corner - BOOKSHELF LEFT SIDE */}
+      <group position={[-1.8, 0, -3.8]}>
         {/* Floor cushion */}
         <mesh position={[0, -0.9, -0.2]} castShadow>
           <boxGeometry args={[2.6, 0.2, 0.4]} />
-          <meshStandardMaterial color="#9b8b7e" roughness={0.8} />
+          <meshStandardMaterial color="#9b8b7e" roughness={0.8} metalness={0.05} />
         </mesh>
 
         {/* Bookshelf Frame - vertical supports */}
         {[-1.3, 1.3].map((x) => (
           <mesh key={`frame-${x}`} position={[x, 0.35, -0.15]} castShadow>
-            <boxGeometry args={[0.08, 0.85, 0.35]} />
-            <meshStandardMaterial color="#3d2f1f" roughness={0.6} metalness={0.15} />
+            <boxGeometry args={[0.1, 0.9, 0.4]} />
+            <meshStandardMaterial color="#2d2318" roughness={0.55} metalness={0.2} />
           </mesh>
         ))}
 
-        {/* Bookshelf backing - nice wood backing */}
-        <mesh position={[0, 0.35, -0.35]} castShadow receiveShadow>
-          <boxGeometry args={[2.66, 0.85, 0.08]} />
-          <meshStandardMaterial color="#4a3a2a" roughness={0.7} />
+        {/* Bookshelf backing - premium wood */}
+        <mesh position={[0, 0.35, -0.4]} castShadow receiveShadow>
+          <boxGeometry args={[2.6, 0.9, 0.1]} />
+          <meshStandardMaterial color="#3a2f24" roughness={0.65} metalness={0.08} />
         </mesh>
 
-        {/* Shelves - beautiful wood */}
-        {[0.8, 0.4, 0].map((y) => (
+        {/* Shelves - polished wood */}
+        {[0.85, 0.35, -0.15].map((y) => (
           <mesh key={y} position={[0, y, 0]} receiveShadow castShadow>
-            <boxGeometry args={[2.6, 0.1, 0.3]} />
+            <boxGeometry args={[2.5, 0.12, 0.32]} />
             <meshStandardMaterial 
               color="#5d4e3a" 
-              roughness={0.4}
-              metalness={0.15}
+              roughness={0.35}
+              metalness={0.2}
             />
           </mesh>
         ))}
 
-        {/* Books - beautifully arranged */}
+        {/* Books - premium arrangement */}
         {[
-          { pos: [-0.9, 0.55, -0.08], color: '#d32f2f' },
-          { pos: [-0.5, 0.55, -0.08], color: '#1976d2' },
-          { pos: [-0.05, 0.55, -0.08], color: '#f57c00' },
-          { pos: [0.4, 0.55, -0.08], color: '#388e3c' },
-          { pos: [0.85, 0.55, -0.08], color: '#6a1b9a' },
-          { pos: [-0.7, 0.15, -0.08], color: '#c62828' },
-          { pos: [-0.15, 0.15, -0.08], color: '#0d47a1' },
-          { pos: [0.6, 0.15, -0.08], color: '#e65100' },
+          { pos: [-0.95, 0.6, 0], color: '#c5121c' },
+          { pos: [-0.55, 0.6, 0], color: '#1554b0' },
+          { pos: [-0.1, 0.6, 0], color: '#d97706' },
+          { pos: [0.35, 0.6, 0], color: '#30a46c' },
+          { pos: [0.8, 0.6, 0], color: '#5e1ba9' },
+          { pos: [-0.75, 0.1, 0], color: '#a41e34' },
+          { pos: [-0.2, 0.1, 0], color: '#0c3ca6' },
+          { pos: [0.55, 0.1, 0], color: '#b45309' },
         ].map((book, i) => (
           <mesh key={i} position={book.pos as [number, number, number]} castShadow>
-            <boxGeometry args={[0.35, 0.58, 0.22]} />
-            <meshPhongMaterial color={book.color} shininess={60} />
+            <boxGeometry args={[0.36, 0.6, 0.25]} />
+            <meshPhongMaterial color={book.color} shininess={70} />
           </mesh>
         ))}
       </group>
 
-      {/* Premium Reading Chair - PERFECT */}
-      <group position={[0.8, -0.5, -3.5]}>
-        {/* Front left leg */}
-        <mesh position={[-0.35, -0.35, 0.35]} castShadow>
-          <boxGeometry args={[0.1, 0.4, 0.1]} />
-          <meshStandardMaterial color="#3d2f1f" roughness={0.7} />
+      {/* Premium Reading Chair - RIGHT SIDE */}
+      <group position={[2.2, -0.5, -3.3]}>
+        {/* Front left leg - premium wood */}
+        <mesh position={[-0.4, -0.35, 0.4]} castShadow>
+          <boxGeometry args={[0.12, 0.42, 0.12]} />
+          <meshStandardMaterial color="#2d2318" roughness={0.65} metalness={0.1} />
         </mesh>
         {/* Front right leg */}
-        <mesh position={[0.35, -0.35, 0.35]} castShadow>
-          <boxGeometry args={[0.1, 0.4, 0.1]} />
-          <meshStandardMaterial color="#3d2f1f" roughness={0.7} />
+        <mesh position={[0.4, -0.35, 0.4]} castShadow>
+          <boxGeometry args={[0.12, 0.42, 0.12]} />
+          <meshStandardMaterial color="#2d2318" roughness={0.65} metalness={0.1} />
         </mesh>
         {/* Back left leg */}
-        <mesh position={[-0.35, -0.35, -0.35]} castShadow>
-          <boxGeometry args={[0.1, 0.4, 0.1]} />
-          <meshStandardMaterial color="#3d2f1f" roughness={0.7} />
+        <mesh position={[-0.4, -0.35, -0.4]} castShadow>
+          <boxGeometry args={[0.12, 0.42, 0.12]} />
+          <meshStandardMaterial color="#2d2318" roughness={0.65} metalness={0.1} />
         </mesh>
         {/* Back right leg */}
-        <mesh position={[0.35, -0.35, -0.35]} castShadow>
-          <boxGeometry args={[0.1, 0.4, 0.1]} />
-          <meshStandardMaterial color="#3d2f1f" roughness={0.7} />
+        <mesh position={[0.4, -0.35, -0.4]} castShadow>
+          <boxGeometry args={[0.12, 0.42, 0.12]} />
+          <meshStandardMaterial color="#2d2318" roughness={0.65} metalness={0.1} />
         </mesh>
 
-        {/* Seat cushion - perfect proportions */}
+        {/* Seat cushion - premium fabric */}
         <mesh position={[0, 0.15, 0]} castShadow>
-          <boxGeometry args={[0.9, 0.3, 0.85]} />
-          <meshStandardMaterial color="#9b8b7e" roughness={0.85} />
+          <boxGeometry args={[0.95, 0.35, 0.9]} />
+          <meshStandardMaterial color="#a89a8a" roughness={0.8} metalness={0.02} />
         </mesh>
         
-        {/* Back cushion - angled */}
-        <mesh position={[0, 0.75, -0.35]} castShadow rotation={[0.3, 0, 0]}>
-          <boxGeometry args={[0.9, 0.6, 0.25]} />
-          <meshStandardMaterial color="#8b7b6e" roughness={0.85} />
+        {/* Back cushion - angled for comfort */}
+        <mesh position={[0, 0.8, -0.4]} castShadow rotation={[0.35, 0, 0]}>
+          <boxGeometry args={[0.95, 0.65, 0.28]} />
+          <meshStandardMaterial color="#9a8a7a" roughness={0.82} metalness={0.02} />
         </mesh>
 
-        {/* Left armrest */}
-        <mesh position={[-0.5, 0.35, 0]} castShadow>
-          <boxGeometry args={[0.15, 0.5, 0.8]} />
-          <meshStandardMaterial color="#6d5b45" roughness={0.8} />
+        {/* Left armrest - premium */}
+        <mesh position={[-0.55, 0.4, 0]} castShadow>
+          <boxGeometry args={[0.18, 0.55, 0.85]} />
+          <meshStandardMaterial color="#6d5b45" roughness={0.75} metalness={0.08} />
         </mesh>
 
-        {/* Right armrest */}
-        <mesh position={[0.5, 0.35, 0]} castShadow>
-          <boxGeometry args={[0.15, 0.5, 0.8]} />
-          <meshStandardMaterial color="#6d5b45" roughness={0.8} />
+        {/* Right armrest - premium */}
+        <mesh position={[0.55, 0.4, 0]} castShadow>
+          <boxGeometry args={[0.18, 0.55, 0.85]} />
+          <meshStandardMaterial color="#6d5b45" roughness={0.75} metalness={0.08} />
         </mesh>
       </group>
 
@@ -450,61 +450,62 @@ function Room() {
         <pointLight position={[0, 0.35, 0]} intensity={0.8} color="#22ff22" />
       </group>
 
-      {/* Modern Sofa */}
-      <group position={[-2, -0.5, 1.5]}>
+      {/* Premium Sofa */}
+      <group position={[-2.5, -0.5, 2]}>
         <mesh position={[0, 0, 0]} receiveShadow castShadow>
-          <boxGeometry args={[3, 0.8, 1.4]} />
-          <meshStandardMaterial color="#4a3a2a" roughness={0.85} />
+          <boxGeometry args={[3.2, 0.85, 1.5]} />
+          <meshStandardMaterial color="#4a3a2a" roughness={0.8} metalness={0.03} />
         </mesh>
-        <mesh position={[0, 0.7, -0.75]} receiveShadow castShadow>
-          <boxGeometry args={[3, 0.8, 0.3]} />
-          <meshStandardMaterial color="#3d2f1f" roughness={0.85} />
+        <mesh position={[0, 0.75, -0.8]} receiveShadow castShadow>
+          <boxGeometry args={[3.2, 0.85, 0.35]} />
+          <meshStandardMaterial color="#3a2f24" roughness={0.8} metalness={0.03} />
         </mesh>
-        {[-1.6, 1.6].map((x) => (
+        {[-1.7, 1.7].map((x) => (
           <mesh key={x} position={[x, 0.35, 0]} castShadow>
-            <boxGeometry args={[0.35, 0.8, 1.4]} />
-            <meshStandardMaterial color="#3d2f1f" roughness={0.85} />
+            <boxGeometry args={[0.4, 0.85, 1.5]} />
+            <meshStandardMaterial color="#2d2318" roughness={0.8} metalness={0.05} />
           </mesh>
         ))}
       </group>
 
-      {/* Coffee Table - Premium */}
-      <group position={[2.2, -0.8, 0.8]}>
+      {/* Premium Coffee Table */}
+      <group position={[0, -0.8, 1.2]}>
         <mesh position={[0, 0, 0]} receiveShadow castShadow>
-          <boxGeometry args={[1.4, 0.12, 0.9]} />
+          <boxGeometry args={[1.6, 0.14, 1.1]} />
           <meshStandardMaterial 
-            color="#6d5345" 
-            roughness={0.4}
-            metalness={0.1}
+            color="#7a6655" 
+            roughness={0.35}
+            metalness={0.15}
           />
         </mesh>
-        {[[-0.6, -0.35], [0.6, -0.35], [-0.6, 0.35], [0.6, 0.35]].map((pos, i) => (
+        {[[-0.7, -0.4], [0.7, -0.4], [-0.7, 0.4], [0.7, 0.4]].map((pos, i) => (
           <mesh key={i} position={[pos[0], pos[1], 0]} castShadow>
-            <cylinderGeometry args={[0.08, 0.08, 0.35, 16]} />
+            <cylinderGeometry args={[0.1, 0.1, 0.4, 16]} />
             <meshStandardMaterial 
-              color="#5d4345" 
-              roughness={0.6}
+              color="#2d2318" 
+              roughness={0.65}
+              metalness={0.1}
             />
           </mesh>
         ))}
       </group>
 
-      {/* Designer Floor Lamp */}
-      <group position={[4, -0.8, 1]}>
-        <mesh position={[0, 0.4, 0]} castShadow>
-          <cylinderGeometry args={[0.1, 0.1, 0.8, 16]} />
-          <meshStandardMaterial color="#1a1a1a" roughness={0.3} metalness={0.2} />
+      {/* Premium Floor Lamp */}
+      <group position={[4.5, -0.8, 0.5]}>
+        <mesh position={[0, 0.5, 0]} castShadow>
+          <cylinderGeometry args={[0.12, 0.12, 1, 16]} />
+          <meshStandardMaterial color="#0d0a08" roughness={0.25} metalness={0.3} />
         </mesh>
-        <mesh position={[0, 1, 0]} castShadow>
-          <coneGeometry args={[0.35, 0.4, 24]} />
+        <mesh position={[0, 1.15, 0]} castShadow>
+          <coneGeometry args={[0.4, 0.45, 24]} />
           <meshStandardMaterial 
-            color="#fff8dc" 
-            roughness={0.2}
+            color="#fffef0" 
+            roughness={0.15}
             emissive="#ffedd5"
-            emissiveIntensity={0.4}
+            emissiveIntensity={0.5}
           />
         </mesh>
-        <pointLight position={[0, 1, 0]} intensity={1.5} color="#ffe8a8" castShadow />
+        <pointLight position={[0, 1.15, 0]} intensity={1.8} color="#ffefd5" castShadow />
       </group>
 
       {/* Decorative Plant - Premium */}
@@ -538,18 +539,19 @@ function Room() {
         />
       </mesh>
 
-      {/* Ambient + Directional Lighting */}
-      <ambientLight intensity={0.6} color="#f5e6d3" />
+      {/* Premium Lighting Setup */}
+      <ambientLight intensity={0.65} color="#f5e6d3" />
       <directionalLight 
-        position={[6, 10, 8]} 
-        intensity={1.4} 
+        position={[7, 12, 9]} 
+        intensity={1.5} 
         castShadow
-        color="#ffe8cc"
+        color="#ffebd0"
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
       />
-      <pointLight position={[-3, 2.5, 2]} intensity={0.8} color="#ffedd5" />
-      <pointLight position={[5, 1.5, -5]} intensity={0.6} color="#fff8dc" />
+      <pointLight position={[-4, 2.8, 2.5]} intensity={1} color="#ffedd5" />
+      <pointLight position={[5, 2, -5]} intensity={0.8} color="#fff8dc" />
+      <pointLight position={[0, 0.5, 0]} intensity={0.3} color="#f5e6d3" />
     </>
   );
 }
