@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Send, MessageCircle, X } from 'lucide-react';
 import { getPersonality } from '@/lib/data/laptop-personalities';
+import { getAIResponse, isAIEnabled, getAIApiKey } from '@/lib/companion-ai';
 
 interface Message {
   id: string;
@@ -128,7 +129,7 @@ export function LaptopCompanionChat({ laptopId, onClose }: LaptopCompanionChatPr
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
 
     const userMessage: Message = {
@@ -139,14 +140,34 @@ export function LaptopCompanionChat({ laptopId, onClose }: LaptopCompanionChatPr
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const userInput = input;
     setInput('');
     setIsTyping(true);
 
+    const aiEnabled = isAIEnabled();
+    const aiKey = getAIApiKey();
+
+    let response: string | null = null;
+    
+    if (aiEnabled && aiKey) {
+      try {
+        response = await getAIResponse(userInput, personality.personality, {
+          enabled: true,
+          apiKey: aiKey
+        });
+      } catch (error) {
+        console.log('AI response failed, using fallback');
+      }
+    }
+
+    if (!response) {
+      response = getCompanionResponse(userInput);
+    }
+
     setTimeout(() => {
       setIsTyping(false);
-      const response = getCompanionResponse(input);
       addCompanionMessage(response);
-    }, 500 + Math.random() * 1000);
+    }, 500 + Math.random() * 500);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
