@@ -101,9 +101,6 @@ export function BattleDashboard({ socket, onStartMatch, isSearching, error }: Ba
                   <p className="text-slate-400 text-sm mb-2">
                     {LAPTOPS.find(l => l.id === profile.selectedLaptop)?.description}
                   </p>
-                  <p className="text-blue-400 text-xs">
-                    💬 Click "Chat" to talk to your companion!
-                  </p>
                 </div>
               </>
             )}
