@@ -148,11 +148,13 @@ interface Keyboard3DProps {
 
 function Keyboard3D({ position, team, playerId, nickname, role, lastKeyPressed, isMe, laptopColor }: Keyboard3DProps) {
   const meshRef = useRef<THREE.Group>(null);
+  const screenRef = useRef<THREE.Mesh>(null);
   const [keyStates, setKeyStates] = useState<Set<number>>(new Set());
   
   const teamColor = team === 'blue' ? '#3b82f6' : '#ef4444';
   const baseColor = laptopColor && isMe ? laptopColor : teamColor;
   const highlightColor = isMe ? (laptopColor || '#fbbf24') : teamColor;
+  const accentColor = team === 'blue' ? '#60a5fa' : '#f87171';
 
   useEffect(() => {
     if (lastKeyPressed !== null && lastKeyPressed !== undefined) {
@@ -167,87 +169,153 @@ function Keyboard3D({ position, team, playerId, nickname, role, lastKeyPressed, 
     }
   }, [lastKeyPressed]);
 
-  useFrame(() => {
+  useFrame(({ clock }) => {
     if (meshRef.current && isMe) {
-      meshRef.current.rotation.y = Math.sin(Date.now() * 0.001) * 0.05;
+      meshRef.current.rotation.y = Math.sin(clock.getElapsedTime() * 0.5) * 0.08;
+    }
+    // Glow effect on screen
+    if (screenRef.current && isMe) {
+      screenRef.current.material.emissiveIntensity = 0.3 + Math.sin(clock.getElapsedTime() * 2) * 0.1;
     }
   });
 
   return (
     <group ref={meshRef} position={position}>
-      {/* Keyboard base */}
-      <mesh position={[0, 0.1, 0]} castShadow>
-        <boxGeometry args={[4, 0.2, 2]} />
+      {/* Laptop base/body */}
+      <mesh position={[0, 0.15, 0]} castShadow>
+        <boxGeometry args={[4.2, 0.3, 2.2]} />
         <meshStandardMaterial 
-          color={baseColor}
-          emissive={baseColor}
-          emissiveIntensity={isMe ? 0.4 : 0.1}
-          metalness={laptopColor && isMe ? 0.6 : 0.2}
-          roughness={laptopColor && isMe ? 0.3 : 0.5}
+          color="#2d3748"
+          roughness={0.4}
+          metalness={0.5}
+          emissive="#1a202c"
+          emissiveIntensity={0.1}
         />
       </mesh>
       
-      {/* Keys - Row 1 */}
-      {[...Array(10)].map((_, i) => {
+      {/* Keyboard surface - dark with metallic finish */}
+      <mesh position={[0, 0.32, 0.3]} castShadow>
+        <boxGeometry args={[4, 1.8, 0.05]} />
+        <meshStandardMaterial 
+          color="#1f2937"
+          roughness={0.3}
+          metalness={0.4}
+        />
+      </mesh>
+      
+      {/* Keys - Row 1 (larger section) */}
+      {[...Array(11)].map((_, i) => {
         const isPressed = keyStates.has(i);
         return (
           <mesh 
             key={`key-r1-${i}`} 
-            position={[-1.8 + i * 0.4, isPressed ? 0.15 : 0.25, -0.6]} 
+            position={[-2 + i * 0.36, isPressed ? 0.38 : 0.43, 0.2]} 
             castShadow
           >
-            <boxGeometry args={[0.35, 0.2, 0.35]} />
+            <boxGeometry args={[0.32, 0.14, 0.3]} />
             <meshStandardMaterial 
-              color={isPressed ? '#ffffff' : '#1f2937'}
-              emissive={isPressed ? '#ffffff' : '#000000'}
-              emissiveIntensity={isPressed ? 0.5 : 0}
+              color={isPressed ? '#e5e7eb' : '#374151'}
+              emissive={isPressed ? accentColor : '#000000'}
+              emissiveIntensity={isPressed ? 0.3 : 0}
+              roughness={isPressed ? 0.4 : 0.6}
+              metalness={isPressed ? 0.3 : 0.1}
             />
           </mesh>
         );
       })}
       
-      {/* Keys - Row 2 */}
-      {[...Array(9)].map((_, i) => {
-        const isPressed = keyStates.has(i + 10);
+      {/* Keys - Row 2 (offset for realism) */}
+      {[...Array(10)].map((_, i) => {
+        const isPressed = keyStates.has(i + 11);
         return (
           <mesh 
             key={`key-r2-${i}`} 
-            position={[-1.6 + i * 0.4, isPressed ? 0.15 : 0.25, 0]} 
+            position={[-1.82 + i * 0.36, isPressed ? 0.38 : 0.43, 0.5]} 
             castShadow
           >
-            <boxGeometry args={[0.35, 0.2, 0.35]} />
+            <boxGeometry args={[0.32, 0.14, 0.3]} />
             <meshStandardMaterial 
-              color={isPressed ? '#ffffff' : '#1f2937'}
-              emissive={isPressed ? '#ffffff' : '#000000'}
-              emissiveIntensity={isPressed ? 0.5 : 0}
+              color={isPressed ? '#e5e7eb' : '#374151'}
+              emissive={isPressed ? accentColor : '#000000'}
+              emissiveIntensity={isPressed ? 0.3 : 0}
+              roughness={isPressed ? 0.4 : 0.6}
+              metalness={isPressed ? 0.3 : 0.1}
             />
           </mesh>
         );
       })}
       
-      {/* Spacebar */}
+      {/* Spacebar - large key */}
       <mesh 
-        position={[0, keyStates.has(19) ? 0.15 : 0.25, 0.6]} 
+        position={[0, keyStates.has(21) ? 0.38 : 0.43, 0.8]} 
         castShadow
       >
-        <boxGeometry args={[3, 0.2, 0.35]} />
+        <boxGeometry args={[3, 0.14, 0.3]} />
         <meshStandardMaterial 
-          color={keyStates.has(19) ? '#ffffff' : '#1f2937'}
-          emissive={keyStates.has(19) ? '#ffffff' : '#000000'}
-          emissiveIntensity={keyStates.has(19) ? 0.5 : 0}
+          color={keyStates.has(21) ? '#e5e7eb' : '#374151'}
+          emissive={keyStates.has(21) ? accentColor : '#000000'}
+          emissiveIntensity={keyStates.has(21) ? 0.3 : 0}
+          roughness={keyStates.has(21) ? 0.4 : 0.6}
+          metalness={keyStates.has(21) ? 0.3 : 0.1}
         />
       </mesh>
       
-      {/* Player label above keyboard */}
-      <mesh position={[0, 2, 0]}>
-        <boxGeometry args={[3, 0.5, 0.1]} />
-        <meshStandardMaterial color={teamColor} />
+      {/* Screen bezel */}
+      <mesh position={[0, 1.4, -0.6]}>
+        <boxGeometry args={[4.3, 2.5, 0.15]} />
+        <meshStandardMaterial 
+          color="#1a1a1a"
+          roughness={0.3}
+          metalness={0.5}
+        />
       </mesh>
       
-      {/* Glow effect for my keyboard */}
+      {/* Screen display with glow */}
+      <mesh ref={screenRef} position={[0, 1.4, -0.35]} castShadow>
+        <boxGeometry args={[4.0, 2.35, 0.08]} />
+        <meshStandardMaterial 
+          color={baseColor}
+          emissive={baseColor}
+          emissiveIntensity={0.3}
+          roughness={0.1}
+          metalness={0.3}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      
+      {/* Screen shine/reflection */}
+      <mesh position={[0, 1.5, -0.34]}>
+        <boxGeometry args={[3.8, 2.2, 0.01]} />
+        <meshBasicMaterial 
+          color="#ffffff"
+          transparent
+          opacity={isMe ? 0.15 : 0.08}
+        />
+      </mesh>
+      
+      {/* Laptop hinge/connector */}
+      <mesh position={[0, 0.8, 0.05]}>
+        <boxGeometry args={[4.2, 0.1, 0.08]} />
+        <meshStandardMaterial 
+          color="#0f172a"
+          roughness={0.3}
+          metalness={0.6}
+        />
+      </mesh>
+      
+      {/* Status indicator glow */}
       {isMe && (
-        <pointLight position={[0, 1, 0]} color={highlightColor} intensity={2} distance={5} />
+        <>
+          <pointLight position={[0, 1.5, -0.2]} color={highlightColor} intensity={1.5} distance={3} />
+          <pointLight position={[0, 0.4, 0.3]} color={accentColor} intensity={1} distance={2} />
+        </>
       )}
+      
+      {/* Team identifier beneath laptop */}
+      <mesh position={[0, -0.3, 0]}>
+        <boxGeometry args={[4.2, 0.15, 2.2]} />
+        <meshStandardMaterial color={teamColor} emissive={teamColor} emissiveIntensity={isMe ? 0.4 : 0.2} />
+      </mesh>
     </group>
   );
 }
@@ -530,20 +598,35 @@ function Scene({ gameState, selectedLaptop, mySocketId, selectedMap }: { gameSta
   const bluePlayers = playersArray.filter(p => p.team === 'blue');
   const redPlayers = playersArray.filter(p => p.team === 'red');
 
+  // Calculate positions based on team size
+  const getTeamPositions = (teamSize: number): number[] => {
+    switch (teamSize) {
+      case 1:
+        return [0];
+      case 2:
+        return [-5, 5];
+      case 3:
+        return [-8, 0, 8];
+      case 5:
+        return [-9.5, -4.5, 0, 4.5, 9.5];
+      default:
+        // Fallback: evenly distribute
+        const spacing = 16 / (teamSize - 1 || 1);
+        return [...Array(teamSize)].map((_, i) => -8 + i * spacing);
+    }
+  };
+
+  const bluePositions = getTeamPositions(bluePlayers.length);
+  const redPositions = getTeamPositions(redPlayers.length);
+
   // Position blue team keyboards (bottom of screen)
   bluePlayers.forEach((player, idx) => {
-    // For 1v1 (solo), center the laptop. For 2v2+, spread them left/right
-    const isSolo = bluePlayers.length === 1 && redPlayers.length === 1;
-    const xPos = isSolo ? 0 : (idx === 0 ? -5 : 5);
-    playerPositions.set(player.id, [xPos, 0, 10]);
+    playerPositions.set(player.id, [bluePositions[idx], 0, 10]);
   });
 
   // Position red team keyboards (top of screen)
   redPlayers.forEach((player, idx) => {
-    // For 1v1 (solo), center the laptop. For 2v2+, spread them left/right
-    const isSolo = bluePlayers.length === 1 && redPlayers.length === 1;
-    const xPos = isSolo ? 0 : (idx === 0 ? -5 : 5);
-    playerPositions.set(player.id, [xPos, 0, -10]);
+    playerPositions.set(player.id, [redPositions[idx], 0, -10]);
   });
 
   return (
