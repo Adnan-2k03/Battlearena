@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Send, MessageCircle, X } from 'lucide-react';
+import { Send, MessageCircle, X, Volume2, VolumeX } from 'lucide-react';
 import { getPersonality } from '@/lib/data/laptop-personalities';
 import { getAIResponse, isAIEnabled, getAIApiKey } from '@/lib/companion-ai';
 
@@ -56,8 +56,83 @@ export function LaptopCompanionChat({ laptopId, onClose }: LaptopCompanionChatPr
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    return localStorage.getItem('companion_voice_enabled') === 'true';
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const personality = getPersonality(laptopId);
+
+  const speakText = (text: string) => {
+    if (!voiceEnabled || !('speechSynthesis' in window)) return;
+
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    switch(personality.personality) {
+      case 'friendly':
+        utterance.pitch = 1.1;
+        utterance.rate = 1.0;
+        break;
+      case 'energetic':
+        utterance.pitch = 1.3;
+        utterance.rate = 1.2;
+        break;
+      case 'cool':
+        utterance.pitch = 0.9;
+        utterance.rate = 0.95;
+        break;
+      case 'elegant':
+        utterance.pitch = 1.15;
+        utterance.rate = 0.9;
+        break;
+      case 'fierce':
+        utterance.pitch = 0.85;
+        utterance.rate = 1.1;
+        break;
+      case 'mysterious':
+        utterance.pitch = 0.95;
+        utterance.rate = 0.85;
+        break;
+      case 'royal':
+        utterance.pitch = 1.0;
+        utterance.rate = 0.9;
+        break;
+      case 'cosmic':
+        utterance.pitch = 0.95;
+        utterance.rate = 0.95;
+        break;
+      default:
+        utterance.pitch = 1.0;
+        utterance.rate = 1.0;
+    }
+
+    utterance.volume = 0.8;
+    
+    const voices = window.speechSynthesis.getVoices();
+    const femaleVoice = voices.find(voice => 
+      voice.name.toLowerCase().includes('female') || 
+      voice.name.toLowerCase().includes('samantha') ||
+      voice.name.toLowerCase().includes('zira')
+    );
+    if (femaleVoice) {
+      utterance.voice = femaleVoice;
+    }
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const toggleVoice = () => {
+    const newState = !voiceEnabled;
+    setVoiceEnabled(newState);
+    localStorage.setItem('companion_voice_enabled', String(newState));
+    
+    if (newState) {
+      speakText("Voice enabled! I can talk to you now!");
+    } else {
+      window.speechSynthesis.cancel();
+    }
+  };
 
   useEffect(() => {
     const greeting = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
@@ -80,6 +155,8 @@ export function LaptopCompanionChat({ laptopId, onClose }: LaptopCompanionChatPr
       timestamp: Date.now()
     };
     setMessages(prev => [...prev, newMessage]);
+    
+    speakText(text);
   };
 
   const getCompanionResponse = (userMessage: string): string => {
@@ -183,16 +260,27 @@ export function LaptopCompanionChat({ laptopId, onClose }: LaptopCompanionChatPr
           <MessageCircle className="w-5 h-5 text-blue-400" />
           <h3 className="font-bold text-white">Battle Companion Chat</h3>
         </div>
-        {onClose && (
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
-            onClick={onClose}
-            className="text-slate-400 hover:text-white"
+            onClick={toggleVoice}
+            className={voiceEnabled ? "text-green-400 hover:text-green-300" : "text-slate-400 hover:text-white"}
+            title={voiceEnabled ? "Voice ON - Click to disable" : "Voice OFF - Click to enable"}
           >
-            <X className="w-4 h-4" />
+            {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
           </Button>
-        )}
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="text-slate-400 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -246,9 +334,17 @@ export function LaptopCompanionChat({ laptopId, onClose }: LaptopCompanionChatPr
             <Send className="w-4 h-4" />
           </Button>
         </div>
-        <p className="text-xs text-slate-500 mt-2">
-          Try: "Give me a tip" or "I need encouragement" or "How to win?"
-        </p>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-xs text-slate-500">
+            Try: "Give me a tip" or "I need encouragement" or "How to win?"
+          </p>
+          {voiceEnabled && (
+            <p className="text-xs text-green-400 flex items-center gap-1">
+              <Volume2 className="w-3 h-3" />
+              Voice ON
+            </p>
+          )}
+        </div>
       </div>
     </Card>
   );

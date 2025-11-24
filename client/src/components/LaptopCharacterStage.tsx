@@ -148,61 +148,98 @@ function LaptopCharacter({ laptopId, onClick }: LaptopCharacterProps) {
         </>
       )}
 
-      {/* Mouth */}
+      {/* Mouth - Redesigned for better appearance */}
       {personality.mouthType === 'smile' && (
         <>
-          <mesh position={[0, -0.15, 0.06]} rotation={[0, 0, Math.PI]}>
-            <torusGeometry args={[0.25, 0.04, 16, 32, Math.PI]} />
-            <meshStandardMaterial color="#ff6b9d" emissive="#ff1493" emissiveIntensity={0.3} />
+          {/* Main smile curve - wider and more natural */}
+          <mesh position={[0, -0.2, 0.06]} rotation={[Math.PI / 2, 0, 0]} scale={[1.5, 1, 0.8]}>
+            <torusGeometry args={[0.2, 0.03, 16, 64, Math.PI]} />
+            <meshStandardMaterial 
+              color="#ff4d88" 
+              emissive="#ff1493" 
+              emissiveIntensity={0.4}
+            />
           </mesh>
-          <mesh position={[-0.15, -0.12, 0.08]}>
-            <sphereGeometry args={[0.04, 16, 16]} />
-            <meshStandardMaterial color="#ffffff" />
+          {/* Inner mouth glow */}
+          <mesh position={[0, -0.22, 0.05]}>
+            <sphereGeometry args={[0.15, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+            <meshStandardMaterial 
+              color="#ff6b9d" 
+              transparent 
+              opacity={0.6}
+              emissive="#ff1493"
+              emissiveIntensity={0.2}
+            />
           </mesh>
-          <mesh position={[0.15, -0.12, 0.08]}>
-            <sphereGeometry args={[0.04, 16, 16]} />
-            <meshStandardMaterial color="#ffffff" />
+          {/* Cute teeth */}
+          <mesh position={[-0.12, -0.18, 0.08]}>
+            <sphereGeometry args={[0.035, 16, 16]} />
+            <meshStandardMaterial color="#ffffff" roughness={0.1} />
+          </mesh>
+          <mesh position={[0.12, -0.18, 0.08]}>
+            <sphereGeometry args={[0.035, 16, 16]} />
+            <meshStandardMaterial color="#ffffff" roughness={0.1} />
           </mesh>
         </>
       )}
 
       {personality.mouthType === 'grin' && (
         <>
-          <mesh position={[0, -0.15, 0.06]} rotation={[0, 0, Math.PI]}>
-            <torusGeometry args={[0.28, 0.05, 16, 32, Math.PI]} />
-            <meshStandardMaterial color="#ff6b9d" emissive="#ff1493" emissiveIntensity={0.4} />
+          {/* Wide energetic grin */}
+          <mesh position={[0, -0.18, 0.06]} rotation={[Math.PI / 2, 0, 0]} scale={[1.8, 1, 0.9]}>
+            <torusGeometry args={[0.22, 0.035, 16, 64, Math.PI]} />
+            <meshStandardMaterial 
+              color="#ff3366" 
+              emissive="#ff1493" 
+              emissiveIntensity={0.5}
+            />
           </mesh>
-          <mesh position={[-0.2, -0.12, 0.08]}>
-            <boxGeometry args={[0.06, 0.08, 0.02]} />
-            <meshStandardMaterial color="#ffffff" />
-          </mesh>
-          <mesh position={[-0.1, -0.12, 0.08]}>
-            <boxGeometry args={[0.06, 0.08, 0.02]} />
-            <meshStandardMaterial color="#ffffff" />
-          </mesh>
-          <mesh position={[0.1, -0.12, 0.08]}>
-            <boxGeometry args={[0.06, 0.08, 0.02]} />
-            <meshStandardMaterial color="#ffffff" />
-          </mesh>
-          <mesh position={[0.2, -0.12, 0.08]}>
-            <boxGeometry args={[0.06, 0.08, 0.02]} />
-            <meshStandardMaterial color="#ffffff" />
+          {/* Multiple teeth for big smile */}
+          {[-0.18, -0.09, 0.09, 0.18].map((x, i) => (
+            <mesh key={i} position={[x, -0.16, 0.08]}>
+              <boxGeometry args={[0.05, 0.07, 0.02]} />
+              <meshStandardMaterial color="#ffffff" roughness={0.1} />
+            </mesh>
+          ))}
+          {/* Gum line for realism */}
+          <mesh position={[0, -0.13, 0.075]}>
+            <boxGeometry args={[0.45, 0.02, 0.02]} />
+            <meshStandardMaterial color="#ffaac9" />
           </mesh>
         </>
       )}
       
       {personality.mouthType === 'smirk' && (
-        <mesh position={[0.1, -0.15, 0.06]} rotation={[0, 0, -0.3]}>
-          <torusGeometry args={[0.15, 0.04, 16, 32, Math.PI]} />
-          <meshStandardMaterial color="#ff6b9d" emissive="#ff1493" emissiveIntensity={0.3} />
-        </mesh>
+        <>
+          {/* Confident one-sided smirk */}
+          <mesh position={[0.08, -0.18, 0.06]} rotation={[Math.PI / 2.2, 0, -0.4]} scale={[1, 1, 0.7]}>
+            <torusGeometry args={[0.15, 0.03, 16, 64, Math.PI * 0.8]} />
+            <meshStandardMaterial 
+              color="#ff5588" 
+              emissive="#ff1493" 
+              emissiveIntensity={0.3}
+            />
+          </mesh>
+          {/* Single visible tooth for character */}
+          <mesh position={[0.1, -0.16, 0.08]}>
+            <sphereGeometry args={[0.03, 16, 16]} />
+            <meshStandardMaterial color="#ffffff" roughness={0.1} />
+          </mesh>
+        </>
       )}
       
       {personality.mouthType === 'neutral' && (
-        <mesh position={[0, -0.15, 0.06]}>
-          <boxGeometry args={[0.3, 0.03, 0.02]} />
-          <meshStandardMaterial color="#ff6b9d" />
-        </mesh>
+        <>
+          {/* Gentle content expression */}
+          <mesh position={[0, -0.18, 0.06]}>
+            <capsuleGeometry args={[0.015, 0.25, 4, 16]} />
+            <meshStandardMaterial 
+              color="#ff6b9d"
+              emissive="#ff4488"
+              emissiveIntensity={0.2}
+            />
+          </mesh>
+        </>
       )}
 
       {/* Left Hand */}
