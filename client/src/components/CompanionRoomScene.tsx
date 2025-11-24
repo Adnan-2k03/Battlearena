@@ -653,7 +653,7 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
           onPositionChange={setLaptopPos}
         />
       </KeyboardControls>
-      <OrbitControls enableZoom={true} enablePan={true} minDistance={3} maxDistance={15} />
+      <OrbitControls enableZoom={true} enablePan={true} minDistance={2} maxDistance={50} />
     </Canvas>
   );
 }

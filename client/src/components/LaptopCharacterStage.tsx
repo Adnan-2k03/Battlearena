@@ -308,10 +308,12 @@ export function LaptopCharacterStage({
       <Canvas shadows>
         <PerspectiveCamera makeDefault position={[0, 0, 4]} />
         <OrbitControls 
-          enableZoom={false} 
+          enableZoom={true} 
           enablePan={false}
           minPolarAngle={Math.PI / 3}
           maxPolarAngle={Math.PI / 2}
+          minDistance={2}
+          maxDistance={8}
         />
         <ambientLight intensity={0.6} />
         <spotLight 
