@@ -62,7 +62,6 @@ interface AdminSettings {
   instantCharge: boolean;
   controlledTeam: Team | null;
   gameSpeedMultiplier: number;
-  adminTeam: Team | null;
 }
 
 interface GameRoom {
@@ -433,8 +432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             godMode: false,
             instantCharge: false,
             controlledTeam: null,
-            gameSpeedMultiplier: 1.0,
-            adminTeam: null
+            gameSpeedMultiplier: 1.0
           }
         };
         
@@ -558,8 +556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             godMode: false,
             instantCharge: false,
             controlledTeam: null,
-            gameSpeedMultiplier: 1.0,
-            adminTeam: null
+            gameSpeedMultiplier: 1.0
           }
         };
         rooms.set(roomId, room);
@@ -974,10 +971,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!player || !player.isAdmin) {
         socket.emit("admin_error", { message: "Only admins can update settings" });
         return;
-      }
-
-      if (player.team && !room.adminSettings.adminTeam) {
-        room.adminSettings.adminTeam = player.team;
       }
 
       room.adminSettings = { ...room.adminSettings, ...settings };
