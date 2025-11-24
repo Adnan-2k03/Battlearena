@@ -10,6 +10,18 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 24, 2025)
 
+### Customization System Overhaul
+- **Home Page Redesign**: Improved design with larger buttons, modern gradients, and better visual hierarchy
+- **Victory Modal Update**: Added "Return to Home" button for easier navigation after match ends
+- **Laptop/Ability Separation**: Split customization into two distinct systems:
+  - **Laptop Skins**: Purely cosmetic visual customization with unique colors (Client Defender, Shadow Strike, Neon Pulse, etc.)
+  - **Abilities**: Gameplay modifiers with stat bonuses (defined in separate abilities.ts file)
+- **3D Laptop Visualization**: Selected laptop skin now appears on player's keyboard in 3D arena
+  - Uses socket ID for proper player identification
+  - Displays custom laptop color with enhanced metallic/emissive effects
+  - Only applies to the actual user's keyboard, not other players
+- **Admin Auto-Unlock**: Users with "admin" prefix in nickname automatically own all laptops, maps, abilities, and receive unlimited currency
+
 ### Audio Controls Enhancement
 - Removed the "Start Game with Sound" modal screen
 - Added speaker toggle button directly in the lobby screen (top-right corner)
