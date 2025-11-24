@@ -293,47 +293,6 @@ function Room() {
         />
       </mesh>
 
-      {/* Ceiling */}
-      <mesh position={[0, 3.2, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[16, 16]} />
-        <meshStandardMaterial 
-          color="#e8dcc8" 
-          roughness={0.8}
-        />
-      </mesh>
-
-      {/* Crown Molding - top trim where walls meet ceiling */}
-      <mesh position={[0, 3.15, -6]} receiveShadow castShadow>
-        <boxGeometry args={[16, 0.2, 0.12]} />
-        <meshStandardMaterial color="#5d4e3a" roughness={0.6} metalness={0.1} />
-      </mesh>
-      <mesh position={[-8, 3.15, 0]} receiveShadow castShadow>
-        <boxGeometry args={[0.12, 0.2, 16]} />
-        <meshStandardMaterial color="#5d4e3a" roughness={0.6} metalness={0.1} />
-      </mesh>
-      <mesh position={[8, 3.15, 0]} receiveShadow castShadow>
-        <boxGeometry args={[0.12, 0.2, 16]} />
-        <meshStandardMaterial color="#5d4e3a" roughness={0.6} metalness={0.1} />
-      </mesh>
-
-      {/* Corner trim at ceiling-wall junctions */}
-      <mesh position={[-8, 3.08, -6]} receiveShadow castShadow>
-        <boxGeometry args={[0.25, 0.25, 0.25]} />
-        <meshStandardMaterial color="#4a3a2a" roughness={0.65} />
-      </mesh>
-      <mesh position={[8, 3.08, -6]} receiveShadow castShadow>
-        <boxGeometry args={[0.25, 0.25, 0.25]} />
-        <meshStandardMaterial color="#4a3a2a" roughness={0.65} />
-      </mesh>
-      <mesh position={[-8, 3.08, 6]} receiveShadow castShadow>
-        <boxGeometry args={[0.25, 0.25, 0.25]} />
-        <meshStandardMaterial color="#4a3a2a" roughness={0.65} />
-      </mesh>
-      <mesh position={[8, 3.08, 6]} receiveShadow castShadow>
-        <boxGeometry args={[0.25, 0.25, 0.25]} />
-        <meshStandardMaterial color="#4a3a2a" roughness={0.65} />
-      </mesh>
-
       {/* Premium Reading Corner - BOOKSHELF LEFT SIDE */}
       <group position={[-1.8, 0, -3.8]}>
         {/* Floor cushion */}
