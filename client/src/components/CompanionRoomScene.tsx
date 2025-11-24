@@ -476,8 +476,8 @@ function Room() {
         ))}
       </group>
 
-      {/* Premium Coffee Table - Glass & Walnut */}
-      <group position={[1, -0.8, 2]}>
+      {/* Premium Coffee Table - Glass & Walnut - IN FRONT OF SOFA */}
+      <group position={[-9, -0.8, 1]}>
         {/* Glass top surface */}
         <mesh position={[0, 0.08, 0]} receiveShadow castShadow>
           <boxGeometry args={[1.8, 0.08, 1.2]} />
