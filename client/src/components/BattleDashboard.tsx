@@ -15,14 +15,14 @@ import { cn } from '@/lib/utils';
 
 interface BattleDashboardProps {
   socket: Socket | null;
-  onStartMatch: (mode: 'team' | 'solo') => void;
+  onStartMatch: (mode: 'solo' | 'team' | 'trio' | 'pentad') => void;
   isSearching: boolean;
   error?: string;
 }
 
 export function BattleDashboard({ socket, onStartMatch, isSearching, error }: BattleDashboardProps) {
   const { profile, selectLaptop, selectMap, purchaseLaptop } = usePlayerProfile();
-  const [gameMode, setGameMode] = useState<'team' | 'solo'>('solo');
+  const [gameMode, setGameMode] = useState<'solo' | 'team' | 'trio' | 'pentad'>('solo');
   const [purchaseError, setPurchaseError] = useState('');
   const [showChat, setShowChat] = useState(false);
 

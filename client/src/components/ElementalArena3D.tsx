@@ -144,9 +144,10 @@ interface Keyboard3DProps {
   lastKeyPressed?: number | null;
   isMe?: boolean;
   laptopColor?: string;
+  rotationY?: number;
 }
 
-function Keyboard3D({ position, team, playerId, nickname, role, lastKeyPressed, isMe, laptopColor }: Keyboard3DProps) {
+function Keyboard3D({ position, team, playerId, nickname, role, lastKeyPressed, isMe, laptopColor, rotationY = 0 }: Keyboard3DProps) {
   const meshRef = useRef<THREE.Group>(null);
   const screenRef = useRef<THREE.Mesh>(null);
   const [keyStates, setKeyStates] = useState<Set<number>>(new Set());
@@ -180,7 +181,7 @@ function Keyboard3D({ position, team, playerId, nickname, role, lastKeyPressed, 
   });
 
   return (
-    <group ref={meshRef} position={position}>
+    <group ref={meshRef} position={position} rotation={[0, rotationY, 0]}>
       {/* Laptop base/body */}
       <mesh position={[0, 0.15, 0]} castShadow>
         <boxGeometry args={[4.2, 0.3, 2.2]} />
@@ -667,6 +668,9 @@ function Scene({ gameState, selectedLaptop, mySocketId, selectedMap }: { gameSta
         const laptopData = isMe && selectedLaptop ? getLaptopById(selectedLaptop) : undefined;
         const laptopColor = laptopData?.color;
         
+        // Red team keyboards face toward their side (180 degree rotation)
+        const rotationY = player.team === 'red' ? Math.PI : 0;
+        
         return (
           <Keyboard3D
             key={player.id}
@@ -678,6 +682,7 @@ function Scene({ gameState, selectedLaptop, mySocketId, selectedMap }: { gameSta
             lastKeyPressed={player.lastKeyPressed}
             isMe={isMe}
             laptopColor={laptopColor}
+            rotationY={rotationY}
           />
         );
       })}

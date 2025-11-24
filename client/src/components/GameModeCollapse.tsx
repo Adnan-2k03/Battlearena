@@ -3,8 +3,8 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface GameModeCollapseProps {
-  selectedMode: 'team' | 'solo';
-  onModeChange: (mode: 'team' | 'solo') => void;
+  selectedMode: 'solo' | 'team' | 'trio' | 'pentad';
+  onModeChange: (mode: 'solo' | 'team' | 'trio' | 'pentad') => void;
 }
 
 export function GameModeCollapse({ selectedMode, onModeChange }: GameModeCollapseProps) {
@@ -12,7 +12,9 @@ export function GameModeCollapse({ selectedMode, onModeChange }: GameModeCollaps
 
   const modes = [
     { id: 'solo', label: '1v1 Solo', icon: '⚔️' },
-    { id: 'team', label: '2v2 Team', icon: '👥' }
+    { id: 'team', label: '2v2 Team', icon: '👥' },
+    { id: 'trio', label: '3v3 Trio', icon: '🎪' },
+    { id: 'pentad', label: '5v5 Squad', icon: '⚡' }
   ];
 
   const selectedModeData = modes.find(m => m.id === selectedMode) || modes[0];

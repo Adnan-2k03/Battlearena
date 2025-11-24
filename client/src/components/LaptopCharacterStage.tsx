@@ -66,204 +66,134 @@ function LaptopCharacter({ laptopId, onClick }: LaptopCharacterProps) {
       onPointerOver={() => setHovered(true)}
       onPointerOut={() => setHovered(false)}
     >
-      {/* Body - Laptop Screen */}
-      <mesh position={[0, 0, 0]}>
-        <boxGeometry args={[1.2, 0.8, 0.1]} />
+      {/* Laptop base/chassis - metallic body */}
+      <mesh position={[0, -0.05, 0]} castShadow>
+        <boxGeometry args={[1.4, 0.08, 1.0]} />
         <meshStandardMaterial 
-          color={color} 
-          metalness={0.6} 
-          roughness={0.3}
-          emissive={color}
-          emissiveIntensity={hovered ? 0.3 : 0.1}
+          color="#1a1a1a"
+          metalness={0.7}
+          roughness={0.2}
+          emissive="#0a0a0a"
         />
       </mesh>
 
-      {/* Keyboard Base */}
-      <mesh position={[0, -0.5, 0.3]} rotation={[0.2, 0, 0]}>
-        <boxGeometry args={[1.2, 0.1, 0.8]} />
-        <meshStandardMaterial color={color} metalness={0.7} roughness={0.2} />
+      {/* Screen bezel - dark frame */}
+      <mesh position={[0, 0.15, -0.08]}>
+        <boxGeometry args={[1.5, 0.95, 0.05]} />
+        <meshStandardMaterial 
+          color="#0d0d0d"
+          metalness={0.5}
+          roughness={0.3}
+        />
       </mesh>
 
-      {/* Eyes */}
-      {personality.eyeType === 'round' && (
-        <>
-          <mesh position={[-0.25, 0.15, 0.06]}>
-            <sphereGeometry args={[0.15, 32, 32]} />
-            <meshStandardMaterial color="#ffffff" />
-          </mesh>
-          <mesh position={[-0.25, 0.15, 0.12]}>
-            <sphereGeometry args={[0.08, 32, 32]} />
-            <meshStandardMaterial color="#1a1a1a" />
-          </mesh>
-          <mesh position={[-0.22, 0.18, 0.15]}>
-            <sphereGeometry args={[0.03, 16, 16]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.5} />
-          </mesh>
-          <mesh position={[0.25, 0.15, 0.06]}>
-            <sphereGeometry args={[0.15, 32, 32]} />
-            <meshStandardMaterial color="#ffffff" />
-          </mesh>
-          <mesh position={[0.25, 0.15, 0.12]}>
-            <sphereGeometry args={[0.08, 32, 32]} />
-            <meshStandardMaterial color="#1a1a1a" />
-          </mesh>
-          <mesh position={[0.28, 0.18, 0.15]}>
-            <sphereGeometry args={[0.03, 16, 16]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.5} />
-          </mesh>
-        </>
-      )}
+      {/* Screen display - glowing surface */}
+      <mesh position={[0, 0.15, 0.02]} castShadow>
+        <boxGeometry args={[1.35, 0.85, 0.04]} />
+        <meshStandardMaterial 
+          color={color}
+          metalness={0.3}
+          roughness={0.1}
+          emissive={color}
+          emissiveIntensity={hovered ? 0.4 : 0.15}
+        />
+      </mesh>
 
-      {personality.eyeType === 'sharp' && (
-        <>
-          <mesh position={[-0.25, 0.15, 0.06]} rotation={[0, 0, Math.PI / 4]}>
-            <boxGeometry args={[0.15, 0.08, 0.05]} />
-            <meshStandardMaterial color="#00ffff" emissive="#00ffff" emissiveIntensity={0.5} />
-          </mesh>
-          <mesh position={[0.25, 0.15, 0.06]} rotation={[0, 0, -Math.PI / 4]}>
-            <boxGeometry args={[0.15, 0.08, 0.05]} />
-            <meshStandardMaterial color="#00ffff" emissive="#00ffff" emissiveIntensity={0.5} />
-          </mesh>
-        </>
-      )}
+      {/* Screen shine/reflection */}
+      <mesh position={[0, 0.2, 0.08]}>
+        <boxGeometry args={[1.25, 0.75, 0.01]} />
+        <meshBasicMaterial 
+          color="#ffffff"
+          transparent
+          opacity={hovered ? 0.2 : 0.08}
+        />
+      </mesh>
 
-      {personality.eyeType === 'sparkle' && (
-        <>
-          <mesh position={[-0.25, 0.15, 0.06]}>
-            <sphereGeometry args={[0.12, 16, 16]} />
+      {/* Keyboard deck - main keyboard area */}
+      <mesh position={[0, -0.15, 0.35]} castShadow>
+        <boxGeometry args={[1.35, 0.05, 0.7]} />
+        <meshStandardMaterial 
+          color="#1a1a1a"
+          metalness={0.4}
+          roughness={0.35}
+        />
+      </mesh>
+
+      {/* Keys - simplified grid pattern */}
+      {[...Array(4)].map((_, row) => 
+        [...Array(5)].map((_, col) => (
+          <mesh key={`key-${row}-${col}`} position={[-0.4 + col * 0.22, -0.17, 0.15 + row * 0.15]} castShadow>
+            <boxGeometry args={[0.18, 0.04, 0.12]} />
             <meshStandardMaterial 
-              color="#ffff00" 
-              emissive="#ffff00" 
-              emissiveIntensity={0.8}
+              color="#2a2a2a"
+              metalness={0.2}
+              roughness={0.6}
             />
           </mesh>
-          <mesh position={[0.25, 0.15, 0.06]}>
-            <sphereGeometry args={[0.12, 16, 16]} />
-            <meshStandardMaterial 
-              color="#ffff00" 
-              emissive="#ffff00" 
-              emissiveIntensity={0.8}
-            />
-          </mesh>
-        </>
+        ))
       )}
 
-      {/* Mouth - Cartoonish Style */}
-      {personality.mouthType === 'smile' && (
-        <>
-          {/* Pink curved mouth shape */}
-          <mesh position={[0, -0.185, 0.08]}>
-            <boxGeometry args={[0.26, 0.08, 0.04]} />
-            <meshStandardMaterial color="#ff6b9d" emissive="#ff1493" emissiveIntensity={0.3} />
-          </mesh>
-          {/* Smile curve indentation */}
-          <mesh position={[0, -0.155, 0.12]} rotation={[Math.PI / 8, 0, 0]}>
-            <boxGeometry args={[0.24, 0.04, 0.03]} />
-            <meshStandardMaterial color="#1a1a1a" />
-          </mesh>
-          {/* One tooth left */}
-          <mesh position={[-0.08, -0.165, 0.11]}>
-            <boxGeometry args={[0.04, 0.05, 0.03]} />
-            <meshStandardMaterial color="#ffffff" />
-          </mesh>
-          {/* One tooth right */}
-          <mesh position={[0.08, -0.165, 0.11]}>
-            <boxGeometry args={[0.04, 0.05, 0.03]} />
-            <meshStandardMaterial color="#ffffff" />
-          </mesh>
-        </>
-      )}
+      {/* Trackpad area */}
+      <mesh position={[0, -0.16, 0.55]}>
+        <boxGeometry args={[0.5, 0.03, 0.25]} />
+        <meshStandardMaterial 
+          color="#242424"
+          metalness={0.3}
+          roughness={0.4}
+        />
+      </mesh>
 
-      {personality.mouthType === 'grin' && (
-        <>
-          {/* Big happy grin shape */}
-          <mesh position={[0, -0.18, 0.08]}>
-            <boxGeometry args={[0.32, 0.09, 0.04]} />
-            <meshStandardMaterial color="#ff5588" emissive="#ff1493" emissiveIntensity={0.4} />
-          </mesh>
-          {/* Smile curve */}
-          <mesh position={[0, -0.145, 0.12]} rotation={[Math.PI / 6, 0, 0]}>
-            <boxGeometry args={[0.3, 0.05, 0.03]} />
-            <meshStandardMaterial color="#2a0a2a" />
-          </mesh>
-          {/* Three teeth */}
-          {[-0.1, 0, 0.1].map((x, i) => (
-            <mesh key={i} position={[x, -0.16, 0.11]}>
-              <boxGeometry args={[0.035, 0.06, 0.03]} />
-              <meshStandardMaterial color="#fffcf0" />
-            </mesh>
-          ))}
-        </>
-      )}
-      
-      {personality.mouthType === 'smirk' && (
-        <>
-          {/* Confident smirk */}
-          <mesh position={[0.05, -0.185, 0.08]} rotation={[0, 0, -0.15]}>
-            <boxGeometry args={[0.2, 0.075, 0.04]} />
-            <meshStandardMaterial color="#ff6b9d" emissive="#ff1493" emissiveIntensity={0.3} />
-          </mesh>
-          {/* Smirk curve */}
-          <mesh position={[0.1, -0.155, 0.12]} rotation={[Math.PI / 10, 0, -0.1]}>
-            <boxGeometry args={[0.18, 0.04, 0.03]} />
-            <meshStandardMaterial color="#2a0a1a" />
-          </mesh>
-          {/* One visible tooth */}
-          <mesh position={[0.1, -0.165, 0.11]}>
-            <boxGeometry args={[0.03, 0.045, 0.03]} />
-            <meshStandardMaterial color="#fffcf0" />
-          </mesh>
-        </>
-      )}
-      
-      {personality.mouthType === 'neutral' && (
-        <>
-          {/* Simple neutral mouth */}
-          <mesh position={[0, -0.18, 0.08]}>
-            <boxGeometry args={[0.25, 0.06, 0.035]} />
-            <meshStandardMaterial color="#ff8ab8" emissive="#ff1493" emissiveIntensity={0.15} />
-          </mesh>
-        </>
-      )}
+      {/* Hinge line connecting screen and keyboard */}
+      <mesh position={[0, 0.05, 0.15]}>
+        <boxGeometry args={[1.4, 0.04, 0.08]} />
+        <meshStandardMaterial 
+          color="#0f0f0f"
+          metalness={0.6}
+          roughness={0.2}
+        />
+      </mesh>
 
-      {/* Left Hand */}
-      <group position={[-0.7, -0.2, 0.3]}>
-        <mesh>
-          <sphereGeometry args={[0.08, 16, 16]} />
-          <meshStandardMaterial 
-            color={personality.handType === 'glowing' ? '#ffaa00' : color}
-            emissive={personality.handType === 'glowing' ? '#ffaa00' : '#000000'}
-            emissiveIntensity={personality.handType === 'glowing' ? 0.6 : 0}
-          />
-        </mesh>
-        <mesh position={[0, -0.15, 0]}>
-          <cylinderGeometry args={[0.04, 0.04, 0.3]} />
-          <meshStandardMaterial color={color} />
-        </mesh>
-      </group>
+      {/* Left edge accent */}
+      <mesh position={[-0.72, 0, 0]}>
+        <boxGeometry args={[0.04, 0.35, 0.8]} />
+        <meshStandardMaterial 
+          color={personality.handType === 'glowing' ? color : '#1a1a1a'}
+          emissive={personality.handType === 'glowing' ? color : '#000000'}
+          emissiveIntensity={personality.handType === 'glowing' ? 0.4 : 0}
+          metalness={0.5}
+        />
+      </mesh>
 
-      {/* Right Hand */}
-      <group position={[0.7, -0.2, 0.3]}>
-        <mesh>
-          <sphereGeometry args={[0.08, 16, 16]} />
-          <meshStandardMaterial 
-            color={personality.handType === 'glowing' ? '#ffaa00' : color}
-            emissive={personality.handType === 'glowing' ? '#ffaa00' : '#000000'}
-            emissiveIntensity={personality.handType === 'glowing' ? 0.6 : 0}
-          />
-        </mesh>
-        <mesh position={[0, -0.15, 0]}>
-          <cylinderGeometry args={[0.04, 0.04, 0.3]} />
-          <meshStandardMaterial color={color} />
-        </mesh>
-      </group>
+      {/* Right edge accent */}
+      <mesh position={[0.72, 0, 0]}>
+        <boxGeometry args={[0.04, 0.35, 0.8]} />
+        <meshStandardMaterial 
+          color={personality.handType === 'glowing' ? color : '#1a1a1a'}
+          emissive={personality.handType === 'glowing' ? color : '#000000'}
+          emissiveIntensity={personality.handType === 'glowing' ? 0.4 : 0}
+          metalness={0.5}
+        />
+      </mesh>
 
-      {/* Hover effect - glow ring */}
+      {/* Status LED indicator */}
+      <mesh position={[0.6, -0.14, -0.05]}>
+        <sphereGeometry args={[0.05, 16, 16]} />
+        <meshStandardMaterial 
+          color={hovered ? '#22c55e' : '#666'}
+          emissive={hovered ? '#22c55e' : '#000'}
+          emissiveIntensity={hovered ? 0.6 : 0}
+        />
+      </mesh>
+
+      {/* Hover effect - glow around laptop */}
       {hovered && (
-        <mesh position={[0, 0, -0.1]}>
-          <ringGeometry args={[1.0, 1.2, 32]} />
-          <meshBasicMaterial color={color} transparent opacity={0.3} />
-        </mesh>
+        <>
+          <mesh position={[0, 0, -0.15]}>
+            <boxGeometry args={[1.55, 1.0, 0.05]} />
+            <meshBasicMaterial color={color} transparent opacity={0.15} />
+          </mesh>
+          <pointLight position={[0, 0.15, 0]} color={color} intensity={1.5} distance={2} />
+        </>
       )}
     </group>
   );
