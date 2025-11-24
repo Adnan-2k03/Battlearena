@@ -265,6 +265,10 @@ function Room() {
         <boxGeometry args={[24, 0.15, 0.15]} />
         <meshStandardMaterial color="#4a3a2a" roughness={0.6} />
       </mesh>
+      <mesh position={[0, -1.15, 8]} receiveShadow castShadow>
+        <boxGeometry args={[24, 0.15, 0.15]} />
+        <meshStandardMaterial color="#4a3a2a" roughness={0.6} />
+      </mesh>
       <mesh position={[-12, -1.15, 0]} receiveShadow castShadow>
         <boxGeometry args={[0.15, 0.15, 24]} />
         <meshStandardMaterial color="#4a3a2a" roughness={0.6} />
@@ -337,12 +341,6 @@ function Room() {
       {/* Door frame - RIGHT SIDE */}
       <mesh position={[11.5, 1.0, -7.75]} castShadow>
         <boxGeometry args={[0.2, 2.2, 0.1]} />
-        <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
-      </mesh>
-
-      {/* Door frame - BOTTOM */}
-      <mesh position={[10.75, -0.1, -7.75]} castShadow>
-        <boxGeometry args={[1.7, 0.2, 0.1]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
       </mesh>
 
