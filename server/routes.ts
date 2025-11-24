@@ -54,6 +54,17 @@ interface BotPlayer extends Player {
   typingTimeout?: NodeJS.Timeout;
 }
 
+interface AdminSettings {
+  unlimitedEnemyHealth: boolean;
+  enemyBarrierElement: Element | null;
+  enemyBarrierStrength: number;
+  godMode: boolean;
+  instantCharge: boolean;
+  controlledTeam: Team | null;
+  gameSpeedMultiplier: number;
+  adminTeam: Team | null;
+}
+
 interface GameRoom {
   id: string;
   players: Map<string, Player | BotPlayer>;
@@ -64,6 +75,7 @@ interface GameRoom {
   winner: Team | null;
   matchStartTime: number;
   botTimers: NodeJS.Timeout[];
+  adminSettings: AdminSettings;
 }
 
 const rooms = new Map<string, GameRoom>();
@@ -231,7 +243,15 @@ function startBotTyping(bot: BotPlayer, room: GameRoom, io: SocketIOServer) {
       
       // Apply remaining damage to HP
       if (damage > 0) {
-        botEnemyState.hp = Math.max(0, botEnemyState.hp - damage);
+        const adminPlayer = Array.from(room.players.values()).find(p => p.isAdmin);
+        const shouldPreventDamage = adminPlayer && 
+          adminPlayer.team && 
+          botEnemyTeam === (adminPlayer.team === 'blue' ? 'red' : 'blue') && 
+          room.adminSettings.unlimitedEnemyHealth;
+        
+        if (!shouldPreventDamage) {
+          botEnemyState.hp = Math.max(0, botEnemyState.hp - damage);
+        }
       }
       
       bot.stats.damageDealt += 3;
@@ -276,7 +296,15 @@ function startBotTyping(bot: BotPlayer, room: GameRoom, io: SocketIOServer) {
         }
         
         if (damage > 0) {
-          enemyState.hp = Math.max(0, enemyState.hp - damage);
+          const adminPlayer = Array.from(room.players.values()).find(p => p.isAdmin);
+          const shouldPreventDamage = adminPlayer && 
+            adminPlayer.team && 
+            enemyTeam === (adminPlayer.team === 'blue' ? 'red' : 'blue') && 
+            room.adminSettings.unlimitedEnemyHealth;
+          
+          if (!shouldPreventDamage) {
+            enemyState.hp = Math.max(0, enemyState.hp - damage);
+          }
         }
         
         bot.stats.damageDealt += damage;
@@ -397,7 +425,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           redTeam: { hp: 100, shield: 0 },
           winner: null,
           matchStartTime: 0,
-          botTimers: []
+          botTimers: [],
+          adminSettings: {
+            unlimitedEnemyHealth: false,
+            enemyBarrierElement: null,
+            enemyBarrierStrength: 100,
+            godMode: false,
+            instantCharge: false,
+            controlledTeam: null,
+            gameSpeedMultiplier: 1.0,
+            adminTeam: null
+          }
         };
         
         playerData.forEach(({ socketId: playerId, nickname: playerNickname }, index) => {
@@ -512,7 +550,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           redTeam: { hp: 100, shield: 0 },
           winner: null,
           matchStartTime: 0,
-          botTimers: []
+          botTimers: [],
+          adminSettings: {
+            unlimitedEnemyHealth: false,
+            enemyBarrierElement: null,
+            enemyBarrierStrength: 100,
+            godMode: false,
+            instantCharge: false,
+            controlledTeam: null,
+            gameSpeedMultiplier: 1.0,
+            adminTeam: null
+          }
         };
         rooms.set(roomId, room);
       }
@@ -828,7 +876,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (damage > 0) {
-          enemyState.hp = Math.max(0, enemyState.hp - damage);
+          const adminPlayer = Array.from(room.players.values()).find(p => p.isAdmin);
+          const shouldPreventDamage = adminPlayer && 
+            adminPlayer.team && 
+            enemyTeam === (adminPlayer.team === 'blue' ? 'red' : 'blue') && 
+            room.adminSettings.unlimitedEnemyHealth;
+          
+          if (!shouldPreventDamage) {
+            enemyState.hp = Math.max(0, enemyState.hp - damage);
+          }
         }
 
         player.stats.damageDealt += damage;
@@ -908,6 +964,190 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Broadcast typing event to all players in the room
       io.to(roomId).emit("player_typing", { playerId: socket.id, keyIndex });
+    });
+
+    socket.on("admin_update_settings", ({ roomId, settings }: { roomId: string; settings: Partial<AdminSettings> }) => {
+      const room = rooms.get(roomId);
+      if (!room) return;
+
+      const player = room.players.get(socket.id);
+      if (!player || !player.isAdmin) {
+        socket.emit("admin_error", { message: "Only admins can update settings" });
+        return;
+      }
+
+      if (player.team && !room.adminSettings.adminTeam) {
+        room.adminSettings.adminTeam = player.team;
+      }
+
+      room.adminSettings = { ...room.adminSettings, ...settings };
+
+      if (settings.enemyBarrierElement !== undefined && player.team) {
+        const adminTeam = player.team;
+        const enemyTeam = adminTeam === "blue" ? "red" : "blue";
+        const enemyTeamState = enemyTeam === "blue" ? room.blueTeam : room.redTeam;
+        
+        if (settings.enemyBarrierElement === null) {
+          enemyTeamState.barrier = null;
+        } else {
+          enemyTeamState.barrier = {
+            element: settings.enemyBarrierElement,
+            strength: room.adminSettings.enemyBarrierStrength
+          };
+        }
+      } else if (settings.enemyBarrierStrength !== undefined && player.team) {
+        const adminTeam = player.team;
+        const enemyTeam = adminTeam === "blue" ? "red" : "blue";
+        const enemyTeamState = enemyTeam === "blue" ? room.blueTeam : room.redTeam;
+        
+        if (enemyTeamState.barrier) {
+          enemyTeamState.barrier.strength = settings.enemyBarrierStrength;
+        }
+      }
+
+      io.to(roomId).emit("admin_settings_updated", { 
+        adminSettings: room.adminSettings,
+        blueTeam: room.blueTeam,
+        redTeam: room.redTeam
+      });
+    });
+
+    socket.on("admin_control_bot", ({ roomId, botId, action }: { roomId: string; botId: string; action: string }) => {
+      const room = rooms.get(roomId);
+      if (!room) return;
+
+      const player = room.players.get(socket.id);
+      if (!player || !player.isAdmin) return;
+
+      const bot = room.players.get(botId);
+      if (!bot || !isBot(bot)) return;
+
+      if (action === 'trigger_attack') {
+        const botTeamState = bot.team === "blue" ? room.blueTeam : room.redTeam;
+        const enemyTeamState = bot.team === "blue" ? room.redTeam : room.blueTeam;
+        
+        const elements: Element[] = ['fire', 'water', 'leaf'];
+        const element = elements[Math.floor(Math.random() * elements.length)];
+        
+        bot.elementCharges[element] = 100;
+        
+        let damage = 15;
+        if (enemyTeamState.barrier && enemyTeamState.barrier.element === element) {
+          damage = Math.floor(damage * 0.5);
+          enemyTeamState.barrier.strength = Math.max(0, enemyTeamState.barrier.strength - 30);
+          if (enemyTeamState.barrier.strength === 0) {
+            enemyTeamState.barrier = null;
+          }
+        } else if (enemyTeamState.barrier) {
+          const barrierElement = enemyTeamState.barrier.element;
+          if ((element === 'fire' && barrierElement === 'leaf') || 
+              (element === 'water' && barrierElement === 'fire') || 
+              (element === 'leaf' && barrierElement === 'water')) {
+            damage = Math.floor(damage * 1.5);
+            enemyTeamState.barrier.strength = Math.max(0, enemyTeamState.barrier.strength - 50);
+            if (enemyTeamState.barrier.strength === 0) {
+              enemyTeamState.barrier = null;
+            }
+          }
+        }
+
+        if (enemyTeamState.shield > 0) {
+          const shieldDamage = Math.min(enemyTeamState.shield, damage);
+          enemyTeamState.shield -= shieldDamage;
+          damage -= shieldDamage;
+        }
+        
+        if (damage > 0) {
+          const adminPlayer = Array.from(room.players.values()).find(p => p.isAdmin);
+          const botEnemyTeam = bot.team === 'blue' ? 'red' : 'blue';
+          const shouldPreventDamage = adminPlayer && 
+            adminPlayer.team && 
+            botEnemyTeam === (adminPlayer.team === 'blue' ? 'red' : 'blue') && 
+            room.adminSettings.unlimitedEnemyHealth;
+          
+          if (!shouldPreventDamage) {
+            enemyTeamState.hp = Math.max(0, enemyTeamState.hp - damage);
+          }
+        }
+
+        bot.elementCharges[element] = 0;
+
+        io.to(roomId).emit("attack_executed", {
+          attackerId: botId,
+          element,
+          blueTeam: room.blueTeam,
+          redTeam: room.redTeam,
+          damage,
+          attackerTeam: bot.team
+        });
+      } else if (action === 'trigger_barrier') {
+        const elements: Element[] = ['fire', 'water', 'leaf'];
+        const element = elements[Math.floor(Math.random() * elements.length)];
+        
+        bot.elementCharges[element] = 100;
+        
+        const botTeamState = bot.team === "blue" ? room.blueTeam : room.redTeam;
+        botTeamState.barrier = {
+          element,
+          strength: 100
+        };
+
+        bot.elementCharges[element] = 0;
+
+        io.to(roomId).emit("barrier_created", {
+          team: bot.team,
+          element,
+          blueTeam: room.blueTeam,
+          redTeam: room.redTeam
+        });
+      }
+    });
+
+    socket.on("leave_match", ({ roomId }: { roomId: string }) => {
+      const room = rooms.get(roomId);
+      if (!room) return;
+
+      const player = room.players.get(socket.id);
+      const wasSpectator = room.spectators.has(socket.id);
+      
+      if (player) {
+        room.players.delete(socket.id);
+        socket.leave(roomId);
+      } else if (wasSpectator) {
+        room.spectators.delete(socket.id);
+        socket.leave(roomId);
+      }
+      
+      if (player || wasSpectator) {
+
+        if (room.players.size === 0 && room.spectators.size === 0) {
+          room.botTimers.forEach(t => clearTimeout(t));
+          room.botTimers = [];
+          rooms.delete(roomId);
+        } else {
+          const playersList = Array.from(room.players.values()).map(p => ({
+            id: p.id,
+            nickname: p.nickname,
+            team: p.team,
+            role: p.role
+          }));
+
+          if (player) {
+            io.to(roomId).emit("player_left", {
+              playerId: socket.id,
+              nickname: player.nickname
+            });
+          }
+
+          io.to(roomId).emit("room_update", {
+            players: playersList,
+            canStart: room.players.size >= 2,
+            phase: room.phase
+          });
+        }
+
+        socket.emit("left_match", { success: true });
+      }
     });
 
     socket.on("disconnect", () => {

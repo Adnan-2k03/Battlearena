@@ -110,6 +110,20 @@ function App() {
         setRoomId(specRoomId);
         const validPlayers = players.filter((p: any) => p.team && p.role);
         setSpectatorData({ players: validPlayers, blueTeam, redTeam, phase });
+      } else if (eventName === 'player_left' && args[0]) {
+        const { nickname: leftNickname } = args[0];
+        console.log(`Player ${leftNickname} left the match`);
+      } else if (eventName === 'left_match' && args[0]) {
+        const { success } = args[0];
+        if (success) {
+          console.log('Successfully left match, returning to lobby');
+          setGamePhase('lobby');
+          setMyTeam(null);
+          setMyRole(null);
+          setWinner(null);
+          setMatchStats([]);
+          setRoomId('');
+        }
       }
     });
 

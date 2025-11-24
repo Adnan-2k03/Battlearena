@@ -7,6 +7,8 @@ import { useGameState, Team, Element } from '@/hooks/useGameState';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Heart, Shield as ShieldIcon, Flame, Droplet, Leaf, Swords } from 'lucide-react';
+import { AdminControlPanel } from './AdminControlPanel';
+import { LeaveMatchButton } from './LeaveMatchButton';
 
 interface ElementalArena3DProps {
   socket: Socket | null;
@@ -923,6 +925,27 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode =
             )}
           </div>
         </div>
+
+        {/* Admin Control Panel */}
+        {isAdminMode && (
+          <AdminControlPanel 
+            socket={socket}
+            roomId={roomId}
+            myTeam={myTeam}
+            enemyPlayers={enemyPlayers.map(p => ({
+              id: p.id,
+              nickname: p.nickname,
+              team: p.team!,
+              role: p.role!
+            }))}
+          />
+        )}
+
+        {/* Leave Match Button for all players */}
+        <LeaveMatchButton 
+          socket={socket}
+          roomId={roomId}
+        />
       </div>
     </div>
   );
