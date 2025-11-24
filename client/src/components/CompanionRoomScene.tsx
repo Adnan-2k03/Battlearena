@@ -18,7 +18,7 @@ interface CompanionRoomSceneProps {
 const ACTIVITY_POSITIONS: Record<Activity, { pos: [number, number, number]; rot: [number, number, number] }> = {
   idle: { pos: [0, 0, 0], rot: [0, 0, 0] },
   reading: { pos: [0.2, 0.2, -5], rot: [-0.5, 0.1, 0.15] },
-  sleeping: { pos: [7.8, 0.3, -1.5], rot: [0, 0, Math.PI / 2.5] },
+  sleeping: { pos: [11.3, -0.1, -1.5], rot: [0, 0, 0] },
   hiding: { pos: [-3.5, 0.2, 3.5], rot: [0, -Math.PI / 4, -0.3] },
   playing: { pos: [0, 0, 1], rot: [0, 0, 0] },
   jumping: { pos: [0, 0, 0], rot: [0, 0, 0] },
@@ -393,27 +393,45 @@ function Room() {
         </mesh>
       </group>
 
-      {/* Charging Station - Wall Mounted on Right Side */}
-      <group position={[7.8, 0.5, -1.5]}>
-        {/* Wall outlet plate */}
-        <mesh position={[0, 0, 0.15]} castShadow>
-          <boxGeometry args={[0.5, 0.6, 0.05]} />
-          <meshStandardMaterial color="#444" roughness={0.3} metalness={0.1} />
+      {/* Charging Station - Test Tube Cylinder at End of Wall */}
+      <group position={[11.3, -0.2, -1.5]}>
+        {/* Test tube cylinder - main body */}
+        <mesh castShadow>
+          <cylinderGeometry args={[0.35, 0.35, 1.2, 32]} />
+          <meshStandardMaterial 
+            color="#e8f4f8" 
+            roughness={0.15}
+            metalness={0.1}
+            transparent={true}
+            opacity={0.7}
+          />
         </mesh>
-        {/* Outlet holes */}
-        <mesh position={[-0.1, 0.05, 0.25]} castShadow>
-          <cylinderGeometry args={[0.06, 0.06, 0.1, 16]} />
-          <meshStandardMaterial color="#222" roughness={0.6} />
+        {/* Test tube glass rim - top edge */}
+        <mesh position={[0, 0.6, 0]} castShadow>
+          <cylinderGeometry args={[0.36, 0.36, 0.05, 32]} />
+          <meshStandardMaterial 
+            color="#7fb3d5" 
+            roughness={0.2}
+            metalness={0.2}
+          />
         </mesh>
-        <mesh position={[0.1, 0.05, 0.25]} castShadow>
-          <cylinderGeometry args={[0.06, 0.06, 0.1, 16]} />
-          <meshStandardMaterial color="#222" roughness={0.6} />
+        {/* Charging liquid glow inside */}
+        <mesh position={[0, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.32, 0.32, 1.15, 32]} />
+          <meshStandardMaterial 
+            color="#22ff22" 
+            emissive="#22ff22"
+            emissiveIntensity={0.4}
+            transparent={true}
+            opacity={0.3}
+          />
         </mesh>
-        {/* Charging indicator light - glowing green */}
-        <pointLight position={[0, -0.15, 0.3]} intensity={1} color="#22ff22" />
-        <mesh position={[0, -0.15, 0.28]} castShadow>
-          <sphereGeometry args={[0.08, 16, 16]} />
-          <meshStandardMaterial color="#22ff22" emissive="#22ff22" emissiveIntensity={0.8} />
+        {/* Charging glow light */}
+        <pointLight position={[0, 0.2, 0]} intensity={1.2} color="#22ff22" />
+        {/* Stand base */}
+        <mesh position={[0, -0.7, 0]} castShadow>
+          <cylinderGeometry args={[0.45, 0.45, 0.1, 32]} />
+          <meshStandardMaterial color="#333" roughness={0.5} metalness={0.15} />
         </mesh>
       </group>
 
