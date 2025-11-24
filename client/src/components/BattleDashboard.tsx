@@ -178,7 +178,7 @@ export function BattleDashboard({ socket, onStartMatch, isSearching, error }: Ba
                 const isSelected = profile.selectedLaptop === laptop.id;
                 
                 return (
-                  <button
+                  <div
                     key={laptop.id}
                     onClick={() => {
                       if (isOwned) {
@@ -188,7 +188,7 @@ export function BattleDashboard({ socket, onStartMatch, isSearching, error }: Ba
                       }
                     }}
                     className={cn(
-                      "flex-shrink-0 w-48 p-4 rounded-lg border-2 transition-all",
+                      "flex-shrink-0 w-48 p-4 rounded-lg border-2 transition-all cursor-pointer",
                       isSelected 
                         ? "border-blue-400 shadow-lg shadow-blue-500/50" 
                         : "border-slate-600 hover:border-slate-500",
@@ -234,7 +234,7 @@ export function BattleDashboard({ socket, onStartMatch, isSearching, error }: Ba
                         </Button>
                       )}
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
