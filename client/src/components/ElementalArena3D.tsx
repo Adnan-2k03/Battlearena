@@ -9,6 +9,7 @@ import { Button } from './ui/button';
 import { Heart, Shield as ShieldIcon, Flame, Droplet, Leaf, Swords } from 'lucide-react';
 import { AdminControlPanel } from './AdminControlPanel';
 import { LeaveMatchButton } from './LeaveMatchButton';
+import { getLaptopById } from '@/lib/data/laptops';
 
 interface ElementalArena3DProps {
   socket: Socket | null;
@@ -16,6 +17,7 @@ interface ElementalArena3DProps {
   myTeam: 'blue' | 'red';
   myRole: 'striker' | 'guardian';
   isAdminMode?: boolean;
+  selectedLaptop?: string;
 }
 
 // Deterministic random function for stable terrain generation
@@ -94,14 +96,16 @@ interface Keyboard3DProps {
   role?: string;
   lastKeyPressed?: number | null;
   isMe?: boolean;
+  laptopColor?: string;
 }
 
-function Keyboard3D({ position, team, playerId, nickname, role, lastKeyPressed, isMe }: Keyboard3DProps) {
+function Keyboard3D({ position, team, playerId, nickname, role, lastKeyPressed, isMe, laptopColor }: Keyboard3DProps) {
   const meshRef = useRef<THREE.Group>(null);
   const [keyStates, setKeyStates] = useState<Set<number>>(new Set());
   
   const teamColor = team === 'blue' ? '#3b82f6' : '#ef4444';
-  const highlightColor = isMe ? '#fbbf24' : teamColor;
+  const baseColor = laptopColor && isMe ? laptopColor : teamColor;
+  const highlightColor = isMe ? (laptopColor || '#fbbf24') : teamColor;
 
   useEffect(() => {
     if (lastKeyPressed !== null && lastKeyPressed !== undefined) {
@@ -128,9 +132,11 @@ function Keyboard3D({ position, team, playerId, nickname, role, lastKeyPressed, 
       <mesh position={[0, 0.1, 0]} castShadow>
         <boxGeometry args={[4, 0.2, 2]} />
         <meshStandardMaterial 
-          color={highlightColor}
-          emissive={highlightColor}
-          emissiveIntensity={isMe ? 0.3 : 0.1}
+          color={baseColor}
+          emissive={baseColor}
+          emissiveIntensity={isMe ? 0.4 : 0.1}
+          metalness={laptopColor && isMe ? 0.6 : 0.2}
+          roughness={laptopColor && isMe ? 0.3 : 0.5}
         />
       </mesh>
       
@@ -505,7 +511,7 @@ function AttackProjectile({ id, element, fromTeam, isCritical }: AttackProjectil
 }
 
 // Main Scene
-function Scene({ gameState }: { gameState: ReturnType<typeof useGameState> }) {
+function Scene({ gameState, selectedLaptop, mySocketId }: { gameState: ReturnType<typeof useGameState>, selectedLaptop?: string, mySocketId?: string }) {
   const { players, blueTeam, redTeam, attackEvents, myTeam } = gameState;
   
   // Get player positions
@@ -545,8 +551,10 @@ function Scene({ gameState }: { gameState: ReturnType<typeof useGameState> }) {
         const pos = playerPositions.get(player.id);
         if (!pos) return null;
         
-        // First human player in the map is "me"
-        const isFirstHuman = idx === 0 && !player.id.startsWith('bot-');
+        // Identify "me" by socket ID
+        const isMe = mySocketId && player.id === mySocketId;
+        const laptopData = isMe && selectedLaptop ? getLaptopById(selectedLaptop) : undefined;
+        const laptopColor = laptopData?.color;
         
         return (
           <Keyboard3D
@@ -557,7 +565,8 @@ function Scene({ gameState }: { gameState: ReturnType<typeof useGameState> }) {
             nickname={player.nickname}
             role={player.role || undefined}
             lastKeyPressed={player.lastKeyPressed}
-            isMe={isFirstHuman}
+            isMe={isMe}
+            laptopColor={laptopColor}
           />
         );
       })}
@@ -603,7 +612,7 @@ function Scene({ gameState }: { gameState: ReturnType<typeof useGameState> }) {
 }
 
 // Main Component
-export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode = false }: ElementalArena3DProps) {
+export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode = false, selectedLaptop }: ElementalArena3DProps) {
   const gameState = useGameState(socket, roomId, myTeam, myRole, isAdminMode);
   const [inputValue, setInputValue] = useState('');
   const [actionMode, setActionMode] = useState<'attack' | 'barrier'>('attack');
@@ -674,7 +683,7 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode =
       {/* 3D Canvas */}
       <Canvas shadows>
         <Suspense fallback={null}>
-          <Scene gameState={gameState} />
+          <Scene gameState={gameState} selectedLaptop={selectedLaptop} mySocketId={socket?.id} />
         </Suspense>
       </Canvas>
 

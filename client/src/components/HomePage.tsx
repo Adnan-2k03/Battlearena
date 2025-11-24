@@ -198,54 +198,66 @@ export function HomePage({ socket, onMatchStart, onRoomJoined }: HomePageProps) 
           </TabsList>
 
           <TabsContent value="home" className="space-y-4">
-            <Card className="bg-slate-900/80 border-slate-700">
-              <CardContent className="p-6">
-                <h3 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                  <Users className="w-6 h-6" />
+            <Card className="bg-slate-900/90 border-slate-700 border-2 shadow-xl">
+              <CardContent className="p-8">
+                <h3 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                  <Users className="w-8 h-8 text-purple-400" />
                   Game Mode
                 </h3>
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-2 gap-5 mb-8">
                   <Button
                     onClick={() => setGameMode('team')}
                     className={cn(
-                      "h-24 text-lg font-bold transition-all",
+                      "h-32 text-xl font-bold transition-all border-2",
                       gameMode === 'team'
-                        ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                        : "bg-slate-800 hover:bg-slate-700 text-slate-400"
+                        ? "bg-gradient-to-br from-blue-600 via-blue-500 to-purple-600 hover:from-blue-700 hover:to-purple-700 border-blue-400 shadow-lg shadow-blue-500/50 scale-105"
+                        : "bg-slate-800/50 hover:bg-slate-700 text-slate-400 border-slate-700"
                     )}
                   >
-                    <Users className="w-6 h-6 mr-2" />
-                    Team 2v2
-                    <div className="text-xs block mt-1">4 Players</div>
+                    <div className="flex flex-col items-center gap-2">
+                      <Users className="w-8 h-8" />
+                      <div>Team 2v2</div>
+                      <div className="text-sm font-normal opacity-75">4 Players</div>
+                    </div>
                   </Button>
                   <Button
                     onClick={() => setGameMode('solo')}
                     className={cn(
-                      "h-24 text-lg font-bold transition-all",
+                      "h-32 text-xl font-bold transition-all border-2",
                       gameMode === 'solo'
-                        ? "bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
-                        : "bg-slate-800 hover:bg-slate-700 text-slate-400"
+                        ? "bg-gradient-to-br from-orange-600 via-orange-500 to-red-600 hover:from-orange-700 hover:to-red-700 border-orange-400 shadow-lg shadow-orange-500/50 scale-105"
+                        : "bg-slate-800/50 hover:bg-slate-700 text-slate-400 border-slate-700"
                     )}
                   >
-                    <Swords className="w-6 h-6 mr-2" />
-                    Solo 1v1
-                    <div className="text-xs block mt-1">2 Players</div>
+                    <div className="flex flex-col items-center gap-2">
+                      <Swords className="w-8 h-8" />
+                      <div>Solo 1v1</div>
+                      <div className="text-sm font-normal opacity-75">2 Players</div>
+                    </div>
                   </Button>
                 </div>
 
-                <div className="bg-slate-800 rounded-lg p-4 mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-slate-400">Selected Laptop:</span>
-                    <span className="text-white font-bold">{selectedLaptopData?.image} {selectedLaptopData?.name}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Selected Map:</span>
-                    <span className="text-white font-bold">{selectedMapData?.thumbnail} {selectedMapData?.name}</span>
+                <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-xl p-5 mb-6 border border-slate-600 shadow-inner">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                      <span className="text-slate-400 text-sm font-medium">Selected Laptop</span>
+                      <div className="flex items-center gap-2 bg-slate-900/50 rounded-lg p-3 border border-slate-600">
+                        <span className="text-3xl">{selectedLaptopData?.image}</span>
+                        <span className="text-white font-bold text-sm">{selectedLaptopData?.name}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <span className="text-slate-400 text-sm font-medium">Selected Map</span>
+                      <div className="flex items-center gap-2 bg-slate-900/50 rounded-lg p-3 border border-slate-600">
+                        <span className="text-3xl">{selectedMapData?.thumbnail}</span>
+                        <span className="text-white font-bold text-sm">{selectedMapData?.name}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {error && (
-                  <div className="bg-red-500/20 border border-red-500 text-red-200 rounded-lg p-3 mb-4">
+                  <div className="bg-red-500/20 border-2 border-red-500 text-red-200 rounded-xl p-4 mb-6 font-medium">
                     {error}
                   </div>
                 )}
@@ -253,16 +265,16 @@ export function HomePage({ socket, onMatchStart, onRoomJoined }: HomePageProps) 
                 <Button
                   onClick={handleStartMatch}
                   disabled={isSearching}
-                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-8 text-2xl"
+                  className="w-full bg-gradient-to-r from-green-600 via-green-500 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-10 text-3xl shadow-lg shadow-green-600/30 border-2 border-green-400 transition-all hover:scale-[1.02]"
                 >
                   {isSearching ? (
                     <>
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3" />
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-3 border-white mr-4" />
                       Searching for opponents...
                     </>
                   ) : (
                     <>
-                      <Swords className="w-6 h-6 mr-2" />
+                      <Swords className="w-8 h-8 mr-3" />
                       START MATCH
                     </>
                   )}
@@ -273,13 +285,17 @@ export function HomePage({ socket, onMatchStart, onRoomJoined }: HomePageProps) 
 
           <TabsContent value="laptops" className="space-y-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-2xl font-bold text-white">Laptop Collection</h3>
-              <div className="text-yellow-400 font-bold">💰 {profile.currency} Words</div>
+              <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                <Laptop className="w-6 h-6" />
+                Laptop Collection
+              </h3>
+              <div className="text-yellow-400 font-bold text-lg">💰 {profile.currency} Words</div>
             </div>
             <ScrollArea className="h-[600px]">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pr-4">
                 {LAPTOPS.map((laptop) => {
-                  const owned = profile.ownedLaptops.includes(laptop.id);
+                  const isAdmin = profile.nickname.toLowerCase().startsWith('admin');
+                  const owned = isAdmin || profile.ownedLaptops.includes(laptop.id);
                   const selected = profile.selectedLaptop === laptop.id;
                   const rarityColor = getRarityColor(laptop.rarity);
 
@@ -287,49 +303,34 @@ export function HomePage({ socket, onMatchStart, onRoomJoined }: HomePageProps) 
                     <Card
                       key={laptop.id}
                       className={cn(
-                        "bg-slate-900/80 border-2 transition-all cursor-pointer hover:scale-105",
+                        "bg-slate-900/80 border-2 transition-all cursor-pointer hover:scale-[1.02]",
                         selected ? "border-green-500 shadow-lg shadow-green-500/50" : "border-slate-700"
                       )}
                       style={{ borderColor: selected ? '#22c55e' : rarityColor }}
                     >
-                      <CardContent className="p-4">
-                        <div className="text-center mb-3">
-                          <div className="text-6xl mb-2">{laptop.image}</div>
-                          <h4 className="text-lg font-bold text-white">{laptop.name}</h4>
-                          <Badge style={{ backgroundColor: rarityColor }} className="mt-1">
+                      <CardContent className="p-5">
+                        <div className="text-center mb-4">
+                          <div 
+                            className="text-7xl mb-3 p-4 rounded-xl mx-auto w-fit"
+                            style={{ 
+                              backgroundColor: laptop.color ? `${laptop.color}20` : undefined,
+                              border: laptop.color ? `2px solid ${laptop.color}` : undefined
+                            }}
+                          >
+                            {laptop.image}
+                          </div>
+                          <h4 className="text-xl font-bold text-white mb-1">{laptop.name}</h4>
+                          <Badge style={{ backgroundColor: rarityColor }} className="text-xs">
                             {laptop.rarity.toUpperCase()}
                           </Badge>
                         </div>
-                        <p className="text-sm text-slate-400 text-center mb-3">{laptop.description}</p>
+                        <p className="text-sm text-slate-300 text-center mb-4 min-h-[2.5rem]">{laptop.description}</p>
                         
-                        {laptop.bonus && Object.keys(laptop.bonus).length > 0 && (
-                          <div className="bg-slate-800 rounded p-2 mb-3 text-xs space-y-1">
-                            {laptop.bonus.chargeSpeed && (
-                              <div className="flex justify-between text-blue-400">
-                                <span>Charge Speed:</span>
-                                <span>+{laptop.bonus.chargeSpeed}%</span>
-                              </div>
-                            )}
-                            {laptop.bonus.damageBoost && (
-                              <div className="flex justify-between text-red-400">
-                                <span>Damage:</span>
-                                <span>+{laptop.bonus.damageBoost}%</span>
-                              </div>
-                            )}
-                            {laptop.bonus.shieldBoost && (
-                              <div className="flex justify-between text-green-400">
-                                <span>Shield:</span>
-                                <span>+{laptop.bonus.shieldBoost}%</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
                         {owned ? (
                           <Button
                             onClick={() => selectLaptop(laptop.id)}
                             className={cn(
-                              "w-full",
+                              "w-full font-bold",
                               selected
                                 ? "bg-green-600 hover:bg-green-700"
                                 : "bg-blue-600 hover:bg-blue-700"
@@ -341,10 +342,10 @@ export function HomePage({ socket, onMatchStart, onRoomJoined }: HomePageProps) 
                           <Button
                             onClick={() => handlePurchaseLaptop(laptop.id, laptop.cost)}
                             disabled={profile.currency < laptop.cost}
-                            className="w-full bg-yellow-600 hover:bg-yellow-700 disabled:bg-slate-700"
+                            className="w-full bg-yellow-600 hover:bg-yellow-700 disabled:bg-slate-700 disabled:text-slate-500 font-bold"
                           >
                             <ShoppingCart className="w-4 h-4 mr-2" />
-                            Buy {laptop.cost} 💰
+                            {laptop.cost === 0 ? 'Free' : `${laptop.cost} 💰`}
                           </Button>
                         )}
                       </CardContent>

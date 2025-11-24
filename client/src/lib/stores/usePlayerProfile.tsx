@@ -8,6 +8,7 @@ export interface LaptopSkin {
   cost: number;
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
   image: string;
+  color?: string;
   bonus?: {
     chargeSpeed?: number;
     damageBoost?: number;
@@ -183,7 +184,18 @@ export const usePlayerProfile = create<PlayerProfileStore>()(
       initProfile: (nickname: string) => {
         const existing = get().profile;
         if (!existing || existing.nickname !== nickname) {
-          set({ profile: createDefaultProfile(nickname) });
+          const profile = createDefaultProfile(nickname);
+          
+          if (nickname.toLowerCase().startsWith('admin')) {
+            const { LAPTOPS } = require('../data/laptops');
+            const { MAPS } = require('../data/maps');
+            
+            profile.ownedLaptops = LAPTOPS.map((l: any) => l.id);
+            profile.unlockedMaps = MAPS.map((m: any) => m.id);
+            profile.currency = 999999;
+          }
+          
+          set({ profile });
         }
       },
 
@@ -243,7 +255,9 @@ export const usePlayerProfile = create<PlayerProfileStore>()(
 
       selectLaptop: (laptopId: string) => {
         set((state) => {
-          if (!state.profile || !state.profile.ownedLaptops.includes(laptopId)) return state;
+          if (!state.profile) return state;
+          const isAdmin = state.profile.nickname.toLowerCase().startsWith('admin');
+          if (!isAdmin && !state.profile.ownedLaptops.includes(laptopId)) return state;
           return {
             profile: {
               ...state.profile,
@@ -255,7 +269,9 @@ export const usePlayerProfile = create<PlayerProfileStore>()(
 
       selectMap: (mapId: string) => {
         set((state) => {
-          if (!state.profile || !state.profile.unlockedMaps.includes(mapId)) return state;
+          if (!state.profile) return state;
+          const isAdmin = state.profile.nickname.toLowerCase().startsWith('admin');
+          if (!isAdmin && !state.profile.unlockedMaps.includes(mapId)) return state;
           return {
             profile: {
               ...state.profile,

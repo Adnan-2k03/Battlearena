@@ -8,101 +8,78 @@ export const LAPTOPS: LaptopSkin[] = [
     cost: 0,
     rarity: 'common',
     image: '💻',
+    color: '#6b7280',
     bonus: {}
   },
   {
-    id: 'gaming_pro',
-    name: 'Gaming Pro',
-    description: 'Faster charge regeneration',
+    id: 'gaming_beast',
+    name: 'Gaming Beast',
+    description: 'RGB illuminated gaming laptop',
     cost: 500,
     rarity: 'rare',
-    image: '🎮',
-    bonus: {
-      chargeSpeed: 10
-    }
+    image: '🖥️',
+    color: '#ef4444',
+    bonus: {}
   },
   {
-    id: 'cyber_blade',
-    name: 'Cyber Blade',
-    description: 'Increased attack damage',
+    id: 'cyber_laptop',
+    name: 'Cyber Laptop',
+    description: 'Futuristic cyberpunk design',
     cost: 800,
     rarity: 'rare',
-    image: '⚔️',
-    bonus: {
-      damageBoost: 15
-    }
+    image: '⚡',
+    color: '#06b6d4',
+    bonus: {}
   },
   {
-    id: 'shield_master',
-    name: 'Shield Master',
-    description: 'Enhanced shield restoration',
-    cost: 800,
-    rarity: 'rare',
-    image: '🛡️',
-    bonus: {
-      shieldBoost: 15
-    }
+    id: 'neon_edge',
+    name: 'Neon Edge',
+    description: 'Glowing neon accents',
+    cost: 1000,
+    rarity: 'epic',
+    image: '🌟',
+    color: '#a855f7',
+    bonus: {}
   },
   {
-    id: 'elite_racer',
-    name: 'Elite Racer',
-    description: 'Balanced performance boost',
+    id: 'crystal_laptop',
+    name: 'Crystal Laptop',
+    description: 'Transparent crystal design',
     cost: 1200,
     rarity: 'epic',
-    image: '🏎️',
-    bonus: {
-      chargeSpeed: 15,
-      damageBoost: 10
-    }
+    image: '💎',
+    color: '#3b82f6',
+    bonus: {}
   },
   {
-    id: 'dragon_fury',
-    name: 'Dragon Fury',
-    description: 'Massive damage increase',
-    cost: 1500,
-    rarity: 'epic',
-    image: '🐉',
-    bonus: {
-      damageBoost: 25
-    }
-  },
-  {
-    id: 'phoenix_wing',
-    name: 'Phoenix Wing',
-    description: 'Superior regeneration',
+    id: 'fire_laptop',
+    name: 'Inferno Laptop',
+    description: 'Blazing fire themed design',
     cost: 1500,
     rarity: 'epic',
     image: '🔥',
-    bonus: {
-      chargeSpeed: 25,
-      shieldBoost: 10
-    }
+    color: '#f97316',
+    bonus: {}
   },
   {
-    id: 'ultimate_titan',
-    name: 'Ultimate Titan',
-    description: 'Maximum power in all aspects',
-    cost: 3000,
-    rarity: 'legendary',
-    image: '👑',
-    bonus: {
-      chargeSpeed: 30,
-      damageBoost: 30,
-      shieldBoost: 30
-    }
-  },
-  {
-    id: 'cosmic_legend',
-    name: 'Cosmic Legend',
-    description: 'Legendary cosmic power',
+    id: 'golden_laptop',
+    name: 'Golden Elite',
+    description: 'Luxurious gold finish',
     cost: 2500,
     rarity: 'legendary',
+    image: '👑',
+    color: '#eab308',
+    bonus: {}
+  },
+  {
+    id: 'cosmic_laptop',
+    name: 'Cosmic Laptop',
+    description: 'Galaxy themed masterpiece',
+    cost: 3000,
+    rarity: 'legendary',
     image: '🌌',
-    bonus: {
-      chargeSpeed: 25,
-      damageBoost: 35,
-      shieldBoost: 20
-    }
+    color: '#8b5cf6',
+    bonus: {}
   }
 ];
 
