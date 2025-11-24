@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { PerspectiveCamera, OrbitControls, Sparkles, KeyboardControls, useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { Button } from './ui/button';
@@ -15,14 +15,24 @@ interface CompanionRoomSceneProps {
   onBack: () => void;
 }
 
+// Activity-specific target positions
+const ACTIVITY_POSITIONS: Record<Activity, { pos: [number, number, number]; rot: [number, number, number] }> = {
+  idle: { pos: [0, 0, 0], rot: [0, 0, 0] },
+  reading: { pos: [1.2, -0.2, -3.8], rot: [-0.5, 0.1, 0.15] },
+  sleeping: { pos: [3, -0.6, -1.5], rot: [0, 0, Math.PI / 2.5] },
+  hiding: { pos: [-2.2, 0.2, 2], rot: [0, -Math.PI / 4, -0.3] },
+  playing: { pos: [0, 0, 0.5], rot: [0, 0, 0] },
+  jumping: { pos: [0, 0, 0], rot: [0, 0, 0] },
+};
+
 function AnimatedLaptop({ 
   laptopId, 
   activity, 
-  position,
+  userPos,
 }: { 
   laptopId: string; 
   activity: Activity;
-  position: [number, number, number];
+  userPos: [number, number, number];
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const bodyRef = useRef<THREE.Mesh>(null);
@@ -40,58 +50,75 @@ function AnimatedLaptop({
     timeRef.current += delta;
     const t = timeRef.current;
 
-    // Update position
-    groupRef.current.position.copy(new THREE.Vector3(...position));
+    // Get target position for this activity
+    const target = ACTIVITY_POSITIONS[activity];
+    const targetPos = new THREE.Vector3(userPos[0], userPos[1], userPos[2]);
+    
+    // Smoothly move toward activity position when not idle/playing/jumping
+    if (!['idle', 'playing', 'jumping'].includes(activity)) {
+      targetPos.x = target.pos[0];
+      targetPos.y = target.pos[1];
+      targetPos.z = target.pos[2];
+    }
+
+    // Smoothly interpolate position
+    groupRef.current.position.lerp(targetPos, 0.05);
 
     // Activity-specific animations
     if (activity === 'sleeping') {
-      groupRef.current.rotation.set(0, 0, Math.PI / 2.2);
-      groupRef.current.position.y = position[1] - 0.8;
+      groupRef.current.rotation.z = target.rot[2];
       if (bodyRef.current) bodyRef.current.position.y = 0.2;
-      if (leftArmRef.current) leftArmRef.current.rotation.z = -1.5;
-      if (rightArmRef.current) rightArmRef.current.rotation.z = 1.5;
+      if (leftArmRef.current) leftArmRef.current.rotation.z = -1.6;
+      if (rightArmRef.current) rightArmRef.current.rotation.z = 1.6;
+      if (leftLegRef.current) leftLegRef.current.position.y = -0.7;
+      if (rightLegRef.current) rightLegRef.current.position.y = -0.7;
     } else if (activity === 'hiding') {
-      groupRef.current.rotation.set(0, -Math.PI / 6, 0);
-      groupRef.current.scale.set(0.8, 0.7, 0.8);
+      groupRef.current.rotation.y = target.rot[1];
+      groupRef.current.rotation.z = target.rot[2];
+      groupRef.current.scale.set(0.75, 0.65, 0.75);
       if (bodyRef.current) bodyRef.current.rotation.z = 0.3;
-      if (leftArmRef.current) leftArmRef.current.rotation.z = -1.2;
-      if (rightArmRef.current) rightArmRef.current.rotation.z = 1.2;
+      if (leftArmRef.current) leftArmRef.current.rotation.z = -1.3;
+      if (rightArmRef.current) rightArmRef.current.rotation.z = 1.3;
     } else if (activity === 'reading') {
-      groupRef.current.rotation.set(-0.4, 0, 0.2);
+      groupRef.current.rotation.x = target.rot[0];
+      groupRef.current.rotation.y = target.rot[1];
+      groupRef.current.rotation.z = target.rot[2];
       groupRef.current.scale.set(1, 1, 1);
-      if (bodyRef.current) bodyRef.current.rotation.x = 0.3;
-      if (leftArmRef.current) leftArmRef.current.rotation.z = -0.9;
-      if (rightArmRef.current) rightArmRef.current.rotation.z = 0.9;
+      if (bodyRef.current) bodyRef.current.rotation.x = 0.4;
+      // Arms as if holding book
+      if (leftArmRef.current) leftArmRef.current.rotation.z = -1.1;
+      if (rightArmRef.current) rightArmRef.current.rotation.z = 1.1;
       if (leftLegRef.current) leftLegRef.current.position.y = -0.95;
       if (rightLegRef.current) rightLegRef.current.position.y = -0.95;
     } else if (activity === 'playing') {
       groupRef.current.rotation.set(
-        Math.sin(t * 2) * 0.1,
-        Math.sin(t * 1.5) * 0.15,
+        Math.sin(t * 2) * 0.12,
+        Math.sin(t * 1.5) * 0.2,
         0
       );
       groupRef.current.scale.set(1, 1, 1);
-      const bounce = Math.sin(t * 2.5) * 0.15;
-      groupRef.current.position.y = position[1] + bounce;
-      if (leftArmRef.current) leftArmRef.current.rotation.z = Math.sin(t * 3) * 1.2 - 0.3;
-      if (rightArmRef.current) rightArmRef.current.rotation.z = Math.sin(t * 3 + Math.PI) * 1.2 + 0.3;
-      if (leftLegRef.current) leftLegRef.current.position.y = Math.sin(t * 2.5) * 0.1 - 0.85;
-      if (rightLegRef.current) rightLegRef.current.position.y = Math.sin(t * 2.5 + Math.PI) * 0.1 - 0.85;
+      const bounce = Math.sin(t * 2.5) * 0.18;
+      groupRef.current.position.y = userPos[1] + bounce;
+      if (leftArmRef.current) leftArmRef.current.rotation.z = Math.sin(t * 3) * 1.3 - 0.4;
+      if (rightArmRef.current) rightArmRef.current.rotation.z = Math.sin(t * 3 + Math.PI) * 1.3 + 0.4;
+      if (leftLegRef.current) leftLegRef.current.position.y = Math.sin(t * 2.5) * 0.12 - 0.85;
+      if (rightLegRef.current) rightLegRef.current.position.y = Math.sin(t * 2.5 + Math.PI) * 0.12 - 0.85;
     } else if (activity === 'jumping') {
-      groupRef.current.rotation.set(0, 0, Math.sin(t * 3) * 0.1);
+      groupRef.current.rotation.set(0, 0, Math.sin(t * 3) * 0.12);
       groupRef.current.scale.set(1, 1, 1);
-      const jumpH = Math.max(0, Math.sin(t * 2.5) * 1.5);
-      groupRef.current.position.y = position[1] + jumpH;
-      if (leftArmRef.current) leftArmRef.current.rotation.z = Math.sin(t * 3) * 1.4 - 0.8;
-      if (rightArmRef.current) rightArmRef.current.rotation.z = Math.sin(t * 3 + Math.PI) * 1.4 + 0.8;
-      if (leftLegRef.current) leftLegRef.current.position.y = -0.5 + jumpH * 0.5;
-      if (rightLegRef.current) rightLegRef.current.position.y = -0.5 + jumpH * 0.5;
+      const jumpH = Math.max(0, Math.sin(t * 2.5) * 1.8);
+      groupRef.current.position.y = userPos[1] + jumpH;
+      if (leftArmRef.current) leftArmRef.current.rotation.z = Math.sin(t * 3) * 1.5 - 1;
+      if (rightArmRef.current) rightArmRef.current.rotation.z = Math.sin(t * 3 + Math.PI) * 1.5 + 1;
+      if (leftLegRef.current) leftLegRef.current.position.y = -0.4 + jumpH * 0.6;
+      if (rightLegRef.current) rightLegRef.current.position.y = -0.4 + jumpH * 0.6;
     } else {
-      groupRef.current.rotation.set(0, Math.sin(t * 0.8) * 0.08, 0);
+      // Idle - slight sway
+      groupRef.current.rotation.set(0, Math.sin(t * 0.8) * 0.1, 0);
       groupRef.current.scale.set(1, 1, 1);
-      if (bodyRef.current) bodyRef.current.position.y = Math.sin(t * 1.2) * 0.05;
-      if (leftArmRef.current) leftArmRef.current.rotation.z = Math.sin(t * 1.5) * 0.3;
-      if (rightArmRef.current) rightArmRef.current.rotation.z = Math.sin(t * 1.5 + Math.PI) * 0.3;
+      if (bodyRef.current) bodyRef.current.position.y = Math.sin(t * 1.2) * 0.06;
+      if (leftArmRef.current) leftArmRef.current.rotation.z = Math.sin(t * 1.5) * 0.35;
+      if (rightArmRef.current) rightArmRef.current.rotation.z = Math.sin(t * 1.5 + Math.PI) * 0.35;
     }
   });
 
@@ -103,11 +130,11 @@ function AnimatedLaptop({
           color={color} 
           shininess={100}
           emissive={activity === 'playing' ? color : '#000000'}
-          emissiveIntensity={activity === 'playing' ? 0.4 : 0}
+          emissiveIntensity={activity === 'playing' ? 0.5 : 0}
         />
       </mesh>
 
-      {activity === 'playing' && <pointLight position={[0, 0, 0.5]} intensity={1} color={color} />}
+      {activity === 'playing' && <pointLight position={[0, 0, 0.5]} intensity={1.2} color={color} />}
 
       <mesh position={[0, -0.5, 0.3]} rotation={[0.2, 0, 0]} castShadow>
         <boxGeometry args={[1.2, 0.1, 0.8]} />
@@ -139,7 +166,7 @@ function AnimatedLaptop({
             color={color} 
             shininess={80}
             emissive={activity === 'playing' ? '#ffaa00' : '#000000'}
-            emissiveIntensity={activity === 'playing' ? 0.5 : 0}
+            emissiveIntensity={activity === 'playing' ? 0.6 : 0}
           />
         </mesh>
       </group>
@@ -155,7 +182,7 @@ function AnimatedLaptop({
             color={color} 
             shininess={80}
             emissive={activity === 'playing' ? '#ffaa00' : '#000000'}
-            emissiveIntensity={activity === 'playing' ? 0.5 : 0}
+            emissiveIntensity={activity === 'playing' ? 0.6 : 0}
           />
         </mesh>
       </group>
@@ -219,7 +246,8 @@ function Room() {
         <meshStandardMaterial color="#f0e6d2" roughness={0.7} />
       </mesh>
 
-      <group position={[1.5, 0, -4.2]}>
+      {/* Library with chair */}
+      <group position={[1.5, 0, -3.8]}>
         {[0.8, 0.4, 0].map((y) => (
           <mesh key={y} position={[0, y, -0.15]} receiveShadow>
             <boxGeometry args={[2.2, 0.1, 0.3]} />
@@ -241,6 +269,33 @@ function Room() {
         ))}
       </group>
 
+      {/* Reading Chair */}
+      <group position={[0.8, -0.5, -3.5]}>
+        <mesh position={[0, 0.3, 0]} castShadow>
+          <boxGeometry args={[0.8, 0.6, 0.8]} />
+          <meshStandardMaterial color="#7d5a3a" roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 0.8, -0.35]} castShadow>
+          <boxGeometry args={[0.8, 0.6, 0.2]} />
+          <meshStandardMaterial color="#7d5a3a" roughness={0.8} />
+        </mesh>
+      </group>
+
+      {/* Charging Station */}
+      <group position={[3, -0.8, -1.5]}>
+        {/* Socket */}
+        <mesh position={[0, 0.2, 0]} castShadow>
+          <boxGeometry args={[0.3, 0.4, 0.15]} />
+          <meshStandardMaterial color="#444" roughness={0.5} />
+        </mesh>
+        {/* Plug */}
+        <mesh position={[0, 0, -0.2]} castShadow>
+          <boxGeometry args={[0.15, 0.3, 0.1]} />
+          <meshStandardMaterial color="#333" roughness={0.6} />
+        </mesh>
+      </group>
+
+      {/* Sofa */}
       <group position={[-2, -0.5, 1.5]}>
         <mesh position={[0, 0, 0]} receiveShadow castShadow>
           <boxGeometry args={[2.8, 0.8, 1.2]} />
@@ -258,6 +313,7 @@ function Room() {
         ))}
       </group>
 
+      {/* Coffee Table */}
       <group position={[2.2, -0.8, 0.8]}>
         <mesh position={[0, 0, 0]} receiveShadow castShadow>
           <boxGeometry args={[1.2, 0.1, 0.8]} />
@@ -271,6 +327,7 @@ function Room() {
         ))}
       </group>
 
+      {/* Desk Lamp */}
       <group position={[3.5, -0.8, 0.3]}>
         <mesh position={[0, 0, 0]} castShadow>
           <cylinderGeometry args={[0.08, 0.08, 0.8, 12]} />
@@ -283,6 +340,7 @@ function Room() {
         <pointLight position={[0, 0.5, 0]} intensity={1.2} color="#ffff99" castShadow />
       </group>
 
+      {/* Plant */}
       <group position={[-4.5, -0.8, -3]}>
         <mesh position={[0, 0, 0]} castShadow>
           <cylinderGeometry args={[0.25, 0.3, 0.4, 12]} />
@@ -305,18 +363,6 @@ function Room() {
       <pointLight position={[-3, 2, 0]} intensity={0.6} color="#fff" />
     </>
   );
-}
-
-function CameraController({ laptopPos }: { laptopPos: [number, number, number] }) {
-  const { camera } = useThree();
-
-  useFrame(() => {
-    const targetX = laptopPos[0] + 3;
-    const targetZ = laptopPos[2] + 5;
-    camera.position.lerp(new THREE.Vector3(targetX, 1.8, targetZ), 0.1);
-  });
-
-  return null;
 }
 
 function RoomSceneContent({ 
@@ -349,7 +395,7 @@ function RoomSceneContent({
   return (
     <>
       <Room />
-      <AnimatedLaptop laptopId={laptopId} activity={activity} position={posRef.current} />
+      <AnimatedLaptop laptopId={laptopId} activity={activity} userPos={posRef.current} />
       {activity === 'playing' && <Sparkles count={30} scale={3} size={3} speed={0.5} />}
     </>
   );
@@ -366,16 +412,15 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
   ];
 
   return (
-    <Canvas shadows camera={{ position: [3, 1.8, 5], fov: 50 }}>
+    <Canvas shadows camera={{ position: [5, 2, 8], fov: 45 }}>
       <KeyboardControls map={keyMap}>
         <RoomSceneContent 
           laptopId={laptopId} 
           activity={activity}
           onPositionChange={setLaptopPos}
         />
-        <CameraController laptopPos={laptopPos} />
       </KeyboardControls>
-      <OrbitControls enableZoom={true} enablePan={false} minDistance={3} maxDistance={12} />
+      <OrbitControls enableZoom={true} enablePan={true} minDistance={3} maxDistance={15} />
     </Canvas>
   );
 }
@@ -386,7 +431,7 @@ function VirtualJoystick({ onMove }: { onMove: (x: number, y: number) => void })
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
-    const handleTouchStart = (e: TouchEvent) => {
+    const handleTouchStart = () => {
       setIsDragging(true);
     };
 
@@ -491,8 +536,8 @@ export function CompanionRoomScene({ laptopId, onBack }: CompanionRoomSceneProps
     setActivity(newActivity);
     const messages: Record<Activity, string> = {
       idle: 'Time to relax!',
-      reading: 'Let me read some books',
-      sleeping: 'Charging my battery now...',
+      reading: 'Going to read some books!',
+      sleeping: 'Heading to charge station...',
       hiding: 'Peek-a-boo!',
       playing: 'Game time!',
       jumping: 'Wheeeee!',
