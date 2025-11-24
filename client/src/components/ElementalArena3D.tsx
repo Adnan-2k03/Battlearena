@@ -28,6 +28,29 @@ function seededRandom(seed: number) {
   return x - Math.floor(x);
 }
 
+// Skybox Component
+const Skybox = memo(function Skybox({ mapId }: { mapId?: string }) {
+  const isCosmicRealm = mapId === 'cosmic_realm';
+  
+  let skyTexture: THREE.Texture | null = null;
+  try {
+    skyTexture = useTexture('/textures/sky.png');
+  } catch (e) {
+    console.log('Sky texture not loaded, using gradient');
+  }
+
+  return (
+    <mesh scale={[-1, 1, 1]}>
+      <sphereGeometry args={[200, 32, 32]} />
+      <meshBasicMaterial 
+        map={skyTexture || undefined}
+        color={!skyTexture ? (isCosmicRealm ? '#0a0a2e' : '#87ceeb') : undefined}
+        side={THREE.BackSide}
+      />
+    </mesh>
+  );
+});
+
 // Terrain component - Memoized with mapId as dependency
 const Terrain = memo(function Terrain({ mapId }: { mapId?: string }) {
   const isCosmicRealm = mapId === 'cosmic_realm';
@@ -395,9 +418,7 @@ interface AttackProjectileProps {
 
 function AttackProjectile({ id, element, fromTeam, isCritical }: AttackProjectileProps) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const trailRef1 = useRef<THREE.Mesh>(null);
-  const trailRef2 = useRef<THREE.Mesh>(null);
-  const trailRef3 = useRef<THREE.Mesh>(null);
+  const trailRef = useRef<THREE.Mesh>(null);
   const progressRef = useRef(0);
   const startTimeRef = useRef(Date.now());
   
@@ -409,7 +430,7 @@ function AttackProjectile({ id, element, fromTeam, isCritical }: AttackProjectil
     : [0, 2, 10];
 
   useFrame(() => {
-    const elapsed = (Date.now() - startTimeRef.current) / 1200; // 1.2 second animation (faster)
+    const elapsed = (Date.now() - startTimeRef.current) / 1200;
     progressRef.current = Math.min(elapsed, 1);
     
     if (meshRef.current && progressRef.current < 1) {
@@ -420,18 +441,9 @@ function AttackProjectile({ id, element, fromTeam, isCritical }: AttackProjectil
       meshRef.current.rotation.x += 0.15;
       meshRef.current.rotation.y += 0.2;
       
-      // Update trail positions
-      if (trailRef1.current) {
-        trailRef1.current.position.copy(meshRef.current.position);
-        trailRef1.current.scale.setScalar(0.8 + Math.sin(t * 10) * 0.2);
-      }
-      if (trailRef2.current) {
-        trailRef2.current.position.copy(meshRef.current.position);
-        trailRef2.current.scale.setScalar(0.6 + Math.sin(t * 10 + 1) * 0.2);
-      }
-      if (trailRef3.current) {
-        trailRef3.current.position.copy(meshRef.current.position);
-        trailRef3.current.scale.setScalar(0.4 + Math.sin(t * 10 + 2) * 0.2);
+      if (trailRef.current) {
+        trailRef.current.position.copy(meshRef.current.position);
+        trailRef.current.scale.setScalar(0.7 + Math.sin(t * 8) * 0.15);
       }
     }
   });
@@ -475,49 +487,27 @@ function AttackProjectile({ id, element, fromTeam, isCritical }: AttackProjectil
         />
       </mesh>
       
-      {/* Trail effects */}
-      <mesh ref={trailRef1} position={startPos}>
-        <sphereGeometry args={[isCritical ? 0.8 : 0.5, 16, 16]} />
+      {/* Single optimized trail */}
+      <mesh ref={trailRef} position={startPos}>
+        <sphereGeometry args={[isCritical ? 0.7 : 0.5, 12, 12]} />
         <meshBasicMaterial 
           color={color}
           transparent
-          opacity={0.5}
-        />
-      </mesh>
-      <mesh ref={trailRef2} position={startPos}>
-        <sphereGeometry args={[isCritical ? 0.6 : 0.4, 16, 16]} />
-        <meshBasicMaterial 
-          color={color}
-          transparent
-          opacity={0.3}
-        />
-      </mesh>
-      <mesh ref={trailRef3} position={startPos}>
-        <sphereGeometry args={[isCritical ? 0.4 : 0.3, 16, 16]} />
-        <meshBasicMaterial 
-          color={color}
-          transparent
-          opacity={0.1}
+          opacity={0.4}
         />
       </mesh>
       
-      {/* Energy particles around projectile */}
-      {isCritical && [...Array(6)].map((_, i) => {
-        const angle = (i / 6) * Math.PI * 2;
-        return (
-          <mesh 
-            key={i}
-            position={[
-              startPos[0] + Math.cos(angle) * 0.5,
-              startPos[1] + Math.sin(angle) * 0.5,
-              startPos[2]
-            ]}
-          >
-            <sphereGeometry args={[0.15, 8, 8]} />
-            <meshBasicMaterial color={color} />
-          </mesh>
-        );
-      })}
+      {/* Simplified critical glow */}
+      {isCritical && (
+        <mesh position={startPos}>
+          <sphereGeometry args={[1.2, 16, 16]} />
+          <meshBasicMaterial 
+            color={color} 
+            transparent 
+            opacity={0.2} 
+          />
+        </mesh>
+      )}
       
       <pointLight 
         position={meshRef.current?.position || startPos} 
@@ -572,6 +562,9 @@ function Scene({ gameState, selectedLaptop, mySocketId, selectedMap }: { gameSta
       {/* Environment */}
       <Environment preset={isCosmicRealm ? "night" : "sunset"} />
       
+      {/* Skybox */}
+      <Skybox key={`skybox-${selectedMap}`} mapId={selectedMap} />
+      
       {/* Terrain */}
       <Terrain key={selectedMap} mapId={selectedMap} />
       
@@ -581,7 +574,7 @@ function Scene({ gameState, selectedLaptop, mySocketId, selectedMap }: { gameSta
         if (!pos) return null;
         
         // Identify "me" by socket ID
-        const isMe = mySocketId && player.id === mySocketId;
+        const isMe = !!(mySocketId && player.id === mySocketId);
         const laptopData = isMe && selectedLaptop ? getLaptopById(selectedLaptop) : undefined;
         const laptopColor = laptopData?.color;
         
@@ -993,6 +986,7 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode =
             socket={socket}
             roomId={roomId}
             myTeam={myTeam}
+            selectedMap={selectedMap}
             enemyPlayers={enemyPlayers.map(p => ({
               id: p.id,
               nickname: p.nickname,

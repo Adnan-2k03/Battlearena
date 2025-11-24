@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
+import { getMapById, ELEMENT_COLORS, ELEMENT_ICONS } from '@/lib/data/maps';
+
+type Element = 'fire' | 'water' | 'leaf' | 'light' | 'darkness' | 'space';
 
 interface AdminControlPanelProps {
   socket: Socket | null;
   roomId: string;
   myTeam: 'blue' | 'red' | null;
+  selectedMap?: string;
   enemyPlayers: Array<{
     id: string;
     nickname: string;
@@ -15,13 +19,13 @@ interface AdminControlPanelProps {
 
 interface AdminSettings {
   unlimitedEnemyHealth: boolean;
-  enemyBarrierElement: 'fire' | 'water' | 'leaf' | null;
+  enemyBarrierElement: Element | null;
   enemyBarrierStrength: number;
   godMode: boolean;
   instantCharge: boolean;
 }
 
-export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: AdminControlPanelProps) {
+export function AdminControlPanel({ socket, roomId, myTeam, selectedMap, enemyPlayers }: AdminControlPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [settings, setSettings] = useState<AdminSettings>({
     unlimitedEnemyHealth: false,
@@ -175,14 +179,10 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
                 padding: '8px 10px',
                 borderRadius: '6px',
                 background: settings.enemyBarrierElement 
-                  ? (settings.enemyBarrierElement === 'fire' ? 'rgba(239, 68, 68, 0.2)' 
-                    : settings.enemyBarrierElement === 'water' ? 'rgba(59, 130, 246, 0.2)' 
-                    : 'rgba(34, 197, 94, 0.2)')
+                  ? `${ELEMENT_COLORS[settings.enemyBarrierElement]}33`
                   : 'rgba(255, 255, 255, 0.1)',
                 border: settings.enemyBarrierElement 
-                  ? (settings.enemyBarrierElement === 'fire' ? '2px solid #ef4444' 
-                    : settings.enemyBarrierElement === 'water' ? '2px solid #3b82f6' 
-                    : '2px solid #22c55e')
+                  ? `2px solid ${ELEMENT_COLORS[settings.enemyBarrierElement]}`
                   : '1px solid rgba(255, 255, 255, 0.3)',
                 color: 'white',
                 fontSize: '14px',
@@ -192,9 +192,19 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
               }}
             >
               <option value="" style={{ background: '#1e293b', color: '#94a3b8' }}>None</option>
-              <option value="fire" style={{ background: '#1e293b', color: '#ef4444' }}>🔥 Fire</option>
-              <option value="water" style={{ background: '#1e293b', color: '#3b82f6' }}>💧 Water</option>
-              <option value="leaf" style={{ background: '#1e293b', color: '#22c55e' }}>🌿 Leaf</option>
+              {(() => {
+                const mapData = getMapById(selectedMap || 'elemental_arena');
+                const elements = mapData?.elements || ['fire', 'water', 'leaf'];
+                return elements.map((element) => (
+                  <option 
+                    key={element} 
+                    value={element} 
+                    style={{ background: '#1e293b', color: ELEMENT_COLORS[element] }}
+                  >
+                    {ELEMENT_ICONS[element]} {element.charAt(0).toUpperCase() + element.slice(1)}
+                  </option>
+                ));
+              })()}
             </select>
           </div>
 

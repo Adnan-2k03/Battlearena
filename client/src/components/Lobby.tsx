@@ -166,27 +166,25 @@ export function Lobby({ socket, onMatchStart, onRoomJoined, initialNickname = ''
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setGameMode('team')}
-                    className={`p-4 rounded-lg border-2 transition-all ${
+                    className={`p-2 rounded-lg border-2 transition-all ${
                       gameMode === 'team'
                         ? 'bg-purple-600 border-purple-400 text-white'
                         : 'bg-slate-700 border-slate-600 text-slate-300 hover:border-slate-500'
                     }`}
                   >
-                    <Users className="w-6 h-6 mx-auto mb-2" />
-                    <div className="font-bold">Team 2v2</div>
-                    <div className="text-xs opacity-75">4 Players</div>
+                    <Users className="w-4 h-4 mx-auto mb-1" />
+                    <div className="text-sm font-bold">Team 2v2</div>
                   </button>
                   <button
                     onClick={() => setGameMode('solo')}
-                    className={`p-4 rounded-lg border-2 transition-all ${
+                    className={`p-2 rounded-lg border-2 transition-all ${
                       gameMode === 'solo'
                         ? 'bg-orange-600 border-orange-400 text-white'
                         : 'bg-slate-700 border-slate-600 text-slate-300 hover:border-slate-500'
                     }`}
                   >
-                    <Swords className="w-6 h-6 mx-auto mb-2" />
-                    <div className="font-bold">Solo 1v1</div>
-                    <div className="text-xs opacity-75">2 Players</div>
+                    <Swords className="w-4 h-4 mx-auto mb-1" />
+                    <div className="text-sm font-bold">Solo 1v1</div>
                   </button>
                 </div>
               </div>

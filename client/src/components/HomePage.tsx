@@ -372,62 +372,50 @@ export function HomePage({ socket, onMatchStart, onRoomJoined }: HomePageProps) 
           </TabsContent>
 
           <TabsContent value="maps" className="space-y-4">
-            <h3 className="text-2xl font-bold text-white mb-4">Arena Selection</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h3 className="text-xl font-bold text-white mb-3">Select Arena</h3>
+            <div className="flex gap-3 overflow-x-auto pb-2">
               {MAPS.map((map) => {
                 const unlocked = profile.unlockedMaps.includes(map.id);
                 const selected = profile.selectedMap === map.id;
-                const canUnlock = profile.level >= map.unlockLevel;
 
                 return (
                   <Card
                     key={map.id}
                     className={cn(
-                      "bg-slate-900/80 border-2 transition-all",
-                      selected ? "border-green-500 shadow-lg shadow-green-500/50" : "border-slate-700",
-                      unlocked && !selected && "cursor-pointer hover:scale-105"
+                      "bg-slate-900/80 border-2 transition-all cursor-pointer min-w-[180px] flex-shrink-0",
+                      selected ? "border-green-500 shadow-lg shadow-green-500/30" : "border-slate-700",
+                      unlocked && "hover:border-slate-500"
                     )}
                     onClick={() => unlocked && selectMap(map.id)}
                   >
-                    <CardContent className="p-6">
-                      <div className="text-center mb-4">
-                        <div className="text-7xl mb-3">{map.thumbnail}</div>
-                        <h4 className="text-2xl font-bold text-white">{map.name}</h4>
-                        <p className="text-slate-400 mt-2">{map.description}</p>
-                      </div>
-
-                      <div className="bg-slate-800 rounded-lg p-4 mb-4">
-                        <div className="text-sm text-slate-400 mb-2">Elements:</div>
-                        <div className="flex gap-2 justify-center">
+                    <CardContent className="p-3">
+                      <div className="text-center">
+                        <div className="text-4xl mb-1">{map.thumbnail}</div>
+                        <h4 className="text-sm font-bold text-white mb-1">{map.name}</h4>
+                        <div className="flex gap-1 justify-center mb-2">
                           {map.elements.map((element) => (
                             <div
                               key={element}
-                              className="px-3 py-2 rounded-lg font-bold text-white"
+                              className="text-xs px-1.5 py-0.5 rounded"
                               style={{ backgroundColor: ELEMENT_COLORS[element] }}
                             >
-                              {ELEMENT_ICONS[element]} {element.charAt(0).toUpperCase() + element.slice(1)}
+                              {ELEMENT_ICONS[element]}
                             </div>
                           ))}
                         </div>
+                        {!unlocked ? (
+                          <div className="text-xs text-slate-400 flex items-center justify-center gap-1">
+                            <Lock className="w-3 h-3" />
+                            <span>Lv {map.unlockLevel}</span>
+                          </div>
+                        ) : selected ? (
+                          <div className="bg-green-600 text-white text-xs py-1 rounded font-bold">
+                            ✓ Selected
+                          </div>
+                        ) : (
+                          <div className="text-xs text-blue-400">Tap to select</div>
+                        )}
                       </div>
-
-                      {!unlocked ? (
-                        <div className="flex items-center justify-center gap-2 text-slate-400">
-                          <Lock className="w-5 h-5" />
-                          <span>Unlock at Level {map.unlockLevel}</span>
-                        </div>
-                      ) : selected ? (
-                        <div className="bg-green-600 text-white text-center py-3 rounded-lg font-bold">
-                          ✓ Selected
-                        </div>
-                      ) : (
-                        <Button
-                          onClick={() => selectMap(map.id)}
-                          className="w-full bg-blue-600 hover:bg-blue-700"
-                        >
-                          Select Map
-                        </Button>
-                      )}
                     </CardContent>
                   </Card>
                 );
