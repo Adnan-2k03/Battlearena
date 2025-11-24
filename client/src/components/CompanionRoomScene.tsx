@@ -393,20 +393,28 @@ function Room() {
         </mesh>
       </group>
 
-      {/* Charging Station - Premium */}
-      <group position={[3, -0.8, -1.5]}>
-        {/* Wall outlet */}
-        <mesh position={[0, 0.3, 0]} castShadow>
-          <boxGeometry args={[0.4, 0.5, 0.2]} />
-          <meshStandardMaterial color="#333" roughness={0.4} />
+      {/* Charging Station - Wall Mounted on Right Side */}
+      <group position={[7.8, 0.5, -1.5]}>
+        {/* Wall outlet plate */}
+        <mesh position={[0, 0, 0.15]} castShadow>
+          <boxGeometry args={[0.5, 0.6, 0.05]} />
+          <meshStandardMaterial color="#444" roughness={0.3} metalness={0.1} />
         </mesh>
-        {/* Plug connector */}
-        <mesh position={[0, 0.15, -0.25]} castShadow>
-          <boxGeometry args={[0.2, 0.4, 0.15]} />
-          <meshStandardMaterial color="#222" roughness={0.5} />
+        {/* Outlet holes */}
+        <mesh position={[-0.1, 0.05, 0.25]} castShadow>
+          <cylinderGeometry args={[0.06, 0.06, 0.1, 16]} />
+          <meshStandardMaterial color="#222" roughness={0.6} />
         </mesh>
-        {/* Charging indicator light */}
-        <pointLight position={[0, 0.35, 0]} intensity={0.8} color="#22ff22" />
+        <mesh position={[0.1, 0.05, 0.25]} castShadow>
+          <cylinderGeometry args={[0.06, 0.06, 0.1, 16]} />
+          <meshStandardMaterial color="#222" roughness={0.6} />
+        </mesh>
+        {/* Charging indicator light - glowing green */}
+        <pointLight position={[0, -0.15, 0.3]} intensity={1} color="#22ff22" />
+        <mesh position={[0, -0.15, 0.28]} castShadow>
+          <sphereGeometry args={[0.08, 16, 16]} />
+          <meshStandardMaterial color="#22ff22" emissive="#22ff22" emissiveIntensity={0.8} />
+        </mesh>
       </group>
 
       {/* Premium Sofa */}
