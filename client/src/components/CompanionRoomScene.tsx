@@ -319,15 +319,6 @@ function Room() {
         />
       </mesh>
 
-      {/* Back wall - BOTTOM SECTION (below small door from x=10 to x=11.5) */}
-      <mesh position={[10.75, -0.2, -8]} receiveShadow>
-        <boxGeometry args={[1.5, 0.5, 0.5]} />
-        <meshStandardMaterial 
-          color="#daa55b" 
-          roughness={0.7}
-        />
-      </mesh>
-
       {/* Back wall - RIGHT PILLAR (right side of door from x=11.5 to x=12) */}
       <mesh position={[11.75, 1.5, -8]} receiveShadow>
         <boxGeometry args={[0.5, 3.5, 0.5]} />
