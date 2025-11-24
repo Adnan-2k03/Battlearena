@@ -292,40 +292,48 @@ function Room() {
         <meshStandardMaterial color="#3a2a1a" roughness={0.65} />
       </mesh>
 
-      {/* Back wall with door - warmer tones */}
-      <mesh position={[-3, 1.5, -8]} receiveShadow>
-        <boxGeometry args={[6, 3.5, 0.5]} />
+      {/* Back wall - LEFT SECTION (before door) */}
+      <mesh position={[-6, 1.5, -8]} receiveShadow>
+        <boxGeometry args={[10, 3.5, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
         />
       </mesh>
-      <mesh position={[10, 1.5, -8]} receiveShadow>
-        <boxGeometry args={[8, 3.5, 0.5]} />
+
+      {/* Back wall - RIGHT SECTION (after door) */}
+      <mesh position={[11, 1.5, -8]} receiveShadow>
+        <boxGeometry args={[2, 3.5, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
         />
       </mesh>
-      <mesh position={[6, 2.8, -8]} receiveShadow>
-        <boxGeometry args={[4, 0.9, 0.5]} />
+
+      {/* Back wall - TOP SECTION (above door) */}
+      <mesh position={[6, 2.85, -8]} receiveShadow>
+        <boxGeometry args={[8, 0.8, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
         />
       </mesh>
       
-      {/* Door frame - right side */}
-      <mesh position={[4, 0.5, -7.8]} castShadow>
-        <boxGeometry args={[0.2, 2.5, 0.2]} />
+      {/* Door frame - LEFT SIDE */}
+      <mesh position={[2, 0.5, -7.8]} castShadow>
+        <boxGeometry args={[0.3, 2.4, 0.2]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
       </mesh>
-      <mesh position={[8, 0.5, -7.8]} castShadow>
-        <boxGeometry args={[0.2, 2.5, 0.2]} />
+
+      {/* Door frame - RIGHT SIDE */}
+      <mesh position={[10, 0.5, -7.8]} castShadow>
+        <boxGeometry args={[0.3, 2.4, 0.2]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
       </mesh>
-      <mesh position={[6, 2.3, -7.8]} castShadow>
-        <boxGeometry args={[4.4, 0.2, 0.2]} />
+
+      {/* Door frame - TOP */}
+      <mesh position={[6, 2.5, -7.8]} castShadow>
+        <boxGeometry args={[8.3, 0.3, 0.2]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
       </mesh>
 
@@ -903,11 +911,13 @@ function RoomSceneContent({
     }
   });
 
+  const isOutside = posRef.current[2] < -8;
+
   return (
     <>
       <Room />
-      <OutdoorWorld />
-      <Bike position={bikePos} wheelRotation={wheelRotation} />
+      {isOutside && <OutdoorWorld />}
+      {isOutside && <Bike position={bikePos} wheelRotation={wheelRotation} />}
       <AnimatedLaptop laptopId={laptopId} activity={activity} userPos={posRef.current} isRidingBike={isRidingBike} />
       {activity === 'playing' && <Sparkles count={40} scale={4} size={4} speed={0.6} />}
       
