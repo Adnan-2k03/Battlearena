@@ -292,9 +292,9 @@ function Room() {
         <meshStandardMaterial color="#3a2a1a" roughness={0.65} />
       </mesh>
 
-      {/* Back wall - MAIN SECTION (full height, most of wall) */}
-      <mesh position={[0, 1.5, -8]} receiveShadow>
-        <boxGeometry args={[18, 3.5, 0.5]} />
+      {/* Back wall - LEFT SECTION (full height from x=-12 to x=9) */}
+      <mesh position={[-1.5, 1.5, -8]} receiveShadow>
+        <boxGeometry args={[21, 3.5, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
