@@ -96,10 +96,11 @@ export function useGameState(
       });
       setPlayers(playersMap);
       
-      // Update my charges
+      // Update my charges - always set to 100 if admin mode
       const myData = playerCharges.find((p: any) => p.id === socket.id);
       if (myData) {
         if (isAdminMode) {
+          console.log('Admin mode active - setting all charges to 100');
           setMyCharges({ fire: 100, water: 100, leaf: 100 });
         } else {
           setMyCharges(myData.charges);
@@ -217,7 +218,7 @@ export function useGameState(
       socket.off('word_correct');
       socket.off('word_invalid');
     };
-  }, [socket, roomId, playHit, playSuccess, playCharge, playBarrier, playAttack]);
+  }, [socket, roomId, playHit, playSuccess, playCharge, playBarrier, playAttack, isAdminMode]);
 
   const submitWord = (word: string) => {
     if (!socket || !word.trim()) return;
@@ -234,16 +235,26 @@ export function useGameState(
   };
 
   const useElement = (element: Element, action: 'attack' | 'barrier') => {
-    if (!socket || myCharges[element] < 100) return;
+    console.log('useElement called:', { element, action, charge: myCharges[element], isAdminMode });
+    
+    if (!socket || myCharges[element] < 100) {
+      console.log('Element use blocked - charge not full or no socket');
+      return;
+    }
 
+    console.log('Emitting use_element to server');
     socket.emit('use_element', {
       roomId,
       element,
       action
     });
 
+    // Immediately restore charges in admin mode
     if (isAdminMode) {
-      setTimeout(() => setMyCharges({ fire: 100, water: 100, leaf: 100 }), 100);
+      setTimeout(() => {
+        console.log('Admin mode - restoring all charges to 100');
+        setMyCharges({ fire: 100, water: 100, leaf: 100 });
+      }, 50);
     }
   };
 
