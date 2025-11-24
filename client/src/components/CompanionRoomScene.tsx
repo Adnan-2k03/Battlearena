@@ -301,18 +301,27 @@ function Room() {
         />
       </mesh>
 
-      {/* Back wall - TOP SECTION (above small door from x=9 to x=12) */}
-      <mesh position={[10.5, 2.7, -8]} receiveShadow>
-        <boxGeometry args={[3, 1.1, 0.5]} />
+      {/* Back wall - TOP SECTION (above small door from x=10 to x=11.5) */}
+      <mesh position={[10.75, 2.7, -8]} receiveShadow>
+        <boxGeometry args={[1.5, 1.1, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
         />
       </mesh>
 
-      {/* Back wall - BOTTOM SECTION (below small door from x=9 to x=12) */}
-      <mesh position={[10.5, -0.2, -8]} receiveShadow>
-        <boxGeometry args={[3, 0.5, 0.5]} />
+      {/* Back wall - BOTTOM SECTION (below small door from x=10 to x=11.5) */}
+      <mesh position={[10.75, -0.2, -8]} receiveShadow>
+        <boxGeometry args={[1.5, 0.5, 0.5]} />
+        <meshStandardMaterial 
+          color="#daa55b" 
+          roughness={0.7}
+        />
+      </mesh>
+
+      {/* Back wall - RIGHT PILLAR (right side of door from x=11.5 to x=12) */}
+      <mesh position={[11.75, 1.5, -8]} receiveShadow>
+        <boxGeometry args={[0.5, 3.5, 0.5]} />
         <meshStandardMaterial 
           color="#daa55b" 
           roughness={0.7}
@@ -320,20 +329,20 @@ function Room() {
       </mesh>
       
       {/* Door frame - LEFT SIDE */}
-      <mesh position={[9, 1.0, -7.75]} castShadow>
+      <mesh position={[10, 1.0, -7.75]} castShadow>
         <boxGeometry args={[0.2, 2.2, 0.1]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
       </mesh>
 
       {/* Door frame - RIGHT SIDE */}
-      <mesh position={[12, 1.0, -7.75]} castShadow>
+      <mesh position={[11.5, 1.0, -7.75]} castShadow>
         <boxGeometry args={[0.2, 2.2, 0.1]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
       </mesh>
 
       {/* Door frame - BOTTOM */}
-      <mesh position={[10.5, -0.1, -7.75]} castShadow>
-        <boxGeometry args={[3.2, 0.2, 0.1]} />
+      <mesh position={[10.75, -0.1, -7.75]} castShadow>
+        <boxGeometry args={[1.7, 0.2, 0.1]} />
         <meshStandardMaterial color="#3a2a1a" roughness={0.6} />
       </mesh>
 
