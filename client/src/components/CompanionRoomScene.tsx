@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { PerspectiveCamera, OrbitControls, Sparkles, KeyboardControls, useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { Button } from './ui/button';
@@ -45,21 +45,18 @@ function AnimatedLaptop({
 
     // Activity-specific animations
     if (activity === 'sleeping') {
-      // Lying down on ground
       groupRef.current.rotation.set(0, 0, Math.PI / 2.2);
       groupRef.current.position.y = position[1] - 0.8;
       if (bodyRef.current) bodyRef.current.position.y = 0.2;
       if (leftArmRef.current) leftArmRef.current.rotation.z = -1.5;
       if (rightArmRef.current) rightArmRef.current.rotation.z = 1.5;
     } else if (activity === 'hiding') {
-      // Behind sofa - crouched
       groupRef.current.rotation.set(0, -Math.PI / 6, 0);
       groupRef.current.scale.set(0.8, 0.7, 0.8);
       if (bodyRef.current) bodyRef.current.rotation.z = 0.3;
       if (leftArmRef.current) leftArmRef.current.rotation.z = -1.2;
       if (rightArmRef.current) rightArmRef.current.rotation.z = 1.2;
     } else if (activity === 'reading') {
-      // Tilted back, reading pose
       groupRef.current.rotation.set(-0.4, 0, 0.2);
       groupRef.current.scale.set(1, 1, 1);
       if (bodyRef.current) bodyRef.current.rotation.x = 0.3;
@@ -68,7 +65,6 @@ function AnimatedLaptop({
       if (leftLegRef.current) leftLegRef.current.position.y = -0.95;
       if (rightLegRef.current) rightLegRef.current.position.y = -0.95;
     } else if (activity === 'playing') {
-      // Gaming - excited bouncing
       groupRef.current.rotation.set(
         Math.sin(t * 2) * 0.1,
         Math.sin(t * 1.5) * 0.15,
@@ -82,7 +78,6 @@ function AnimatedLaptop({
       if (leftLegRef.current) leftLegRef.current.position.y = Math.sin(t * 2.5) * 0.1 - 0.85;
       if (rightLegRef.current) rightLegRef.current.position.y = Math.sin(t * 2.5 + Math.PI) * 0.1 - 0.85;
     } else if (activity === 'jumping') {
-      // Jumping high
       groupRef.current.rotation.set(0, 0, Math.sin(t * 3) * 0.1);
       groupRef.current.scale.set(1, 1, 1);
       const jumpH = Math.max(0, Math.sin(t * 2.5) * 1.5);
@@ -92,7 +87,6 @@ function AnimatedLaptop({
       if (leftLegRef.current) leftLegRef.current.position.y = -0.5 + jumpH * 0.5;
       if (rightLegRef.current) rightLegRef.current.position.y = -0.5 + jumpH * 0.5;
     } else {
-      // Idle - slight sway
       groupRef.current.rotation.set(0, Math.sin(t * 0.8) * 0.08, 0);
       groupRef.current.scale.set(1, 1, 1);
       if (bodyRef.current) bodyRef.current.position.y = Math.sin(t * 1.2) * 0.05;
@@ -103,7 +97,6 @@ function AnimatedLaptop({
 
   return (
     <group ref={groupRef}>
-      {/* Screen/Body */}
       <mesh ref={bodyRef} position={[0, 0, 0]} castShadow>
         <boxGeometry args={[1.2, 0.8, 0.1]} />
         <meshPhongMaterial 
@@ -116,13 +109,11 @@ function AnimatedLaptop({
 
       {activity === 'playing' && <pointLight position={[0, 0, 0.5]} intensity={1} color={color} />}
 
-      {/* Keyboard */}
       <mesh position={[0, -0.5, 0.3]} rotation={[0.2, 0, 0]} castShadow>
         <boxGeometry args={[1.2, 0.1, 0.8]} />
         <meshPhongMaterial color={color} shininess={80} />
       </mesh>
 
-      {/* Left Leg */}
       <group ref={leftLegRef} position={[-0.5, -0.85, 0.3]} castShadow>
         <mesh>
           <cylinderGeometry args={[0.07, 0.06, 0.35, 16]} />
@@ -130,7 +121,6 @@ function AnimatedLaptop({
         </mesh>
       </group>
 
-      {/* Right Leg */}
       <group ref={rightLegRef} position={[0.5, -0.85, 0.3]} castShadow>
         <mesh>
           <cylinderGeometry args={[0.07, 0.06, 0.35, 16]} />
@@ -138,7 +128,6 @@ function AnimatedLaptop({
         </mesh>
       </group>
 
-      {/* Left Arm */}
       <group ref={leftArmRef} position={[-0.65, 0.1, 0.15]} castShadow>
         <mesh position={[0, -0.25, 0]}>
           <boxGeometry args={[0.12, 0.5, 0.1]} />
@@ -155,7 +144,6 @@ function AnimatedLaptop({
         </mesh>
       </group>
 
-      {/* Right Arm */}
       <group ref={rightArmRef} position={[0.65, 0.1, 0.15]} castShadow>
         <mesh position={[0, -0.25, 0]}>
           <boxGeometry args={[0.12, 0.5, 0.1]} />
@@ -172,13 +160,11 @@ function AnimatedLaptop({
         </mesh>
       </group>
 
-      {/* Face area */}
       <mesh position={[0, 0.2, 0.08]} castShadow>
         <boxGeometry args={[0.6, 0.35, 0.08]} />
         <meshPhongMaterial color="#1f1f1f" shininess={30} />
       </mesh>
 
-      {/* Eyes - white */}
       <mesh position={[-0.15, 0.28, 0.12]} castShadow>
         <sphereGeometry args={[0.08, 16, 16]} />
         <meshPhongMaterial color="#ffffff" shininess={60} />
@@ -188,7 +174,6 @@ function AnimatedLaptop({
         <meshPhongMaterial color="#ffffff" shininess={60} />
       </mesh>
 
-      {/* Pupils */}
       {activity === 'sleeping' ? (
         <>
           <mesh position={[-0.15, 0.2, 0.14]}>
@@ -234,7 +219,6 @@ function Room() {
         <meshStandardMaterial color="#f0e6d2" roughness={0.7} />
       </mesh>
 
-      {/* Library Shelf */}
       <group position={[1.5, 0, -4.2]}>
         {[0.8, 0.4, 0].map((y) => (
           <mesh key={y} position={[0, y, -0.15]} receiveShadow>
@@ -257,7 +241,6 @@ function Room() {
         ))}
       </group>
 
-      {/* Sofa */}
       <group position={[-2, -0.5, 1.5]}>
         <mesh position={[0, 0, 0]} receiveShadow castShadow>
           <boxGeometry args={[2.8, 0.8, 1.2]} />
@@ -275,7 +258,6 @@ function Room() {
         ))}
       </group>
 
-      {/* Coffee Table */}
       <group position={[2.2, -0.8, 0.8]}>
         <mesh position={[0, 0, 0]} receiveShadow castShadow>
           <boxGeometry args={[1.2, 0.1, 0.8]} />
@@ -289,7 +271,6 @@ function Room() {
         ))}
       </group>
 
-      {/* Desk Lamp */}
       <group position={[3.5, -0.8, 0.3]}>
         <mesh position={[0, 0, 0]} castShadow>
           <cylinderGeometry args={[0.08, 0.08, 0.8, 12]} />
@@ -302,7 +283,6 @@ function Room() {
         <pointLight position={[0, 0.5, 0]} intensity={1.2} color="#ffff99" castShadow />
       </group>
 
-      {/* Plant */}
       <group position={[-4.5, -0.8, -3]}>
         <mesh position={[0, 0, 0]} castShadow>
           <cylinderGeometry args={[0.25, 0.3, 0.4, 12]} />
@@ -327,6 +307,18 @@ function Room() {
   );
 }
 
+function CameraController({ laptopPos }: { laptopPos: [number, number, number] }) {
+  const { camera } = useThree();
+
+  useFrame(() => {
+    const targetX = laptopPos[0] + 3;
+    const targetZ = laptopPos[2] + 5;
+    camera.position.lerp(new THREE.Vector3(targetX, 1.8, targetZ), 0.1);
+  });
+
+  return null;
+}
+
 function RoomSceneContent({ 
   laptopId, 
   activity,
@@ -348,11 +340,10 @@ function RoomSceneContent({
     if (controls.left) posRef.current[0] -= speed;
     if (controls.right) posRef.current[0] += speed;
 
-    // Clamp to room bounds
     posRef.current[0] = Math.max(-4, Math.min(4, posRef.current[0]));
     posRef.current[2] = Math.max(-4, Math.min(4, posRef.current[2]));
 
-    onPositionChange(posRef.current);
+    onPositionChange([...posRef.current]);
   });
 
   return (
@@ -366,15 +357,6 @@ function RoomSceneContent({
 
 function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activity }) {
   const [laptopPos, setLaptopPos] = useState<[number, number, number]>([0, 0, 0]);
-  const cameraRef = useRef<THREE.PerspectiveCamera>(null);
-
-  useFrame(() => {
-    if (cameraRef.current) {
-      const targetX = laptopPos[0] + 3;
-      const targetZ = laptopPos[2] + 5;
-      cameraRef.current.position.lerp(new THREE.Vector3(targetX, 1.8, targetZ), 0.1);
-    }
-  });
 
   const keyMap = [
     { name: 'forward' as Controls, keys: ['ArrowUp', 'KeyW'] },
@@ -385,13 +367,13 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
 
   return (
     <Canvas shadows camera={{ position: [3, 1.8, 5], fov: 50 }}>
-      <PerspectiveCamera ref={cameraRef} makeDefault position={[3, 1.8, 5]} fov={50} />
       <KeyboardControls map={keyMap}>
         <RoomSceneContent 
           laptopId={laptopId} 
           activity={activity}
           onPositionChange={setLaptopPos}
         />
+        <CameraController laptopPos={laptopPos} />
       </KeyboardControls>
       <OrbitControls enableZoom={true} enablePan={false} minDistance={3} maxDistance={12} />
     </Canvas>
@@ -481,7 +463,6 @@ export function CompanionRoomScene({ laptopId, onBack }: CompanionRoomSceneProps
   const [voiceEnabled, setVoiceEnabled] = useState(() => {
     return localStorage.getItem('companion_voice_enabled') === 'true';
   });
-  const [joystickMove, setJoystickMove] = useState({ x: 0, y: 0 });
 
   const laptop = LAPTOPS.find(l => l.id === laptopId);
   const personality = getPersonality(laptopId);
@@ -521,12 +502,10 @@ export function CompanionRoomScene({ laptopId, onBack }: CompanionRoomSceneProps
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex flex-col relative">
-      {/* 3D Scene */}
       <div className="flex-1 w-full relative">
         <RoomScene laptopId={laptopId} activity={activity} />
       </div>
 
-      {/* Header Overlay */}
       <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-slate-900/90 to-transparent p-4 flex items-center justify-between z-20">
         <Button
           onClick={onBack}
@@ -554,7 +533,6 @@ export function CompanionRoomScene({ laptopId, onBack }: CompanionRoomSceneProps
         </Button>
       </div>
 
-      {/* Activity Controls */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900/95 to-transparent p-4">
         <div className="max-w-7xl mx-auto">
           <p className="text-slate-300 text-sm mb-3">What should {laptop?.name} do?</p>
@@ -578,10 +556,9 @@ export function CompanionRoomScene({ laptopId, onBack }: CompanionRoomSceneProps
         </div>
       </div>
 
-      {/* Mobile Joystick */}
       {isMobile && (
         <VirtualJoystick 
-          onMove={(x, y) => setJoystickMove({ x, y })}
+          onMove={() => {}}
         />
       )}
     </div>
