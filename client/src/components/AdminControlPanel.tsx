@@ -19,8 +19,6 @@ interface AdminSettings {
   enemyBarrierStrength: number;
   godMode: boolean;
   instantCharge: boolean;
-  controlledTeam: 'blue' | 'red' | null;
-  gameSpeedMultiplier: number;
 }
 
 export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: AdminControlPanelProps) {
@@ -30,9 +28,7 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
     enemyBarrierElement: null,
     enemyBarrierStrength: 100,
     godMode: false,
-    instantCharge: false,
-    controlledTeam: null,
-    gameSpeedMultiplier: 1.0
+    instantCharge: false
   });
 
   useEffect(() => {
@@ -308,38 +304,70 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
         </div>
 
         <div style={{
-          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)',
+          background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(202, 138, 4, 0.05) 100%)',
           padding: '14px',
           borderRadius: '10px',
-          border: '1px solid rgba(59, 130, 246, 0.3)'
+          border: '1px solid rgba(234, 179, 8, 0.3)'
         }}>
-          <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: '#93c5fd', fontWeight: 'bold' }}>⚙️ Game Settings</h4>
+          <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: '#fde047', fontWeight: 'bold' }}>🎮 Match Controls</h4>
           
-          <div>
-            <label style={{ fontSize: '13px', display: 'block', marginBottom: '5px' }}>
-              Game Speed: {settings.gameSpeedMultiplier.toFixed(1)}x
-            </label>
-            <input
-              type="range"
-              min="0.5"
-              max="3.0"
-              step="0.1"
-              value={settings.gameSpeedMultiplier}
-              onChange={(e) => updateSetting('gameSpeedMultiplier', parseFloat(e.target.value))}
-              style={{ width: '100%' }}
-            />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <button
+              onClick={() => {
+                if (window.confirm('Reset both teams to full HP and clear shields?')) {
+                  socket?.emit('admin_reset_match', { roomId });
+                }
+              }}
+              style={{
+                padding: '8px',
+                background: '#eab308',
+                border: 'none',
+                borderRadius: '6px',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 'bold'
+              }}
+            >
+              🔄 Reset Match
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm('End the match immediately with your team as winner?')) {
+                  socket?.emit('admin_force_win', { roomId });
+                }
+              }}
+              style={{
+                padding: '8px',
+                background: '#f59e0b',
+                border: 'none',
+                borderRadius: '6px',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 'bold'
+              }}
+            >
+              🏆 Force Win
+            </button>
           </div>
         </div>
 
         <div style={{
-          background: 'rgba(255, 100, 100, 0.1)',
-          padding: '8px',
+          background: 'rgba(100, 200, 255, 0.1)',
+          padding: '10px',
           borderRadius: '6px',
-          border: '1px solid rgba(255, 100, 100, 0.3)',
+          border: '1px solid rgba(100, 200, 255, 0.3)',
           fontSize: '11px',
-          color: '#fca5a5'
+          color: '#93c5fd'
         }}>
-          ℹ️ Note: Admin mode gives you unlimited element energy. Type "admin" at the start of your nickname to enable.
+          💡 <strong>Admin Tips:</strong>
+          <ul style={{ margin: '5px 0 0 0', paddingLeft: '15px' }}>
+            <li>Unlimited element energy (no charging needed)</li>
+            <li>Use God Mode to prevent damage to your team</li>
+            <li>Control enemy bots to test different scenarios</li>
+            <li>Reset match to practice specific situations</li>
+          </ul>
         </div>
       </div>
     </div>

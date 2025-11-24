@@ -133,18 +133,15 @@ export function useGameState(
       });
     });
 
-    // Attack landed - Optimized to limit attack events and batch cleanup
-    socket.on('attack_landed', ({ attackerTeam, element, blueTeam: blue, redTeam: red, isCritical }: any) => {
-      setBlueTeam(blue);
-      setRedTeam(red);
-      
+    // Attack initiated - Shows projectile immediately
+    socket.on('attack_initiated', ({ attackerTeam, element }: { attackerTeam: Team; element: Element }) => {
       const effectId = `${Date.now()}-${Math.random()}`;
       const newAttack = {
         id: effectId,
         attackerTeam,
         element,
         startTime: Date.now(),
-        isCritical: isCritical || false
+        isCritical: false
       };
       
       setAttackEvents(prev => {
@@ -156,11 +153,40 @@ export function useGameState(
       playAttack();
     });
 
+    // Attack landed - Updates HP/shields after projectile hits
+    socket.on('attack_landed', ({ attackerTeam, element, blueTeam: blue, redTeam: red, isCritical, damage }: any) => {
+      setBlueTeam(blue);
+      setRedTeam(red);
+      
+      // Play hit sound when damage is dealt
+      if (damage > 0) {
+        playHit();
+      }
+      
+      // Update existing attack event to show it's critical if it is
+      if (isCritical) {
+        setAttackEvents(prev => prev.map(attack => {
+          if (attack.attackerTeam === attackerTeam && attack.element === element) {
+            return { ...attack, isCritical: true };
+          }
+          return attack;
+        }));
+      }
+    });
+
     // Barrier created
     socket.on('barrier_created', ({ team, element, blueTeam: blue, redTeam: red }: any) => {
       setBlueTeam(blue);
       setRedTeam(red);
       playBarrier();
+    });
+
+    // Match reset (admin command)
+    socket.on('match_reset', ({ blueTeam: blue, redTeam: red }: any) => {
+      setBlueTeam(blue);
+      setRedTeam(red);
+      setAttackEvents([]);
+      setFloatingTexts([]);
     });
 
     // Small boost (chip damage to enemy) - Optimized cleanup
@@ -209,8 +235,10 @@ export function useGameState(
       socket.off('new_words');
       socket.off('element_charges_update');
       socket.off('player_typing');
+      socket.off('attack_initiated');
       socket.off('attack_landed');
       socket.off('barrier_created');
+      socket.off('match_reset');
       socket.off('small_boost');
       socket.off('damage_dealt');
       socket.off('word_correct');

@@ -849,83 +849,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (action === 'attack') {
         const enemyTeam = player.team === "blue" ? "red" : "blue";
-        const enemyState = enemyTeam === "blue" ? room.blueTeam : room.redTeam;
+        const attackerId = socket.id;
+        const attackerTeam = player.team;
 
-        let damage = 30;
-        let isCritical = false;
-
-        if (enemyState.barrier) {
-          const advantage = getElementAdvantage(element, enemyState.barrier.element);
-          if (advantage === 'critical') {
-            damage = 60;
-            isCritical = true;
-          } else if (advantage === 'weak') {
-            damage = 15;
-          }
-
-          const barrierDamage = Math.min(damage, enemyState.barrier.strength);
-          enemyState.barrier.strength -= barrierDamage;
-          damage -= barrierDamage;
-
-          if (enemyState.barrier.strength <= 0) {
-            enemyState.barrier = null;
-          }
-        }
-
-        if (damage > 0) {
-          const adminPlayer = Array.from(room.players.values()).find(p => p.isAdmin);
-          const shouldPreventDamage = adminPlayer && 
-            adminPlayer.team && 
-            enemyTeam === (adminPlayer.team === 'blue' ? 'red' : 'blue') && 
-            room.adminSettings.unlimitedEnemyHealth;
-          
-          if (!shouldPreventDamage) {
-            enemyState.hp = Math.max(0, enemyState.hp - damage);
-          }
-        }
-
-        player.stats.damageDealt += damage;
-
-        io.to(roomId).emit("attack_landed", {
-          attackerTeam: player.team,
-          element,
-          blueTeam: room.blueTeam,
-          redTeam: room.redTeam,
-          isCritical
+        // Emit attack initiated event immediately (shows projectile)
+        io.to(roomId).emit("attack_initiated", {
+          attackerTeam,
+          element
         });
 
-        if (enemyState.hp <= 0) {
-          room.phase = "ended";
-          room.winner = player.team;
-          
-          const endTime = Date.now();
-          const matchDuration = (endTime - room.matchStartTime) / 60000;
-          const playerStats = Array.from(room.players.values()).map(p => {
-            const wpm = matchDuration > 0 ? Math.round(p.stats.correctWords / matchDuration) : 0;
-            const accuracy = p.stats.wordsTyped > 0 
-              ? Math.round((p.stats.correctWords / p.stats.wordsTyped) * 100) 
-              : 100;
+        // Delay damage calculation until projectile reaches target (1.2 seconds)
+        setTimeout(() => {
+          // Re-fetch room - ensure it still exists and is in playing phase
+          const currentRoom = rooms.get(roomId);
+          if (!currentRoom || currentRoom.phase !== "playing") {
+            console.log(`Attack timeout: room ${roomId} no longer exists or not playing`);
+            return;
+          }
+
+          // Get current player (may be different if reconnected, or null if disconnected)
+          const currentPlayer = currentRoom.players.get(attackerId);
+          if (!currentPlayer) {
+            console.log(`Attack timeout: attacker ${attackerId} no longer in room`);
+            return;
+          }
+
+          // Verify attacker still on the same team
+          if (currentPlayer.team !== attackerTeam) {
+            console.log(`Attack timeout: attacker team changed`);
+            return;
+          }
+
+          const enemyState = enemyTeam === "blue" ? currentRoom.blueTeam : currentRoom.redTeam;
+
+          let damage = 30;
+          let isCritical = false;
+
+          // Check for barrier at impact time (not when attack was initiated)
+          if (enemyState.barrier) {
+            const advantage = getElementAdvantage(element, enemyState.barrier.element);
+            if (advantage === 'critical') {
+              damage = 60;
+              isCritical = true;
+            } else if (advantage === 'weak') {
+              damage = 15;
+            }
+
+            const barrierDamage = Math.min(damage, enemyState.barrier.strength);
+            enemyState.barrier.strength -= barrierDamage;
+            damage -= barrierDamage;
+
+            if (enemyState.barrier.strength <= 0) {
+              enemyState.barrier = null;
+            }
+          }
+
+          if (damage > 0) {
+            const adminPlayer = Array.from(currentRoom.players.values()).find(p => p.isAdmin);
             
-            return {
-              id: p.id,
-              nickname: p.nickname,
-              team: p.team,
-              role: p.role,
-              wpm,
-              accuracy,
-              damageDealt: p.stats.damageDealt,
-              shieldRestored: p.stats.shieldRestored
-            };
+            // Check if damage should be prevented
+            let shouldPreventDamage = false;
+            
+            // God mode prevents damage to admin's team
+            if (adminPlayer && adminPlayer.team === enemyTeam && currentRoom.adminSettings.godMode) {
+              shouldPreventDamage = true;
+            }
+            
+            // Unlimited enemy health prevents damage to enemy team (from admin perspective)
+            if (adminPlayer && 
+                adminPlayer.team && 
+                enemyTeam === (adminPlayer.team === 'blue' ? 'red' : 'blue') && 
+                currentRoom.adminSettings.unlimitedEnemyHealth) {
+              shouldPreventDamage = true;
+            }
+            
+            if (!shouldPreventDamage) {
+              enemyState.hp = Math.max(0, enemyState.hp - damage);
+            }
+          }
+
+          currentPlayer.stats.damageDealt += damage;
+
+          // Emit attack landed event after projectile hits
+          io.to(roomId).emit("attack_landed", {
+            attackerTeam: currentPlayer.team,
+            element,
+            blueTeam: currentRoom.blueTeam,
+            redTeam: currentRoom.redTeam,
+            isCritical,
+            damage
           });
 
-          io.to(roomId).emit("match_ended", {
-            winner: player.team,
-            blueTeam: room.blueTeam,
-            redTeam: room.redTeam,
-            stats: playerStats
-          });
-          return;
-        }
+          // Check for match end condition
+          if (enemyState.hp <= 0) {
+            currentRoom.phase = "ended";
+            currentRoom.winner = currentPlayer.team;
+            
+            const endTime = Date.now();
+            const matchDuration = (endTime - currentRoom.matchStartTime) / 60000;
+            const playerStats = Array.from(currentRoom.players.values()).map(p => {
+              const wpm = matchDuration > 0 ? Math.round(p.stats.correctWords / matchDuration) : 0;
+              const accuracy = p.stats.wordsTyped > 0 
+                ? Math.round((p.stats.correctWords / p.stats.wordsTyped) * 100) 
+                : 100;
+              
+              return {
+                id: p.id,
+                nickname: p.nickname,
+                team: p.team,
+                role: p.role,
+                wpm,
+                accuracy,
+                damageDealt: p.stats.damageDealt,
+                shieldRestored: p.stats.shieldRestored
+              };
+            });
+
+            // Emit match ended event
+            io.to(roomId).emit("match_ended", {
+              winner: currentPlayer.team,
+              blueTeam: currentRoom.blueTeam,
+              redTeam: currentRoom.redTeam,
+              stats: playerStats
+            });
+          }
+        }, 1200); // Match projectile animation duration
       } else if (action === 'barrier') {
         const myTeamState = player.team === "blue" ? room.blueTeam : room.redTeam;
         myTeamState.barrier = {
@@ -1107,6 +1155,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
           redTeam: room.redTeam
         });
       }
+    });
+
+    socket.on("admin_reset_match", ({ roomId }: { roomId: string }) => {
+      const room = rooms.get(roomId);
+      if (!room) return;
+
+      const player = room.players.get(socket.id);
+      if (!player || !player.isAdmin) {
+        socket.emit("admin_error", { message: "Only admins can reset the match" });
+        return;
+      }
+
+      // Reset both teams to full HP and clear barriers
+      room.blueTeam = { hp: 100, shield: 0, barrier: null };
+      room.redTeam = { hp: 100, shield: 0, barrier: null };
+
+      // Reset all player stats but keep element charges
+      room.players.forEach(p => {
+        p.stats = {
+          wordsTyped: 0,
+          correctWords: 0,
+          incorrectWords: 0,
+          damageDealt: 0,
+          shieldRestored: 0,
+          startTime: Date.now()
+        };
+      });
+
+      io.to(roomId).emit("match_reset", {
+        blueTeam: room.blueTeam,
+        redTeam: room.redTeam
+      });
+
+      io.to(roomId).emit("barrier_created", {
+        team: "blue",
+        element: null,
+        blueTeam: room.blueTeam,
+        redTeam: room.redTeam
+      });
+
+      io.to(roomId).emit("barrier_created", {
+        team: "red",
+        element: null,
+        blueTeam: room.blueTeam,
+        redTeam: room.redTeam
+      });
+    });
+
+    socket.on("admin_force_win", ({ roomId }: { roomId: string }) => {
+      const room = rooms.get(roomId);
+      if (!room) {
+        socket.emit("admin_error", { message: "Room not found" });
+        return;
+      }
+
+      const player = room.players.get(socket.id);
+      if (!player || !player.isAdmin) {
+        socket.emit("admin_error", { message: "Only admins can force win" });
+        return;
+      }
+
+      if (!player.team) {
+        socket.emit("admin_error", { message: "Admin must be on a team to force win" });
+        return;
+      }
+
+      room.phase = "ended";
+      room.winner = player.team;
+
+      const endTime = Date.now();
+      const matchDuration = (endTime - room.matchStartTime) / 60000;
+      const playerStats = Array.from(room.players.values()).map(p => {
+        const wpm = matchDuration > 0 ? Math.round(p.stats.correctWords / matchDuration) : 0;
+        const accuracy = p.stats.wordsTyped > 0 
+          ? Math.round((p.stats.correctWords / p.stats.wordsTyped) * 100) 
+          : 100;
+        
+        return {
+          id: p.id,
+          nickname: p.nickname,
+          team: p.team,
+          role: p.role,
+          wpm,
+          accuracy,
+          damageDealt: p.stats.damageDealt,
+          shieldRestored: p.stats.shieldRestored
+        };
+      });
+
+      io.to(roomId).emit("match_ended", {
+        winner: player.team,
+        blueTeam: room.blueTeam,
+        redTeam: room.redTeam,
+        stats: playerStats
+      });
     });
 
     socket.on("leave_match", ({ roomId }: { roomId: string }) => {
