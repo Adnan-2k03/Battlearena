@@ -235,10 +235,16 @@ export function useGameState(
   };
 
   const useElement = (element: Element, action: 'attack' | 'barrier') => {
-    console.log('useElement called:', { element, action, charge: myCharges[element], isAdminMode });
+    console.log('useElement called:', { element, action, isAdminMode });
     
-    if (!socket || myCharges[element] < 100) {
-      console.log('Element use blocked - charge not full or no socket');
+    if (!socket) {
+      console.log('Element use blocked - no socket');
+      return;
+    }
+
+    // In admin mode, always allow element use
+    if (!isAdminMode && myCharges[element] < 100) {
+      console.log('Element use blocked - charge not full');
       return;
     }
 
@@ -248,15 +254,12 @@ export function useGameState(
       element,
       action
     });
-
-    // Immediately restore charges in admin mode
-    if (isAdminMode) {
-      setTimeout(() => {
-        console.log('Admin mode - restoring all charges to 100');
-        setMyCharges({ fire: 100, water: 100, leaf: 100 });
-      }, 50);
-    }
   };
+
+  // For admin mode, always return 100 for charges
+  const displayCharges = isAdminMode 
+    ? { fire: 100, water: 100, leaf: 100 }
+    : myCharges;
 
   return {
     blueTeam,
@@ -265,7 +268,7 @@ export function useGameState(
     words,
     attackEvents,
     floatingTexts,
-    myCharges,
+    myCharges: displayCharges,
     myTeam,
     myRole,
     enemyTeam: myTeam === 'blue' ? 'red' as Team : 'blue' as Team,
