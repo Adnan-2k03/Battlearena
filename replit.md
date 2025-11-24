@@ -10,7 +10,30 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 24, 2025)
 
-### Map-Specific Element System (Latest)
+### UI and Performance Improvements (Latest)
+- **Map-Aware Admin Controls**: Admin panel barrier element selector now dynamically shows elements based on the selected map
+  - Elemental Arena: Fire, Water, Leaf options
+  - Cosmic Realm: Light, Darkness, Space options
+  - Uses element colors and icons for visual clarity
+- **Attack Performance Optimization**: Reduced projectile lag during attacks
+  - Reduced trail rendering from 3 meshes to 1 optimized mesh
+  - Simplified critical hit particles (from 6 to 1 glow effect)
+  - Improved frame rates during intense battles
+- **360° Arena Background**: Added skybox environment to arena
+  - Uses sky.png texture for immersive background
+  - Seamless 200-unit sphere with inverted normals
+  - Maintains consistent lighting across both maps
+- **Compact Map Selection**: Redesigned map selection UI
+  - Horizontal carousel layout instead of large vertical cards
+  - Smaller card size (180px width) with compact padding
+  - Shows map thumbnail, name, and element icons
+  - Improved mobile and desktop responsiveness
+- **Streamlined Game Mode Selection**: Made mode selection more compact
+  - Reduced padding from p-4 to p-2
+  - Smaller icons (w-4 h-4 instead of w-6 h-6)
+  - Removed subtitle text for cleaner appearance
+
+### Map-Specific Element System
 - **Complete Element Theming**: Implemented dynamic theming system supporting all 6 elements (fire, water, leaf, light, darkness, space) across the entire UI
   - Element colors, icons, energy bars, barriers, and attacks all adapt to selected map's elements
   - Added icons for cosmic elements: light (Sun), darkness (Moon), space (Sparkles)
