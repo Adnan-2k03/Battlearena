@@ -81,12 +81,14 @@ function AnimatedLaptop({
       groupRef.current.scale.set(1, 1, 1);
       if (bodyRef.current) bodyRef.current.rotation.x = 0.4;
       if (leftArmRef.current) {
-        leftArmRef.current.rotation.z = -1.1;
-        leftArmRef.current.rotation.x = -0.4;
+        leftArmRef.current.rotation.z = -0.3;
+        leftArmRef.current.rotation.x = 0.6;
+        leftArmRef.current.rotation.y = 0.4;
       }
       if (rightArmRef.current) {
-        rightArmRef.current.rotation.z = 1.1;
-        rightArmRef.current.rotation.x = -0.4;
+        rightArmRef.current.rotation.z = 0.3;
+        rightArmRef.current.rotation.x = 0.6;
+        rightArmRef.current.rotation.y = -0.4;
       }
       if (leftLegRef.current) {
         leftLegRef.current.position.y = -0.4;
