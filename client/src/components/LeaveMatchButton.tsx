@@ -26,7 +26,7 @@ export function LeaveMatchButton({ socket, roomId, onLeave }: LeaveMatchButtonPr
       onClick={handleLeave}
       style={{
         position: 'fixed',
-        bottom: '20px',
+        bottom: '80px',
         right: '20px',
         padding: '12px 24px',
         background: 'rgba(239, 68, 68, 0.9)',

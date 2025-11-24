@@ -79,7 +79,7 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
     return (
       <div style={{
         position: 'fixed',
-        top: '10px',
+        top: '60px',
         right: '10px',
         zIndex: 1000,
         pointerEvents: 'auto'
@@ -111,14 +111,14 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
   return (
     <div style={{
       position: 'fixed',
-      top: '10px',
+      top: '60px',
       right: '10px',
       background: 'rgba(20, 20, 40, 0.95)',
       border: '2px solid rgba(102, 126, 234, 0.5)',
       borderRadius: '12px',
       padding: '20px',
       maxWidth: '400px',
-      maxHeight: '80vh',
+      maxHeight: '75vh',
       overflowY: 'auto',
       zIndex: 1000,
       boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
