@@ -48,18 +48,7 @@ export function BattleDashboard({ socket, onStartMatch, isSearching, error }: Ba
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
-      {/* Logout Button - Top Right Corner */}
-      <Button
-        onClick={handleLogout}
-        variant="outline"
-        className="absolute top-4 right-4 border-red-600 text-red-400 hover:bg-red-900/20 hover:text-red-300 z-50"
-        title="Logout and switch accounts"
-      >
-        <LogOut className="w-4 h-4 mr-2" />
-        Logout
-      </Button>
-
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">

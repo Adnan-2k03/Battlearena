@@ -3,7 +3,7 @@ import { Socket } from 'socket.io-client';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent } from './ui/card';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, LogOut } from 'lucide-react';
 import { useAudio } from '@/lib/stores/useAudio';
 import { usePlayerProfile } from '@/lib/stores/usePlayerProfile';
 import { BattleDashboard } from './BattleDashboard';
@@ -22,7 +22,7 @@ export function HomePage({ socket, onMatchStart, onRoomJoined, onCompanionRoom }
   const [error, setError] = useState('');
   
   const { initializeAudio, toggleMute, isMuted, initialized } = useAudio();
-  const { profile, initProfile } = usePlayerProfile();
+  const { profile, initProfile, logout } = usePlayerProfile();
 
   useEffect(() => {
     if (profile?.nickname) {
@@ -140,6 +140,15 @@ export function HomePage({ socket, onMatchStart, onRoomJoined, onCompanionRoom }
           className="bg-slate-900/90 border-slate-700 hover:bg-slate-800"
         >
           {isMuted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
+        </Button>
+        <Button
+          onClick={logout}
+          variant="outline"
+          className="border-red-600 text-red-400 hover:bg-red-900/20 hover:text-red-300"
+          title="Logout and switch accounts"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Logout
         </Button>
       </div>
     </div>
