@@ -17,7 +17,7 @@ interface CompanionRoomSceneProps {
 
 const ACTIVITY_POSITIONS: Record<Activity, { pos: [number, number, number]; rot: [number, number, number] }> = {
   idle: { pos: [0, 0, 0], rot: [0, 0, 0] },
-  reading: { pos: [-2, -0.2, -5.5], rot: [-0.5, 0.1, 0.15] },
+  reading: { pos: [0.2, 0.2, -5], rot: [-0.5, 0.1, 0.15] },
   sleeping: { pos: [7.8, 0.3, -1.5], rot: [0, 0, Math.PI / 2.5] },
   hiding: { pos: [-3.5, 0.2, 3.5], rot: [0, -Math.PI / 4, -0.3] },
   playing: { pos: [0, 0, 1], rot: [0, 0, 0] },
