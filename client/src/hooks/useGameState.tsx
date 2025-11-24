@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
 import { useAudio } from '@/lib/stores/useAudio';
 
-export type Element = 'fire' | 'water' | 'leaf';
+export type Element = 'fire' | 'water' | 'leaf' | 'light' | 'darkness' | 'space';
 export type Team = 'blue' | 'red';
 export type Role = 'striker' | 'guardian';
 
@@ -16,9 +16,7 @@ export interface TeamState {
 }
 
 export interface ElementCharges {
-  fire: number;
-  water: number;
-  leaf: number;
+  [key: string]: number;
 }
 
 export interface PlayerData {
@@ -66,7 +64,7 @@ export function useGameState(
   const [words, setWords] = useState<WordWithElement[]>([]);
   const [attackEvents, setAttackEvents] = useState<AttackEvent[]>([]);
   const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
-  const [myCharges, setMyCharges] = useState<ElementCharges>({ fire: 100, water: 100, leaf: 100 });
+  const [myCharges, setMyCharges] = useState<ElementCharges>({});
   
   const { playHit, playSuccess, playCharge, playBarrier, playAttack } = useAudio();
 
@@ -104,7 +102,9 @@ export function useGameState(
       if (myData) {
         if (isAdminMode) {
           console.log('Admin mode active - setting all charges to 100');
-          setMyCharges({ fire: 100, water: 100, leaf: 100 });
+          const adminCharges: ElementCharges = {};
+          Object.keys(myData.charges).forEach(key => adminCharges[key] = 100);
+          setMyCharges(adminCharges);
         } else {
           setMyCharges(myData.charges);
         }
@@ -293,9 +293,9 @@ export function useGameState(
     });
   };
 
-  // For admin mode, always return 100 for charges
+  // For admin mode, always return 100 for all charges
   const displayCharges = isAdminMode 
-    ? { fire: 100, water: 100, leaf: 100 }
+    ? Object.keys(myCharges).reduce((acc, key) => ({ ...acc, [key]: 100 }), {} as ElementCharges)
     : myCharges;
 
   return {

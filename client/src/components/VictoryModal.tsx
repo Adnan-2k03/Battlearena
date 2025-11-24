@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Trophy, RotateCcw, Swords, Shield, Target, Zap } from 'lucide-react';
+import { Trophy, RotateCcw, Swords, Shield, Target, Zap, Star } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { useAudio } from '@/lib/stores/useAudio';
@@ -19,12 +19,17 @@ interface VictoryModalProps {
   winner: 'blue' | 'red';
   myTeam: 'blue' | 'red';
   stats?: PlayerStat[];
+  mySocketId?: string;
   onPlayAgain: () => void;
 }
 
-export function VictoryModal({ winner, myTeam, stats, onPlayAgain }: VictoryModalProps) {
+export function VictoryModal({ winner, myTeam, stats, mySocketId, onPlayAgain }: VictoryModalProps) {
   const isWinner = winner === myTeam;
   const { playSuccess, playHit } = useAudio();
+  
+  const experienceEarned = isWinner ? 200 : 50;
+  const myStats = stats?.find(s => s.id === mySocketId);
+  const currencyEarned = myStats ? myStats.wpm * 3 : 0;
 
   useEffect(() => {
     if (isWinner) {
@@ -65,6 +70,23 @@ export function VictoryModal({ winner, myTeam, stats, onPlayAgain }: VictoryModa
                 <Trophy className="w-8 h-8" />
               </div>
             )}
+
+            <div className="mt-4 bg-purple-900/50 rounded-lg p-4 border border-purple-500">
+              <div className="flex items-center justify-center gap-6">
+                <div className="text-center">
+                  <Star className="w-6 h-6 text-yellow-400 mx-auto mb-1" />
+                  <div className="text-2xl font-bold text-yellow-400">+{experienceEarned} XP</div>
+                  <div className="text-xs text-slate-400">Experience</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-400 mb-1">💰</div>
+                  <div className="text-2xl font-bold text-green-400">
+                    +{currencyEarned} Words
+                  </div>
+                  <div className="text-xs text-slate-400">Currency Earned</div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {stats && stats.length > 0 && (

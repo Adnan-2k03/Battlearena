@@ -17,9 +17,7 @@ interface PlayerStats {
 }
 
 interface ElementCharges {
-  fire: number;
-  water: number;
-  leaf: number;
+  [key: string]: number;
 }
 
 interface Player {
@@ -75,6 +73,7 @@ interface GameRoom {
   matchStartTime: number;
   botTimers: NodeJS.Timeout[];
   adminSettings: AdminSettings;
+  selectedMap: MapType;
 }
 
 const rooms = new Map<string, GameRoom>();
@@ -86,8 +85,12 @@ function isBot(player: Player | BotPlayer): player is BotPlayer {
 
 const BOT_NAMES = ["EasyBot", "SlowTyper", "BeginnerBot", "NoobMaster"];
 
-function createBot(id: string, team: Team, role: Role, roomId: string): BotPlayer {
+function createBot(id: string, team: Team, role: Role, roomId: string, mapType: MapType = 'elemental_arena'): BotPlayer {
   const botName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] + Math.floor(Math.random() * 100);
+  const elements = MAP_ELEMENTS[mapType];
+  const elementCharges: ElementCharges = {};
+  elements.forEach(el => elementCharges[el] = 0);
+  
   return {
     id,
     nickname: botName,
@@ -96,7 +99,7 @@ function createBot(id: string, team: Team, role: Role, roomId: string): BotPlaye
     roomId,
     isBot: true,
     currentWords: [],
-    elementCharges: { fire: 0, water: 0, leaf: 0 },
+    elementCharges,
     stats: {
       wordsTyped: 0,
       correctWords: 0,
@@ -117,9 +120,10 @@ const POWERUP_WORDS = {
 };
 
 // Elemental words system
-type Element = "fire" | "water" | "leaf";
+type Element = "fire" | "water" | "leaf" | "light" | "darkness" | "space";
+type MapType = "elemental_arena" | "cosmic_realm";
 
-const ELEMENT_WORDS = {
+const ELEMENT_WORDS: Record<Element, { charge: string[], normal: string[] }> = {
   fire: {
     charge: ["INFERNO", "BLAZE", "IGNITE"],
     normal: ["BURN", "FLAME", "HEAT", "EMBER", "TORCH"]
@@ -131,7 +135,24 @@ const ELEMENT_WORDS = {
   leaf: {
     charge: ["OVERGROW", "SPROUT", "BLOOM"],
     normal: ["VINE", "ROOT", "GROW", "SEED", "BRANCH"]
+  },
+  light: {
+    charge: ["RADIANCE", "SOLAR", "DAWN"],
+    normal: ["SHINE", "GLOW", "BEAM", "FLASH", "BRIGHT"]
+  },
+  darkness: {
+    charge: ["ECLIPSE", "VOID", "SHADOW"],
+    normal: ["DARK", "NIGHT", "DIM", "BLACK", "GLOOM"]
+  },
+  space: {
+    charge: ["GALAXY", "COSMIC", "NEBULA"],
+    normal: ["STAR", "ORBIT", "COMET", "METEOR", "NOVA"]
   }
+};
+
+const MAP_ELEMENTS: Record<MapType, Element[]> = {
+  elemental_arena: ["fire", "water", "leaf"],
+  cosmic_realm: ["light", "darkness", "space"]
 };
 
 type WordType = "normal" | "double_damage" | "full_shield" | "stun";
@@ -176,9 +197,9 @@ function getRandomWords(role: Role, count: number): WordWithType[] {
   return words;
 }
 
-function getRandomElementalWords(count: number): WordWithElement[] {
+function getRandomElementalWords(count: number, mapType: MapType = 'elemental_arena'): WordWithElement[] {
   const words: WordWithElement[] = [];
-  const elements: Element[] = ["fire", "water", "leaf"];
+  const elements = MAP_ELEMENTS[mapType];
   
   for (let i = 0; i < count; i++) {
     const element = elements[Math.floor(Math.random() * elements.length)];
@@ -257,7 +278,7 @@ function startBotTyping(bot: BotPlayer, room: GameRoom, io: SocketIOServer) {
     }
     
     // Get new words for the bot
-    const newWords = getRandomElementalWords(6);
+    const newWords = getRandomElementalWords(6, room.selectedMap);
     bot.currentWords = newWords as any;
     
     // Randomly decide to use element if bot has enough charge (check actual charge)
@@ -380,6 +401,7 @@ function startBotTyping(bot: BotPlayer, room: GameRoom, io: SocketIOServer) {
 }
 
 function getElementAdvantage(attacker: Element, defender: Element): 'critical' | 'normal' | 'weak' {
+  // Elemental Arena: fire > leaf > water > fire
   if (attacker === 'fire' && defender === 'leaf') return 'critical';
   if (attacker === 'water' && defender === 'fire') return 'critical';
   if (attacker === 'leaf' && defender === 'water') return 'critical';
@@ -387,6 +409,15 @@ function getElementAdvantage(attacker: Element, defender: Element): 'critical' |
   if (attacker === 'fire' && defender === 'water') return 'weak';
   if (attacker === 'water' && defender === 'leaf') return 'weak';
   if (attacker === 'leaf' && defender === 'fire') return 'weak';
+  
+  // Cosmic Realm: light > darkness > space > light
+  if (attacker === 'light' && defender === 'darkness') return 'critical';
+  if (attacker === 'darkness' && defender === 'space') return 'critical';
+  if (attacker === 'space' && defender === 'light') return 'critical';
+  
+  if (attacker === 'light' && defender === 'space') return 'weak';
+  if (attacker === 'darkness' && defender === 'light') return 'weak';
+  if (attacker === 'space' && defender === 'darkness') return 'weak';
   
   return 'normal';
 }
@@ -403,9 +434,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   io.on("connection", (socket) => {
     console.log(`Player connected: ${socket.id}`);
 
-    socket.on("join_queue", ({ nickname, mode = "team" }: { nickname: string; mode?: "team" | "solo" }) => {
+    socket.on("join_queue", ({ nickname, mode = "team", selectedMap = "elemental_arena" }: { nickname: string; mode?: "team" | "solo"; selectedMap?: MapType }) => {
       matchmakingQueue.push({ socketId: socket.id, nickname });
-      console.log(`${nickname} joined ${mode} matchmaking queue. Queue size: ${matchmakingQueue.length}`);
+      console.log(`${nickname} joined ${mode} matchmaking queue for ${selectedMap}. Queue size: ${matchmakingQueue.length}`);
 
       const timeout = setTimeout(() => {
         const queueIndex = matchmakingQueue.findIndex(p => p.socketId === socket.id);
@@ -415,6 +446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const roomId = `auto-${Date.now()}`;
         const maxPlayers = mode === "solo" ? 2 : 4;
         
+        const elements = MAP_ELEMENTS[selectedMap];
         const room: GameRoom = {
           id: roomId,
           players: new Map(),
@@ -433,7 +465,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             instantCharge: false,
             controlledTeam: null,
             gameSpeedMultiplier: 1.0
-          }
+          },
+          selectedMap
         };
         
         playerData.forEach(({ socketId: playerId, nickname: playerNickname }, index) => {
@@ -444,13 +477,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (!playerSocket) return;
           
           const isAdmin = playerNickname.toLowerCase().startsWith('admin');
+          const elementCharges: ElementCharges = {};
+          elements.forEach(el => elementCharges[el] = isAdmin ? 100 : 0);
+          
           const player: Player = {
             id: playerId,
             nickname: playerNickname,
             team,
             role,
             roomId,
-            elementCharges: isAdmin ? { fire: 100, water: 100, leaf: 100 } : { fire: 0, water: 0, leaf: 0 },
+            elementCharges,
             stats: {
               wordsTyped: 0,
               correctWords: 0,
@@ -474,7 +510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const team: Team = mode === "solo" ? (index === 0 ? "blue" : "red") : (index < 2 ? "blue" : "red");
           const role: Role = mode === "solo" ? "striker" : (index % 2 === 0 ? "striker" : "guardian");
           const botId = `bot-${Date.now()}-${index}`;
-          const bot = createBot(botId, team, role, roomId);
+          const bot = createBot(botId, team, role, roomId, selectedMap);
           room.players.set(botId, bot);
         }
         
@@ -523,7 +559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           io.to(roomId).emit("match_started", gameState);
 
           room.players.forEach((player) => {
-            const words = getRandomElementalWords(6);
+            const words = getRandomElementalWords(6, room.selectedMap);
             player.currentWords = words as any;
             if (isBot(player)) {
               startBotTyping(player, room, io);
@@ -557,7 +593,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             instantCharge: false,
             controlledTeam: null,
             gameSpeedMultiplier: 1.0
-          }
+          },
+          selectedMap: 'elemental_arena'
         };
         rooms.set(roomId, room);
       }
@@ -608,13 +645,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const isAdmin = nickname.toLowerCase().startsWith('admin');
+      const elements = MAP_ELEMENTS[room.selectedMap];
+      const elementCharges: ElementCharges = {};
+      elements.forEach(el => elementCharges[el] = isAdmin ? 100 : 0);
+      
       const player: Player = {
         id: socket.id,
         nickname,
         team,
         role,
         roomId,
-        elementCharges: isAdmin ? { fire: 100, water: 100, leaf: 100 } : { fire: 0, water: 0, leaf: 0 },
+        elementCharges,
         stats: {
           wordsTyped: 0,
           correctWords: 0,
@@ -635,7 +676,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const botTeam: Team = index < 2 ? "blue" : "red";
         const botRole: Role = index % 2 === 0 ? "striker" : "guardian";
         const botId = `bot-${Date.now()}-${index}`;
-        const bot = createBot(botId, botTeam, botRole, roomId);
+        const bot = createBot(botId, botTeam, botRole, roomId, room.selectedMap);
         room.players.set(botId, bot);
       }
 
@@ -686,7 +727,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       io.to(roomId).emit("match_started", gameState);
 
       room.players.forEach((player) => {
-        const words = getRandomElementalWords(6);
+        const words = getRandomElementalWords(6, room.selectedMap);
         player.currentWords = words as any;
         if (isBot(player)) {
           startBotTyping(player, room, io);
@@ -704,7 +745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!player) return;
 
       if (player.currentWords.length === 0) {
-        const words = getRandomElementalWords(6);
+        const words = getRandomElementalWords(6, room.selectedMap);
         player.currentWords = words as any;
       }
 
@@ -770,7 +811,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         player.stats.damageDealt += 3;
       }
 
-      const newWords = getRandomElementalWords(6);
+      const newWords = getRandomElementalWords(6, room.selectedMap);
       player.currentWords = newWords as any;
       socket.emit("new_words", { words: newWords });
       socket.emit("word_correct", { element, isCharge });

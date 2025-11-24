@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import "@fontsource/inter";
 import { useSocket } from "./hooks/useSocket";
-import { Lobby } from "./components/Lobby";
+import { HomePage } from "./components/HomePage";
 import { ElementalArena3D } from "./components/ElementalArena3D";
 import { VictoryModal } from "./components/VictoryModal";
 import { SoundManager } from "./components/SoundManager";
 import { SpectatorView } from "./components/SpectatorView";
 import { useAudio } from "./lib/stores/useAudio";
+import { usePlayerProfile } from "./lib/stores/usePlayerProfile";
 import { Button } from "./components/ui/button";
 import { Volume2, VolumeX } from "lucide-react";
 
@@ -61,7 +62,8 @@ function App() {
     phase: string;
   } | null>(null);
   
-  const isAdminMode = nickname.toLowerCase().startsWith('admin');
+  const { profile, updateStats, updateAchievement, addExperience } = usePlayerProfile();
+  const isAdminMode = profile?.nickname?.toLowerCase().startsWith('admin') || false;
   
   const { initializeAudio, toggleMute, isMuted, initialized } = useAudio();
 
@@ -104,6 +106,39 @@ function App() {
         setWinner(winningTeam);
         setMatchStats(stats || []);
         setGamePhase('ended');
+        
+        if (profile) {
+          const myStats = stats?.find((s: PlayerStat) => s.id === socket?.id);
+          if (myStats) {
+            const won = winningTeam === myStats.team;
+            const wordsTypedThisMatch = myStats.wpm * 3;
+            
+            updateStats({
+              totalWordsTyped: profile.stats.totalWordsTyped + wordsTypedThisMatch,
+              totalMatchesPlayed: profile.stats.totalMatchesPlayed + 1,
+              matchesWon: profile.stats.matchesWon + (won ? 1 : 0),
+              matchesLost: profile.stats.matchesLost + (won ? 0 : 1),
+              totalDamageDealt: profile.stats.totalDamageDealt + myStats.damageDealt,
+              totalShieldRestored: profile.stats.totalShieldRestored + myStats.shieldRestored,
+              highestWPM: Math.max(profile.stats.highestWPM, myStats.wpm),
+              currentStreak: won ? profile.stats.currentStreak + 1 : 0,
+              bestStreak: won ? Math.max(profile.stats.bestStreak, profile.stats.currentStreak + 1) : profile.stats.bestStreak
+            });
+            
+            addExperience(won ? 200 : 50);
+            
+            if (won) {
+              updateAchievement('first_win', profile.stats.matchesWon + 1);
+            }
+            if (myStats.wpm >= 100) {
+              updateAchievement('speed_demon', 1);
+            }
+            updateAchievement('veteran', profile.stats.totalMatchesPlayed + 1);
+            updateAchievement('damage_dealer', profile.stats.totalDamageDealt + myStats.damageDealt);
+            updateAchievement('win_streak', profile.stats.currentStreak + (won ? 1 : 0));
+            updateAchievement('word_master', profile.stats.totalWordsTyped + wordsTypedThisMatch);
+          }
+        }
       } else if (eventName === 'joined_as_spectator' && args[0]) {
         const { roomId: specRoomId, players, blueTeam, redTeam, phase } = args[0];
         setUserMode('spectator');
@@ -145,10 +180,6 @@ function App() {
     setWinner(null);
     setMatchStats([]);
     setRoomId('');
-    
-    if (nickname) {
-      socket.emit('join_queue', { nickname, mode: gameMode });
-    }
   };
 
   useEffect(() => {
@@ -187,13 +218,10 @@ function App() {
       ) : (
         <>
           {gamePhase === 'lobby' && (
-            <Lobby 
+            <HomePage 
               socket={socket} 
               onMatchStart={handleMatchStart}
               onRoomJoined={setRoomId}
-              initialNickname={nickname}
-              onNicknameSet={setNickname}
-              onModeSelect={setGameMode}
             />
           )}
 
@@ -224,6 +252,7 @@ function App() {
               winner={winner}
               myTeam={myTeam}
               stats={matchStats}
+              mySocketId={socket?.id}
               onPlayAgain={handlePlayAgain}
             />
           )}
