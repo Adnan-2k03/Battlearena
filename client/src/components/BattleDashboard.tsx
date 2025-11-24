@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
-import { Lock, ShoppingCart, MessageCircle, LogOut } from 'lucide-react';
+import { Lock, ShoppingCart, MessageCircle } from 'lucide-react';
 import { GameModeCollapse } from './GameModeCollapse';
 import { MapThumbnailCarousel } from './MapThumbnailCarousel';
 import { LaptopCharacterStage } from './LaptopCharacterStage';
@@ -21,17 +21,13 @@ interface BattleDashboardProps {
 }
 
 export function BattleDashboard({ socket, onStartMatch, isSearching, error }: BattleDashboardProps) {
-  const { profile, selectLaptop, selectMap, purchaseLaptop, logout } = usePlayerProfile();
+  const { profile, selectLaptop, selectMap, purchaseLaptop } = usePlayerProfile();
   const [gameMode, setGameMode] = useState<'solo' | 'team' | 'trio' | 'pentad'>('solo');
   const [purchaseError, setPurchaseError] = useState('');
   const [showChat, setShowChat] = useState(false);
 
   const handleStartMatch = () => {
     onStartMatch(gameMode);
-  };
-
-  const handleLogout = () => {
-    logout();
   };
 
   if (!profile) return null;

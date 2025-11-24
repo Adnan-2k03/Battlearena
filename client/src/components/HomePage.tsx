@@ -75,7 +75,13 @@ export function HomePage({ socket, onMatchStart, onRoomJoined, onCompanionRoom }
     });
   };
 
-  if (!nicknameSet) {
+  const handleLogoutClick = () => {
+    logout();
+    setNicknameSet(false);
+    setNickname('');
+  };
+
+  if (!nicknameSet || !profile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
         <Card className="w-full max-w-md bg-slate-900/90 border-slate-700">
@@ -142,7 +148,7 @@ export function HomePage({ socket, onMatchStart, onRoomJoined, onCompanionRoom }
           {isMuted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
         </Button>
         <Button
-          onClick={logout}
+          onClick={handleLogoutClick}
           variant="outline"
           className="border-red-600 text-red-400 hover:bg-red-900/20 hover:text-red-300"
           title="Logout and switch accounts"
