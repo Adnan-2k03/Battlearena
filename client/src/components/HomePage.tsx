@@ -12,9 +12,10 @@ interface HomePageProps {
   socket: Socket | null;
   onMatchStart: () => void;
   onRoomJoined?: (roomId: string) => void;
+  onCompanionRoom?: () => void;
 }
 
-export function HomePage({ socket, onMatchStart, onRoomJoined }: HomePageProps) {
+export function HomePage({ socket, onMatchStart, onRoomJoined, onCompanionRoom }: HomePageProps) {
   const [nickname, setNickname] = useState('');
   const [nicknameSet, setNicknameSet] = useState(false);
   const [isSearching, setIsSearching] = useState(false);

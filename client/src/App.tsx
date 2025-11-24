@@ -6,12 +6,13 @@ import { ElementalArena3D } from "./components/ElementalArena3D";
 import { VictoryModal } from "./components/VictoryModal";
 import { SoundManager } from "./components/SoundManager";
 import { SpectatorView } from "./components/SpectatorView";
+import { CompanionRoom } from "./components/CompanionRoom";
 import { useAudio } from "./lib/stores/useAudio";
 import { usePlayerProfile } from "./lib/stores/usePlayerProfile";
 import { Button } from "./components/ui/button";
 import { Volume2, VolumeX } from "lucide-react";
 
-type GamePhase = 'lobby' | 'playing' | 'ended';
+type GamePhase = 'lobby' | 'playing' | 'ended' | 'companion';
 type UserMode = 'player' | 'spectator';
 
 interface Player {
@@ -222,6 +223,14 @@ function App() {
               socket={socket} 
               onMatchStart={handleMatchStart}
               onRoomJoined={setRoomId}
+              onCompanionRoom={() => setGamePhase('companion')}
+            />
+          )}
+
+          {gamePhase === 'companion' && profile && (
+            <CompanionRoom
+              laptopId={profile.selectedLaptop}
+              onBack={() => setGamePhase('lobby')}
             />
           )}
 
