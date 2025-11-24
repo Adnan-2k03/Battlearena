@@ -720,48 +720,8 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!mapControlsRef.current) return;
-      
-      const panSpeed = 0.3;
-      const camera = mapControlsRef.current.object;
-      const target = mapControlsRef.current.target;
-      
-      try {
-        // Get camera direction vectors
-        const forward = new THREE.Vector3().subVectors(target, camera);
-        if (forward.length() < 0.001) return; // Avoid division by zero
-        forward.normalize();
-        
-        const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0));
-        if (right.length() < 0.001) return;
-        right.normalize();
-        
-        const up = new THREE.Vector3(0, 1, 0);
-        
-        if (e.key === 'q' || e.key === 'Q') {
-          // Pan left
-          const offset = right.clone().multiplyScalar(-panSpeed);
-          camera.position.add(offset);
-          target.add(offset);
-        } else if (e.key === 'e' || e.key === 'E') {
-          // Pan right
-          const offset = right.clone().multiplyScalar(panSpeed);
-          camera.position.add(offset);
-          target.add(offset);
-        } else if (e.key === 'r' || e.key === 'R') {
-          // Pan up
-          const offset = up.clone().multiplyScalar(panSpeed);
-          camera.position.add(offset);
-          target.add(offset);
-        } else if (e.key === 'f' || e.key === 'F') {
-          // Pan down
-          const offset = up.clone().multiplyScalar(-panSpeed);
-          camera.position.add(offset);
-          target.add(offset);
-        }
-      } catch (err) {
-        console.warn('Camera control error:', err);
-      }
+      // Keyboard pan controls disabled - use trackpad drag instead
+      // Q/E/R/F were causing camera issues
     };
 
     window.addEventListener('mousedown', handleMouseDown);
