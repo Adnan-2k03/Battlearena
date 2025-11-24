@@ -3,6 +3,8 @@ import { Socket } from 'socket.io-client';
 import { Input } from './ui/input';
 import { Swords, Shield as ShieldIcon, Heart, Flame, Droplet, Leaf } from 'lucide-react';
 import { useAudio } from '@/lib/stores/useAudio';
+import { LaptopCharacterStage } from './LaptopCharacterStage';
+import { usePlayerProfile } from '@/lib/stores/usePlayerProfile';
 
 interface TeamState {
   hp: number;
@@ -68,6 +70,7 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
   const [typedKeys, setTypedKeys] = useState<Set<number>>(new Set());
   const inputRef = useRef<HTMLInputElement>(null);
   const { playHit, playSuccess, playCharge, playBarrier, playAttack } = useAudio();
+  const { profile } = usePlayerProfile();
 
   const enemyTeam = myTeam === 'blue' ? 'red' : 'blue';
   const myTeamState = myTeam === 'blue' ? blueTeam : redTeam;
@@ -390,6 +393,13 @@ export function GameArena({ socket, roomId, myTeam, myRole }: GameArenaProps) {
 
       {/* Arena - Middle */}
       <div className="flex-1 relative overflow-hidden flex items-center justify-center p-4">
+        {/* Battle Companion - Bottom Right Corner */}
+        {profile?.selectedLaptop && (
+          <div className="absolute bottom-4 right-4 w-48 h-48 rounded-lg overflow-hidden shadow-2xl border-4 border-purple-500/50 hover:border-purple-400 transition-all">
+            <LaptopCharacterStage selectedLaptopId={profile.selectedLaptop} />
+          </div>
+        )}
+        
         {/* Improved Projectiles with trails */}
         {projectiles.map((projectile) => (
           <div key={projectile.id} className="absolute" style={{ bottom: '20%', left: '50%' }}>
