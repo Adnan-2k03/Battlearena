@@ -1,5 +1,22 @@
 import { LaptopSkin } from '../stores/usePlayerProfile';
 
+export interface LaptopAnimation {
+  idle: string;
+  greet: string;
+  excited: string;
+  thinking: string;
+}
+
+export interface LaptopPersonality {
+  personality: 'friendly' | 'energetic' | 'cool' | 'mysterious' | 'elegant' | 'fierce' | 'royal' | 'cosmic';
+  eyeType: 'round' | 'sharp' | 'sleepy' | 'sparkle';
+  mouthType: 'smile' | 'grin' | 'smirk' | 'neutral';
+  handType: 'normal' | 'thin' | 'robotic' | 'glowing';
+  voicePitch: 'high' | 'medium' | 'low';
+  idleAnimations: string[];
+  clickResponses: string[];
+}
+
 export const LAPTOPS: LaptopSkin[] = [
   {
     id: 'default',
