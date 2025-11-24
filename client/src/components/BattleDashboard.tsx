@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
-import { Lock, ShoppingCart, MessageCircle } from 'lucide-react';
+import { Lock, ShoppingCart, MessageCircle, LogOut } from 'lucide-react';
 import { GameModeCollapse } from './GameModeCollapse';
 import { MapThumbnailCarousel } from './MapThumbnailCarousel';
 import { LaptopCharacterStage } from './LaptopCharacterStage';
@@ -21,13 +21,17 @@ interface BattleDashboardProps {
 }
 
 export function BattleDashboard({ socket, onStartMatch, isSearching, error }: BattleDashboardProps) {
-  const { profile, selectLaptop, selectMap, purchaseLaptop } = usePlayerProfile();
+  const { profile, selectLaptop, selectMap, purchaseLaptop, logout } = usePlayerProfile();
   const [gameMode, setGameMode] = useState<'solo' | 'team' | 'trio' | 'pentad'>('solo');
   const [purchaseError, setPurchaseError] = useState('');
   const [showChat, setShowChat] = useState(false);
 
   const handleStartMatch = () => {
     onStartMatch(gameMode);
+  };
+
+  const handleLogout = () => {
+    logout();
   };
 
   if (!profile) return null;
@@ -47,14 +51,25 @@ export function BattleDashboard({ socket, onStartMatch, isSearching, error }: Ba
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-4xl font-bold text-white mb-2">⚔️ Type Battle Arena</h1>
-          <div className="flex items-center gap-4 text-slate-300">
-            <span className="text-lg font-semibold">{profile.nickname}</span>
-            <Badge variant="outline" className="bg-slate-800 text-yellow-400 border-yellow-600">
-              💰 {profile.currency} words
-            </Badge>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">⚔️ Type Battle Arena</h1>
+            <div className="flex items-center gap-4 text-slate-300">
+              <span className="text-lg font-semibold">{profile.nickname}</span>
+              <Badge variant="outline" className="bg-slate-800 text-yellow-400 border-yellow-600">
+                💰 {profile.currency} words
+              </Badge>
+            </div>
           </div>
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="border-red-600 text-red-400 hover:bg-red-900/20 hover:text-red-300"
+            title="Logout and switch accounts"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
         </div>
 
         {/* Game Mode Selector (BGMI-style) */}

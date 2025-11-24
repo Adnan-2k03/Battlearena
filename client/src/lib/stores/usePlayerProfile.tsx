@@ -83,6 +83,7 @@ interface PlayerProfileStore {
   updateAchievement: (achievementId: string, progress: number) => void;
   addExperience: (exp: number) => void;
   resetProfile: () => void;
+  logout: () => void;
 }
 
 const DEFAULT_ACHIEVEMENTS: Achievement[] = [
@@ -350,6 +351,10 @@ export const usePlayerProfile = create<PlayerProfileStore>()(
       },
 
       resetProfile: () => {
+        set({ profile: null });
+      },
+
+      logout: () => {
         set({ profile: null });
       }
     }),

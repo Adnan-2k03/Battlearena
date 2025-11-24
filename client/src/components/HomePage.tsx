@@ -62,7 +62,7 @@ export function HomePage({ socket, onMatchStart, onRoomJoined, onCompanionRoom }
     }
   };
 
-  const handleStartMatch = (mode: 'team' | 'solo') => {
+  const handleStartMatch = (mode: 'solo' | 'team' | 'trio' | 'pentad') => {
     if (!socket || !profile) return;
 
     setError('');
