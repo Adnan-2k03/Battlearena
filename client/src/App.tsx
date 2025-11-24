@@ -235,6 +235,7 @@ function App() {
                   myRole={myRole}
                   isAdminMode={isAdminMode}
                   selectedLaptop={profile?.selectedLaptop}
+                  selectedMap={profile?.selectedMap || 'elemental_arena'}
                 />
               ) : (
                 <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">

@@ -6,10 +6,11 @@ import { Socket } from 'socket.io-client';
 import { useGameState, Team, Element } from '@/hooks/useGameState';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { Heart, Shield as ShieldIcon, Flame, Droplet, Leaf, Swords } from 'lucide-react';
+import { Heart, Shield as ShieldIcon, Flame, Droplet, Leaf, Swords, Sun, Moon, Sparkles } from 'lucide-react';
 import { AdminControlPanel } from './AdminControlPanel';
 import { LeaveMatchButton } from './LeaveMatchButton';
 import { getLaptopById } from '@/lib/data/laptops';
+import { ELEMENT_COLORS, getMapById } from '@/lib/data/maps';
 
 interface ElementalArena3DProps {
   socket: Socket | null;
@@ -18,6 +19,7 @@ interface ElementalArena3DProps {
   myRole: 'striker' | 'guardian';
   isAdminMode?: boolean;
   selectedLaptop?: string;
+  selectedMap?: string;
 }
 
 // Deterministic random function for stable terrain generation
@@ -26,8 +28,10 @@ function seededRandom(seed: number) {
   return x - Math.floor(x);
 }
 
-// Terrain component - Memoized to prevent re-renders
-const Terrain = memo(function Terrain() {
+// Terrain component - Memoized with mapId as dependency
+const Terrain = memo(function Terrain({ mapId }: { mapId?: string }) {
+  const isCosmicRealm = mapId === 'cosmic_realm';
+  
   let grassTexture: THREE.Texture | null = null;
   try {
     grassTexture = useTexture('/textures/grass.png');
@@ -48,29 +52,35 @@ const Terrain = memo(function Terrain() {
     });
   }, []);
 
+  const terrainColor = isCosmicRealm ? '#1a0b2e' : '#1a4d2e';
+  const particleColor = isCosmicRealm ? '#8b5cf6' : '#4ade80';
+  const boundaryColor = isCosmicRealm ? '#a855f7' : '#ffffff';
+
   return (
     <group>
       {/* Main terrain */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[100, 100]} />
         <meshStandardMaterial 
-          map={grassTexture || undefined} 
-          color={grassTexture ? undefined : '#1a4d2e'} 
-          roughness={0.8}
-          metalness={0.1}
+          map={isCosmicRealm ? undefined : (grassTexture || undefined)} 
+          color={isCosmicRealm ? terrainColor : (grassTexture ? undefined : terrainColor)} 
+          roughness={isCosmicRealm ? 0.3 : 0.8}
+          metalness={isCosmicRealm ? 0.6 : 0.1}
+          emissive={isCosmicRealm ? '#4c1d95' : '#000000'}
+          emissiveIntensity={isCosmicRealm ? 0.3 : 0}
         />
       </mesh>
       
       {/* Arena boundary lines */}
       <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[18, 19, 64]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
+        <meshBasicMaterial color={boundaryColor} transparent opacity={isCosmicRealm ? 0.6 : 0.3} />
       </mesh>
       
       {/* Center dividing line */}
       <mesh position={[0, 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[40, 0.3]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={0.5} />
+        <meshBasicMaterial color={boundaryColor} transparent opacity={isCosmicRealm ? 0.8 : 0.5} />
       </mesh>
       
       {/* Ambient particles - Pre-calculated */}
@@ -80,9 +90,23 @@ const Terrain = memo(function Terrain() {
           position={particle.position}
         >
           <sphereGeometry args={[0.1, 8, 8]} />
-          <meshBasicMaterial color="#4ade80" transparent opacity={0.6} />
+          <meshBasicMaterial color={particleColor} transparent opacity={isCosmicRealm ? 0.8 : 0.6} />
         </mesh>
       ))}
+      
+      {/* Cosmic Realm specific elements - Floating stars */}
+      {isCosmicRealm && [...Array(30)].map((_, i) => {
+        const x = (seededRandom(i * 2) - 0.5) * 90;
+        const y = seededRandom(i * 2 + 1) * 3 + 0.2;
+        const z = (seededRandom(i * 2 + 2) - 0.5) * 90;
+        return (
+          <mesh key={`star-${i}`} position={[x, y, z]}>
+            <sphereGeometry args={[0.15, 8, 8]} />
+            <meshBasicMaterial color="#fbbf24" />
+            <pointLight position={[0, 0, 0]} color="#fbbf24" intensity={0.3} distance={2} />
+          </mesh>
+        );
+      })}
     </group>
   );
 });
@@ -246,16 +270,7 @@ function BarrierSphere({ team, position, element, strength, visible }: BarrierSp
   if (!visible || !element) return null;
 
   const getBarrierColor = () => {
-    switch (element) {
-      case 'fire':
-        return '#ef4444';
-      case 'water':
-        return '#3b82f6';
-      case 'leaf':
-        return '#22c55e';
-      default:
-        return '#888888';
-    }
+    return ELEMENT_COLORS[element] || '#888888';
   };
 
   const opacity = strength ? strength / 100 : 1;
@@ -422,11 +437,7 @@ function AttackProjectile({ id, element, fromTeam, isCritical }: AttackProjectil
   });
 
   const getColor = () => {
-    switch (element) {
-      case 'fire': return '#ef4444';
-      case 'water': return '#3b82f6';
-      case 'leaf': return '#22c55e';
-    }
+    return ELEMENT_COLORS[element] || '#888888';
   };
 
   const getShape = () => {
@@ -437,6 +448,14 @@ function AttackProjectile({ id, element, fromTeam, isCritical }: AttackProjectil
         return <sphereGeometry args={[isCritical ? 1 : 0.6, 16, 16]} />;
       case 'leaf': 
         return <tetrahedronGeometry args={[isCritical ? 1.1 : 0.7, 0]} />;
+      case 'light':
+        return <icosahedronGeometry args={[isCritical ? 1.1 : 0.7, 0]} />;
+      case 'darkness':
+        return <dodecahedronGeometry args={[isCritical ? 1 : 0.6, 0]} />;
+      case 'space':
+        return <torusGeometry args={[isCritical ? 0.8 : 0.5, isCritical ? 0.4 : 0.25, 16, 32]} />;
+      default:
+        return <sphereGeometry args={[isCritical ? 1 : 0.6, 16, 16]} />;
     }
   };
 
@@ -511,8 +530,9 @@ function AttackProjectile({ id, element, fromTeam, isCritical }: AttackProjectil
 }
 
 // Main Scene
-function Scene({ gameState, selectedLaptop, mySocketId }: { gameState: ReturnType<typeof useGameState>, selectedLaptop?: string, mySocketId?: string }) {
+function Scene({ gameState, selectedLaptop, mySocketId, selectedMap }: { gameState: ReturnType<typeof useGameState>, selectedLaptop?: string, mySocketId?: string, selectedMap?: string }) {
   const { players, blueTeam, redTeam, attackEvents, myTeam } = gameState;
+  const isCosmicRealm = selectedMap === 'cosmic_realm';
   
   // Get player positions
   const playerPositions: Map<string, [number, number, number]> = new Map();
@@ -532,19 +552,28 @@ function Scene({ gameState, selectedLaptop, mySocketId }: { gameState: ReturnTyp
 
   return (
     <>
-      {/* Lighting */}
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[10, 20, 10]} intensity={1.2} castShadow />
-      <directionalLight position={[-10, 20, -10]} intensity={0.7} />
-      <pointLight position={[0, 15, 0]} intensity={0.8} color="#ffffff" />
+      {/* Lighting - different for each map */}
+      <ambientLight intensity={isCosmicRealm ? 0.4 : 0.6} />
+      <directionalLight position={[10, 20, 10]} intensity={isCosmicRealm ? 0.8 : 1.2} castShadow />
+      <directionalLight position={[-10, 20, -10]} intensity={isCosmicRealm ? 0.5 : 0.7} />
+      <pointLight position={[0, 15, 0]} intensity={isCosmicRealm ? 1.2 : 0.8} color={isCosmicRealm ? '#a855f7' : '#ffffff'} />
       <pointLight position={[0, 5, 12]} intensity={0.5} color="#3b82f6" />
       <pointLight position={[0, 5, -12]} intensity={0.5} color="#ef4444" />
       
+      {/* Cosmic-specific accent lights */}
+      {isCosmicRealm && (
+        <>
+          <pointLight position={[-15, 10, 0]} intensity={0.6} color="#fbbf24" />
+          <pointLight position={[15, 10, 0]} intensity={0.6} color="#6b21a8" />
+          <pointLight position={[0, 20, 0]} intensity={0.8} color="#8b5cf6" />
+        </>
+      )}
+      
       {/* Environment */}
-      <Environment preset="sunset" />
+      <Environment preset={isCosmicRealm ? "night" : "sunset"} />
       
       {/* Terrain */}
-      <Terrain />
+      <Terrain key={selectedMap} mapId={selectedMap} />
       
       {/* Player Keyboards */}
       {Array.from(players.values()).map((player, idx) => {
@@ -612,8 +641,8 @@ function Scene({ gameState, selectedLaptop, mySocketId }: { gameState: ReturnTyp
 }
 
 // Main Component
-export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode = false, selectedLaptop }: ElementalArena3DProps) {
-  const gameState = useGameState(socket, roomId, myTeam, myRole, isAdminMode);
+export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode = false, selectedLaptop, selectedMap }: ElementalArena3DProps) {
+  const gameState = useGameState(socket, roomId, myTeam, myRole, isAdminMode, selectedMap);
   const [inputValue, setInputValue] = useState('');
   const [actionMode, setActionMode] = useState<'attack' | 'barrier'>('attack');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -654,28 +683,40 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode =
     inputRef.current?.focus();
   };
 
-  const getElementIcon = (element: Element) => {
+  const getElementIcon = (element: Element, className = "w-4 h-4") => {
     switch (element) {
-      case 'fire': return <Flame className="w-4 h-4" />;
-      case 'water': return <Droplet className="w-4 h-4" />;
-      case 'leaf': return <Leaf className="w-4 h-4" />;
+      case 'fire': return <Flame className={className} />;
+      case 'water': return <Droplet className={className} />;
+      case 'leaf': return <Leaf className={className} />;
+      case 'light': return <Sun className={className} />;
+      case 'darkness': return <Moon className={className} />;
+      case 'space': return <Sparkles className={className} />;
     }
   };
 
+  // Get map data and elements
+  const mapData = getMapById(selectedMap || 'elemental_arena');
+  const mapElements = (mapData?.elements || ['fire', 'water', 'leaf']) as Element[];
+  
   // Calculate enemy team's element charges (average across all enemy players)
-  const enemyCharges = { fire: 0, water: 0, leaf: 0 };
+  // Only include elements from the current map
+  const enemyCharges: Record<string, number> = {};
+  mapElements.forEach(element => {
+    enemyCharges[element] = 0;
+  });
+  
   const enemyPlayers = Array.from(gameState.players.values()).filter(p => p.team === gameState.enemyTeam);
   if (enemyPlayers.length > 0) {
     enemyPlayers.forEach(p => {
       if (p.charges) {
-        enemyCharges.fire += p.charges.fire || 0;
-        enemyCharges.water += p.charges.water || 0;
-        enemyCharges.leaf += p.charges.leaf || 0;
+        mapElements.forEach(element => {
+          enemyCharges[element] += (p.charges as any)[element] || 0;
+        });
       }
     });
-    enemyCharges.fire = Math.round(enemyCharges.fire / enemyPlayers.length);
-    enemyCharges.water = Math.round(enemyCharges.water / enemyPlayers.length);
-    enemyCharges.leaf = Math.round(enemyCharges.leaf / enemyPlayers.length);
+    mapElements.forEach(element => {
+      enemyCharges[element] = Math.round(enemyCharges[element] / enemyPlayers.length);
+    });
   }
 
   return (
@@ -683,7 +724,7 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode =
       {/* 3D Canvas */}
       <Canvas shadows>
         <Suspense fallback={null}>
-          <Scene gameState={gameState} selectedLaptop={selectedLaptop} mySocketId={socket?.id} />
+          <Scene gameState={gameState} selectedLaptop={selectedLaptop} mySocketId={socket?.id} selectedMap={selectedMap} />
         </Suspense>
       </Canvas>
 
@@ -709,16 +750,14 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode =
               {gameState.enemyTeamState.barrier && (
                 <>
                   <ShieldIcon className="w-4 h-4" style={{ 
-                    color: gameState.enemyTeamState.barrier.element === 'fire' ? '#ef4444' : 
-                           gameState.enemyTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e' 
+                    color: ELEMENT_COLORS[gameState.enemyTeamState.barrier.element] || '#888888'
                   }} />
                   <div className="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden border border-slate-600 max-w-xs">
                     <div 
                       className="h-full transition-all duration-300"
                       style={{ 
                         width: `${gameState.enemyTeamState.barrier.strength}%`,
-                        backgroundColor: gameState.enemyTeamState.barrier.element === 'fire' ? '#ef4444' : 
-                                       gameState.enemyTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e'
+                        backgroundColor: ELEMENT_COLORS[gameState.enemyTeamState.barrier.element] || '#888888'
                       }}
                     />
                   </div>
@@ -730,14 +769,15 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode =
             {/* Enemy Element Charges */}
             <div className="flex items-center gap-3">
               <span className="text-white text-xs font-bold">Energy:</span>
-              {(['fire', 'water', 'leaf'] as Element[]).map((element) => {
-                const Icon = element === 'fire' ? Flame : element === 'water' ? Droplet : Leaf;
-                const color = element === 'fire' ? '#ef4444' : element === 'water' ? '#3b82f6' : '#22c55e';
+              {mapElements.map((element) => {
+                const color = ELEMENT_COLORS[element];
                 const charge = enemyCharges[element];
                 
                 return (
                   <div key={element} className="flex items-center gap-1">
-                    <Icon className="w-3 h-3" style={{ color }} />
+                    <div style={{ color }}>
+                      {getElementIcon(element, "w-3 h-3")}
+                    </div>
                     <div className="w-20 bg-slate-700 rounded-full h-3 overflow-hidden border border-slate-600">
                       <div 
                         className={`h-full transition-all duration-300 ${charge >= 80 ? 'animate-pulse' : ''}`}
@@ -784,21 +824,22 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode =
                 Element Energy:
               </h4>
               <div className="space-y-2">
-                {(['fire', 'water', 'leaf'] as Element[]).map((element) => {
-                  const Icon = element === 'fire' ? Flame : element === 'water' ? Droplet : Leaf;
-                  const color = element === 'fire' ? '#ef4444' : element === 'water' ? '#3b82f6' : '#22c55e';
+                {mapElements.map((element) => {
+                  const color = ELEMENT_COLORS[element];
                   
                   return (
                     <div key={element} className="space-y-1">
                       <div className="flex items-center gap-1">
-                        <Icon className="w-4 h-4" style={{ color }} />
+                        <div style={{ color }}>
+                          {getElementIcon(element, "w-4 h-4")}
+                        </div>
                         <span className="text-white text-xs font-bold capitalize flex-1">{element}</span>
-                        <span className="text-white text-xs font-bold">{gameState.myCharges[element]}%</span>
+                        <span className="text-white text-xs font-bold">{gameState.myCharges[element] || 0}%</span>
                       </div>
                       <div className="w-full bg-slate-700 rounded-full h-3 overflow-hidden border border-slate-600">
                         <div 
                           className="h-full transition-all duration-300"
-                          style={{ width: `${gameState.myCharges[element]}%`, backgroundColor: color }}
+                          style={{ width: `${gameState.myCharges[element] || 0}%`, backgroundColor: color }}
                         />
                       </div>
                     </div>
@@ -840,21 +881,26 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode =
             <div className="bg-slate-800/50 rounded-lg p-2 border border-slate-700">
               <h4 className="text-white font-bold mb-2 text-xs">Use Element:</h4>
               <div className="space-y-2">
-                {(['fire', 'water', 'leaf'] as Element[]).map((element) => {
-                  const Icon = element === 'fire' ? Flame : element === 'water' ? Droplet : Leaf;
-                  const color = element === 'fire' ? 'bg-red-600' : element === 'water' ? 'bg-blue-600' : 'bg-green-600';
-                  const isReady = gameState.myCharges[element] >= 100;
+                {mapElements.map((element) => {
+                  const hexColor = ELEMENT_COLORS[element];
+                  const isReady = (gameState.myCharges[element] || 0) >= 100;
                   
                   return (
                     <Button
                       key={element}
                       onClick={() => gameState.useElement(element, actionMode)}
                       disabled={!isReady}
+                      style={{ 
+                        backgroundColor: isReady ? hexColor : undefined,
+                        color: isReady ? 'white' : undefined
+                      }}
                       className={`w-full h-9 font-bold capitalize text-xs ${
-                        isReady ? `${color} hover:opacity-90 text-white` : 'bg-slate-700 text-slate-500'
+                        isReady ? 'hover:opacity-90' : 'bg-slate-700 text-slate-500'
                       }`}
                     >
-                      <Icon className="w-4 h-4 mr-1" />
+                      <div style={{ display: 'inline-block', marginRight: '4px' }}>
+                        {getElementIcon(element, "w-4 h-4")}
+                      </div>
                       {actionMode === 'attack' ? 'Attack' : 'Protect'}
                     </Button>
                   );
@@ -885,18 +931,13 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode =
               <h3 className="text-white font-bold mb-1 text-xs text-center">Available Words:</h3>
               <div className="flex flex-wrap gap-2 justify-center">
                 {gameState.words.slice(0, 6).map((word, idx) => {
-                  const getElementBgColor = () => {
-                    switch (word.element) {
-                      case 'fire': return 'bg-red-600';
-                      case 'water': return 'bg-blue-600';
-                      case 'leaf': return 'bg-green-600';
-                    }
-                  };
+                  const wordColor = ELEMENT_COLORS[word.element] || '#888888';
                   
                   return (
                     <div 
                       key={idx}
-                      className={`px-3 py-1 rounded-md text-xs font-bold text-white flex items-center gap-1 ${getElementBgColor()} ${
+                      style={{ backgroundColor: wordColor }}
+                      className={`px-3 py-1 rounded-md text-xs font-bold text-white flex items-center gap-1 ${
                         word.isCharge ? 'ring-2 ring-yellow-400 shadow-lg shadow-yellow-400/50 animate-pulse' : 'shadow-md'
                       }`}
                     >
@@ -929,16 +970,14 @@ export function ElementalArena3D({ socket, roomId, myTeam, myRole, isAdminMode =
             {gameState.myTeamState.barrier && (
               <>
                 <ShieldIcon className="w-4 h-4" style={{ 
-                  color: gameState.myTeamState.barrier.element === 'fire' ? '#ef4444' : 
-                         gameState.myTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e' 
+                  color: ELEMENT_COLORS[gameState.myTeamState.barrier.element] || '#888888'
                 }} />
                 <div className="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden border border-slate-600 max-w-xs">
                   <div 
                     className="h-full transition-all duration-300"
                     style={{ 
                       width: `${gameState.myTeamState.barrier.strength}%`,
-                      backgroundColor: gameState.myTeamState.barrier.element === 'fire' ? '#ef4444' : 
-                                     gameState.myTeamState.barrier.element === 'water' ? '#3b82f6' : '#22c55e'
+                      backgroundColor: ELEMENT_COLORS[gameState.myTeamState.barrier.element] || '#888888'
                     }}
                   />
                 </div>

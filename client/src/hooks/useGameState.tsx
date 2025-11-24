@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Socket } from 'socket.io-client';
 import { useAudio } from '@/lib/stores/useAudio';
+import { getMapById } from '@/lib/data/maps';
 
 export type Element = 'fire' | 'water' | 'leaf' | 'light' | 'darkness' | 'space';
 export type Team = 'blue' | 'red';
@@ -56,17 +57,36 @@ export function useGameState(
   roomId: string,
   myTeam: Team,
   myRole: Role,
-  isAdminMode: boolean = false
+  isAdminMode: boolean = false,
+  selectedMap?: string
 ) {
+  // Get map elements to initialize charges correctly
+  const mapData = useMemo(() => getMapById(selectedMap || 'elemental_arena'), [selectedMap]);
+  const mapElements = useMemo(() => (mapData?.elements || ['fire', 'water', 'leaf']) as Element[], [mapData]);
+  
+  // Initialize charges with map-specific elements
+  const initialCharges = useMemo(() => {
+    const charges: ElementCharges = {};
+    mapElements.forEach(element => {
+      charges[element] = 0;
+    });
+    return charges;
+  }, [mapElements]);
+  
   const [blueTeam, setBlueTeam] = useState<TeamState>({ hp: 100, shield: 0, barrier: null });
   const [redTeam, setRedTeam] = useState<TeamState>({ hp: 100, shield: 0, barrier: null });
   const [players, setPlayers] = useState<Map<string, PlayerData>>(new Map());
   const [words, setWords] = useState<WordWithElement[]>([]);
   const [attackEvents, setAttackEvents] = useState<AttackEvent[]>([]);
   const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
-  const [myCharges, setMyCharges] = useState<ElementCharges>({});
+  const [myCharges, setMyCharges] = useState<ElementCharges>(initialCharges);
   
   const { playHit, playSuccess, playCharge, playBarrier, playAttack } = useAudio();
+
+  // Reset charges when map changes
+  useEffect(() => {
+    setMyCharges(initialCharges);
+  }, [initialCharges]);
 
   useEffect(() => {
     if (!socket || !roomId) return;
@@ -84,12 +104,18 @@ export function useGameState(
         const playersMap = new Map(prev);
         playerCharges.forEach((p: any) => {
           const existingPlayer = playersMap.get(p.id);
+          // Normalize charges to only include current map elements
+          const normalizedCharges: ElementCharges = {};
+          mapElements.forEach(element => {
+            normalizedCharges[element] = p.charges[element] ?? 0;
+          });
+          
           playersMap.set(p.id, {
             id: p.id,
             nickname: p.nickname || existingPlayer?.nickname || 'Player',
             team: p.team,
             role: p.role,
-            charges: p.charges,
+            charges: normalizedCharges,
             isTyping: existingPlayer?.isTyping || false,
             lastKeyPressed: existingPlayer?.lastKeyPressed || null
           });
@@ -97,17 +123,14 @@ export function useGameState(
         return playersMap;
       });
       
-      // Update my charges - always set to 100 if admin mode
+      // Update my charges - normalize to current map elements
       const myData = playerCharges.find((p: any) => p.id === socket.id);
       if (myData) {
-        if (isAdminMode) {
-          console.log('Admin mode active - setting all charges to 100');
-          const adminCharges: ElementCharges = {};
-          Object.keys(myData.charges).forEach(key => adminCharges[key] = 100);
-          setMyCharges(adminCharges);
-        } else {
-          setMyCharges(myData.charges);
-        }
+        const normalizedMyCharges: ElementCharges = {};
+        mapElements.forEach(element => {
+          normalizedMyCharges[element] = isAdminMode ? 100 : (myData.charges[element] ?? 0);
+        });
+        setMyCharges(normalizedMyCharges);
       }
     });
 
@@ -244,7 +267,7 @@ export function useGameState(
       socket.off('word_correct');
       socket.off('word_invalid');
     };
-  }, [socket, roomId, playHit, playSuccess, playCharge, playBarrier, playAttack, isAdminMode]);
+  }, [socket, roomId, playHit, playSuccess, playCharge, playBarrier, playAttack, isAdminMode, mapElements]);
 
   // Periodic cleanup for attack events and floating texts to prevent accumulation
   useEffect(() => {
@@ -280,8 +303,9 @@ export function useGameState(
     }
 
     // In admin mode, always allow element use
-    if (!isAdminMode && myCharges[element] < 100) {
-      console.log('Element use blocked - charge not full');
+    const charge = myCharges[element] ?? 0;
+    if (!isAdminMode && charge < 100) {
+      console.log('Element use blocked - charge not full:', charge);
       return;
     }
 

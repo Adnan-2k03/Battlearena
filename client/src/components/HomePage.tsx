@@ -207,58 +207,66 @@ export function HomePage({ socket, onMatchStart, onRoomJoined }: HomePageProps) 
           <TabsContent value="home" className="space-y-4">
             <Card className="bg-slate-900/90 border-slate-700 border-2 shadow-xl">
               <CardContent className="p-8">
-                <h3 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
-                  <Users className="w-8 h-8 text-purple-400" />
+                <h3 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                  <Users className="w-6 h-6 text-purple-400" />
                   Game Mode
                 </h3>
-                <div className="grid grid-cols-2 gap-5 mb-8">
+                <div className="grid grid-cols-2 gap-3 mb-6">
                   <Button
                     onClick={() => setGameMode('team')}
                     className={cn(
-                      "h-32 text-xl font-bold transition-all border-2",
+                      "h-20 text-lg font-bold transition-all border-2",
                       gameMode === 'team'
                         ? "bg-gradient-to-br from-blue-600 via-blue-500 to-purple-600 hover:from-blue-700 hover:to-purple-700 border-blue-400 shadow-lg shadow-blue-500/50 scale-105"
                         : "bg-slate-800/50 hover:bg-slate-700 text-slate-400 border-slate-700"
                     )}
                   >
-                    <div className="flex flex-col items-center gap-2">
-                      <Users className="w-8 h-8" />
+                    <div className="flex flex-col items-center gap-1">
+                      <Users className="w-6 h-6" />
                       <div>Team 2v2</div>
-                      <div className="text-sm font-normal opacity-75">4 Players</div>
+                      <div className="text-xs font-normal opacity-75">4 Players</div>
                     </div>
                   </Button>
                   <Button
                     onClick={() => setGameMode('solo')}
                     className={cn(
-                      "h-32 text-xl font-bold transition-all border-2",
+                      "h-20 text-lg font-bold transition-all border-2",
                       gameMode === 'solo'
                         ? "bg-gradient-to-br from-orange-600 via-orange-500 to-red-600 hover:from-orange-700 hover:to-red-700 border-orange-400 shadow-lg shadow-orange-500/50 scale-105"
                         : "bg-slate-800/50 hover:bg-slate-700 text-slate-400 border-slate-700"
                     )}
                   >
-                    <div className="flex flex-col items-center gap-2">
-                      <Swords className="w-8 h-8" />
+                    <div className="flex flex-col items-center gap-1">
+                      <Swords className="w-6 h-6" />
                       <div>Solo 1v1</div>
-                      <div className="text-sm font-normal opacity-75">2 Players</div>
+                      <div className="text-xs font-normal opacity-75">2 Players</div>
                     </div>
                   </Button>
                 </div>
 
-                <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-xl p-5 mb-6 border border-slate-600 shadow-inner">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-xl p-4 mb-4 border border-slate-600 shadow-inner">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-2">
-                      <span className="text-slate-400 text-sm font-medium">Selected Laptop</span>
-                      <div className="flex items-center gap-2 bg-slate-900/50 rounded-lg p-3 border border-slate-600">
-                        <span className="text-3xl">{selectedLaptopData?.image}</span>
-                        <span className="text-white font-bold text-sm">{selectedLaptopData?.name}</span>
-                      </div>
+                      <span className="text-slate-400 text-xs font-medium">Selected Laptop</span>
+                      <Button
+                        onClick={() => setActiveTab('laptops')}
+                        className="flex items-center justify-start gap-2 bg-slate-900/50 hover:bg-slate-800 rounded-lg p-3 border border-slate-600 h-auto"
+                      >
+                        <span className="text-2xl">{selectedLaptopData?.image}</span>
+                        <span className="text-white font-bold text-sm flex-1 text-left">{selectedLaptopData?.name}</span>
+                        <Laptop className="w-4 h-4 text-slate-400" />
+                      </Button>
                     </div>
                     <div className="flex flex-col gap-2">
-                      <span className="text-slate-400 text-sm font-medium">Selected Map</span>
-                      <div className="flex items-center gap-2 bg-slate-900/50 rounded-lg p-3 border border-slate-600">
-                        <span className="text-3xl">{selectedMapData?.thumbnail}</span>
-                        <span className="text-white font-bold text-sm">{selectedMapData?.name}</span>
-                      </div>
+                      <span className="text-slate-400 text-xs font-medium">Selected Map</span>
+                      <Button
+                        onClick={() => setActiveTab('maps')}
+                        className="flex items-center justify-start gap-2 bg-slate-900/50 hover:bg-slate-800 rounded-lg p-3 border border-slate-600 h-auto"
+                      >
+                        <span className="text-2xl">{selectedMapData?.thumbnail}</span>
+                        <span className="text-white font-bold text-sm flex-1 text-left">{selectedMapData?.name}</span>
+                        <Map className="w-4 h-4 text-slate-400" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -272,16 +280,16 @@ export function HomePage({ socket, onMatchStart, onRoomJoined }: HomePageProps) 
                 <Button
                   onClick={handleStartMatch}
                   disabled={isSearching}
-                  className="w-full bg-gradient-to-r from-green-600 via-green-500 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-10 text-3xl shadow-lg shadow-green-600/30 border-2 border-green-400 transition-all hover:scale-[1.02]"
+                  className="w-full bg-gradient-to-r from-green-600 via-green-500 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-6 text-xl shadow-lg shadow-green-600/30 border-2 border-green-400 transition-all hover:scale-[1.02]"
                 >
                   {isSearching ? (
                     <>
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-3 border-white mr-4" />
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3" />
                       Searching for opponents...
                     </>
                   ) : (
                     <>
-                      <Swords className="w-8 h-8 mr-3" />
+                      <Swords className="w-6 h-6 mr-2" />
                       START MATCH
                     </>
                   )}
