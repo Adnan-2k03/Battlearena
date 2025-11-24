@@ -254,6 +254,7 @@ function App() {
               stats={matchStats}
               mySocketId={socket?.id}
               onPlayAgain={handlePlayAgain}
+              onReturnHome={handlePlayAgain}
             />
           )}
         </>

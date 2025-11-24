@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Trophy, RotateCcw, Swords, Shield, Target, Zap, Star } from 'lucide-react';
+import { Trophy, RotateCcw, Swords, Shield, Target, Zap, Star, Home } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { useAudio } from '@/lib/stores/useAudio';
@@ -21,9 +21,10 @@ interface VictoryModalProps {
   stats?: PlayerStat[];
   mySocketId?: string;
   onPlayAgain: () => void;
+  onReturnHome?: () => void;
 }
 
-export function VictoryModal({ winner, myTeam, stats, mySocketId, onPlayAgain }: VictoryModalProps) {
+export function VictoryModal({ winner, myTeam, stats, mySocketId, onPlayAgain, onReturnHome }: VictoryModalProps) {
   const isWinner = winner === myTeam;
   const { playSuccess, playHit } = useAudio();
   
@@ -153,13 +154,23 @@ export function VictoryModal({ winner, myTeam, stats, mySocketId, onPlayAgain }:
             </div>
           )}
 
-          <Button
-            onClick={onPlayAgain}
-            className="w-full font-bold py-6 text-lg bg-purple-600 hover:bg-purple-700 text-white"
-          >
-            <RotateCcw className="w-5 h-5 mr-2" />
-            Play Again
-          </Button>
+          <div className="grid grid-cols-2 gap-4">
+            <Button
+              onClick={onReturnHome}
+              variant="outline"
+              className="font-bold py-6 text-lg bg-slate-700 hover:bg-slate-600 text-white border-slate-600"
+            >
+              <Home className="w-5 h-5 mr-2" />
+              Home
+            </Button>
+            <Button
+              onClick={onPlayAgain}
+              className="font-bold py-6 text-lg bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              <RotateCcw className="w-5 h-5 mr-2" />
+              Play Again
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
