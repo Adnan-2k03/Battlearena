@@ -355,8 +355,8 @@ function Room() {
         ))}
       </group>
 
-      {/* Premium Reading Chair - RIGHT SIDE */}
-      <group position={[0, -0.5, -5]}>
+      {/* Premium Reading Chair - NEXT TO BOOKSHELF */}
+      <group position={[-1.5, -0.5, -5.5]}>
         {/* Front left leg - walnut wood */}
         <mesh position={[-0.42, -0.36, 0.42]} castShadow>
           <boxGeometry args={[0.14, 0.45, 0.14]} />
