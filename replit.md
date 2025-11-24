@@ -10,6 +10,24 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 24, 2025)
 
+### Map-Specific Element System (Latest)
+- **Complete Element Theming**: Implemented dynamic theming system supporting all 6 elements (fire, water, leaf, light, darkness, space) across the entire UI
+  - Element colors, icons, energy bars, barriers, and attacks all adapt to selected map's elements
+  - Added icons for cosmic elements: light (Sun), darkness (Moon), space (Sparkles)
+- **Arena Visuals**: Distinct visual designs for both arenas
+  - Elemental Arena: Grassy terrain with green particle effects
+  - Cosmic Realm: Dark metallic terrain with purple glow and floating golden stars
+- **State Management Improvements**:
+  - useGameState hook now receives selectedMap parameter and initializes charges correctly for map-specific elements
+  - Socket listeners properly re-subscribe when map changes to avoid stale element closures
+  - All charge data normalized to current map's elements only
+  - Enemy charge aggregation dynamically built from mapElements
+- **Navigation Fix**: Returning from match now goes to lobby instead of nickname entry screen
+- **UI Improvements**: Reduced size of game mode selection and start button for better visual hierarchy
+- **Quick Customization**: Added clickable map and laptop selection directly in battle section
+
+## Recent Changes (November 24, 2025 - Earlier)
+
 ### Customization System Overhaul
 - **Home Page Redesign**: Improved design with larger buttons, modern gradients, and better visual hierarchy
 - **Victory Modal Update**: Added "Return to Home" button for easier navigation after match ends
