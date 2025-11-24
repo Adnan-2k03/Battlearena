@@ -15,7 +15,6 @@ interface CompanionRoomSceneProps {
   onBack: () => void;
 }
 
-// Activity-specific target positions
 const ACTIVITY_POSITIONS: Record<Activity, { pos: [number, number, number]; rot: [number, number, number] }> = {
   idle: { pos: [0, 0, 0], rot: [0, 0, 0] },
   reading: { pos: [1.2, -0.2, -3.8], rot: [-0.5, 0.1, 0.15] },
@@ -50,21 +49,17 @@ function AnimatedLaptop({
     timeRef.current += delta;
     const t = timeRef.current;
 
-    // Get target position for this activity
     const target = ACTIVITY_POSITIONS[activity];
     const targetPos = new THREE.Vector3(userPos[0], userPos[1], userPos[2]);
     
-    // Smoothly move toward activity position when not idle/playing/jumping
     if (!['idle', 'playing', 'jumping'].includes(activity)) {
       targetPos.x = target.pos[0];
       targetPos.y = target.pos[1];
       targetPos.z = target.pos[2];
     }
 
-    // Smoothly interpolate position
     groupRef.current.position.lerp(targetPos, 0.05);
 
-    // Activity-specific animations
     if (activity === 'sleeping') {
       groupRef.current.rotation.z = target.rot[2];
       if (bodyRef.current) bodyRef.current.position.y = 0.2;
@@ -85,7 +80,6 @@ function AnimatedLaptop({
       groupRef.current.rotation.z = target.rot[2];
       groupRef.current.scale.set(1, 1, 1);
       if (bodyRef.current) bodyRef.current.rotation.x = 0.4;
-      // Arms as if holding book
       if (leftArmRef.current) leftArmRef.current.rotation.z = -1.1;
       if (rightArmRef.current) rightArmRef.current.rotation.z = 1.1;
       if (leftLegRef.current) leftLegRef.current.position.y = -0.95;
@@ -113,7 +107,6 @@ function AnimatedLaptop({
       if (leftLegRef.current) leftLegRef.current.position.y = -0.4 + jumpH * 0.6;
       if (rightLegRef.current) rightLegRef.current.position.y = -0.4 + jumpH * 0.6;
     } else {
-      // Idle - slight sway
       groupRef.current.rotation.set(0, Math.sin(t * 0.8) * 0.1, 0);
       groupRef.current.scale.set(1, 1, 1);
       if (bodyRef.current) bodyRef.current.position.y = Math.sin(t * 1.2) * 0.06;
@@ -231,136 +224,218 @@ function AnimatedLaptop({
 function Room() {
   return (
     <>
+      {/* Floor - polished wood */}
       <mesh position={[0, -1.2, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[12, 12]} />
-        <meshStandardMaterial color="#c8b896" roughness={0.8} metalness={0.1} />
+        <planeGeometry args={[16, 16]} />
+        <meshStandardMaterial 
+          color="#8b6f47" 
+          roughness={0.6}
+          metalness={0.05}
+        />
       </mesh>
 
-      <mesh position={[0, 1, -5]} receiveShadow>
-        <boxGeometry args={[12, 4, 0.5]} />
-        <meshStandardMaterial color="#e8dcc8" roughness={0.7} />
+      {/* Wall gradient - warmer tones */}
+      <mesh position={[0, 1.5, -6]} receiveShadow>
+        <boxGeometry args={[16, 3.5, 0.5]} />
+        <meshStandardMaterial 
+          color="#daa55b" 
+          roughness={0.7}
+        />
       </mesh>
 
-      <mesh position={[-6, 1, 0]} receiveShadow>
-        <boxGeometry args={[0.5, 4, 10]} />
-        <meshStandardMaterial color="#f0e6d2" roughness={0.7} />
+      {/* Left wall - warmer accent */}
+      <mesh position={[-8, 1.5, 0]} receiveShadow>
+        <boxGeometry args={[0.5, 3.5, 16]} />
+        <meshStandardMaterial 
+          color="#d4a574"
+          roughness={0.7}
+        />
       </mesh>
 
-      {/* Library with chair */}
+      {/* Right wall - ambient lighting surface */}
+      <mesh position={[8, 1.5, 0]} receiveShadow>
+        <boxGeometry args={[0.5, 3.5, 16]} />
+        <meshStandardMaterial 
+          color="#c99a6e"
+          roughness={0.7}
+        />
+      </mesh>
+
+      {/* Premium Reading Corner */}
       <group position={[1.5, 0, -3.8]}>
+        {/* Floor cushion */}
+        <mesh position={[0, -0.9, -0.2]} castShadow>
+          <boxGeometry args={[2.4, 0.2, 0.4]} />
+          <meshStandardMaterial color="#9b8b7e" roughness={0.8} />
+        </mesh>
+
+        {/* Shelving unit - upgraded */}
         {[0.8, 0.4, 0].map((y) => (
-          <mesh key={y} position={[0, y, -0.15]} receiveShadow>
-            <boxGeometry args={[2.2, 0.1, 0.3]} />
-            <meshStandardMaterial color="#8b5a3c" roughness={0.6} />
+          <mesh key={y} position={[0, y, -0.15]} receiveShadow castShadow>
+            <boxGeometry args={[2.4, 0.12, 0.35]} />
+            <meshStandardMaterial 
+              color="#5d4e3a" 
+              roughness={0.5}
+              metalness={0.1}
+            />
           </mesh>
         ))}
+
+        {/* Books - more colorful and detailed */}
         {[
-          { pos: [-0.6, 0.5, 0], color: '#c41e3a' },
-          { pos: [-0.2, 0.5, 0], color: '#0051ba' },
-          { pos: [0.2, 0.5, 0], color: '#ffd700' },
-          { pos: [0.6, 0.5, 0], color: '#27ae60' },
-          { pos: [-0.5, 0.1, 0], color: '#e74c3c' },
-          { pos: [0.1, 0.1, 0], color: '#3498db' },
+          { pos: [-0.8, 0.5, 0], color: '#d32f2f', scale: 0.4 },
+          { pos: [-0.4, 0.5, 0], color: '#1976d2', scale: 0.38 },
+          { pos: [0, 0.5, 0], color: '#f57c00', scale: 0.42 },
+          { pos: [0.4, 0.5, 0], color: '#388e3c', scale: 0.39 },
+          { pos: [0.8, 0.5, 0], color: '#6a1b9a', scale: 0.4 },
+          { pos: [-0.6, 0.1, 0], color: '#c62828', scale: 0.36 },
+          { pos: [0, 0.1, 0], color: '#0d47a1', scale: 0.37 },
+          { pos: [0.6, 0.1, 0], color: '#e65100', scale: 0.38 },
         ].map((book, i) => (
           <mesh key={i} position={book.pos as [number, number, number]} castShadow>
-            <boxGeometry args={[0.35, 0.55, 0.2]} />
-            <meshPhongMaterial color={book.color} shininess={40} />
+            <boxGeometry args={[0.4, 0.6, book.scale]} />
+            <meshPhongMaterial color={book.color} shininess={50} />
           </mesh>
         ))}
       </group>
 
-      {/* Reading Chair */}
+      {/* Premium Reading Chair */}
       <group position={[0.8, -0.5, -3.5]}>
-        <mesh position={[0, 0.3, 0]} castShadow>
-          <boxGeometry args={[0.8, 0.6, 0.8]} />
-          <meshStandardMaterial color="#7d5a3a" roughness={0.8} />
-        </mesh>
-        <mesh position={[0, 0.8, -0.35]} castShadow>
-          <boxGeometry args={[0.8, 0.6, 0.2]} />
-          <meshStandardMaterial color="#7d5a3a" roughness={0.8} />
-        </mesh>
-      </group>
-
-      {/* Charging Station */}
-      <group position={[3, -0.8, -1.5]}>
-        {/* Socket */}
-        <mesh position={[0, 0.2, 0]} castShadow>
-          <boxGeometry args={[0.3, 0.4, 0.15]} />
-          <meshStandardMaterial color="#444" roughness={0.5} />
-        </mesh>
-        {/* Plug */}
-        <mesh position={[0, 0, -0.2]} castShadow>
-          <boxGeometry args={[0.15, 0.3, 0.1]} />
-          <meshStandardMaterial color="#333" roughness={0.6} />
-        </mesh>
-      </group>
-
-      {/* Sofa */}
-      <group position={[-2, -0.5, 1.5]}>
-        <mesh position={[0, 0, 0]} receiveShadow castShadow>
-          <boxGeometry args={[2.8, 0.8, 1.2]} />
-          <meshStandardMaterial color="#6b4423" roughness={0.8} />
-        </mesh>
-        <mesh position={[0, 0.65, -0.65]} receiveShadow castShadow>
-          <boxGeometry args={[2.8, 0.9, 0.25]} />
-          <meshStandardMaterial color="#6b4423" roughness={0.8} />
-        </mesh>
-        {[-1.45, 1.45].map((x) => (
-          <mesh key={x} position={[x, 0.3, 0]} castShadow>
-            <boxGeometry args={[0.3, 0.8, 1.2]} />
-            <meshStandardMaterial color="#6b4423" roughness={0.8} />
-          </mesh>
-        ))}
-      </group>
-
-      {/* Coffee Table */}
-      <group position={[2.2, -0.8, 0.8]}>
-        <mesh position={[0, 0, 0]} receiveShadow castShadow>
-          <boxGeometry args={[1.2, 0.1, 0.8]} />
-          <meshStandardMaterial color="#8b5a3c" roughness={0.6} />
-        </mesh>
-        {[[-0.5, -0.3], [0.5, -0.3], [-0.5, 0.3], [0.5, 0.3]].map((pos, i) => (
-          <mesh key={i} position={[pos[0], pos[1], 0]} castShadow>
-            <cylinderGeometry args={[0.06, 0.06, 0.3, 12]} />
-            <meshStandardMaterial color="#8b5a3c" roughness={0.6} />
-          </mesh>
-        ))}
-      </group>
-
-      {/* Desk Lamp */}
-      <group position={[3.5, -0.8, 0.3]}>
-        <mesh position={[0, 0, 0]} castShadow>
-          <cylinderGeometry args={[0.08, 0.08, 0.8, 12]} />
-          <meshStandardMaterial color="#2a2a2a" roughness={0.4} />
-        </mesh>
-        <mesh position={[0, 0.5, 0]} castShadow>
-          <coneGeometry args={[0.28, 0.35, 16]} />
-          <meshStandardMaterial color="#fffacd" roughness={0.3} />
-        </mesh>
-        <pointLight position={[0, 0.5, 0]} intensity={1.2} color="#ffff99" castShadow />
-      </group>
-
-      {/* Plant */}
-      <group position={[-4.5, -0.8, -3]}>
-        <mesh position={[0, 0, 0]} castShadow>
-          <cylinderGeometry args={[0.25, 0.3, 0.4, 12]} />
+        {/* Seat cushion */}
+        <mesh position={[0, 0.25, 0]} castShadow>
+          <boxGeometry args={[1, 0.4, 0.9]} />
           <meshStandardMaterial color="#8b7355" roughness={0.8} />
         </mesh>
-        <mesh position={[0, 0.6, 0]} castShadow>
-          <sphereGeometry args={[0.4, 16, 16]} />
-          <meshStandardMaterial color="#27ae60" roughness={0.6} />
+        {/* Back cushion */}
+        <mesh position={[0, 0.9, -0.4]} castShadow>
+          <boxGeometry args={[1, 0.7, 0.3]} />
+          <meshStandardMaterial color="#7d6b55" roughness={0.8} />
+        </mesh>
+        {/* Armrests */}
+        {[-0.55, 0.55].map((x) => (
+          <mesh key={x} position={[x, 0.4, 0]} castShadow>
+            <boxGeometry args={[0.2, 0.6, 0.8]} />
+            <meshStandardMaterial color="#6d5b45" roughness={0.8} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Charging Station - Premium */}
+      <group position={[3, -0.8, -1.5]}>
+        {/* Wall outlet */}
+        <mesh position={[0, 0.3, 0]} castShadow>
+          <boxGeometry args={[0.4, 0.5, 0.2]} />
+          <meshStandardMaterial color="#333" roughness={0.4} />
+        </mesh>
+        {/* Plug connector */}
+        <mesh position={[0, 0.15, -0.25]} castShadow>
+          <boxGeometry args={[0.2, 0.4, 0.15]} />
+          <meshStandardMaterial color="#222" roughness={0.5} />
+        </mesh>
+        {/* Charging indicator light */}
+        <pointLight position={[0, 0.35, 0]} intensity={0.8} color="#22ff22" />
+      </group>
+
+      {/* Modern Sofa */}
+      <group position={[-2, -0.5, 1.5]}>
+        <mesh position={[0, 0, 0]} receiveShadow castShadow>
+          <boxGeometry args={[3, 0.8, 1.4]} />
+          <meshStandardMaterial color="#4a3a2a" roughness={0.85} />
+        </mesh>
+        <mesh position={[0, 0.7, -0.75]} receiveShadow castShadow>
+          <boxGeometry args={[3, 0.8, 0.3]} />
+          <meshStandardMaterial color="#3d2f1f" roughness={0.85} />
+        </mesh>
+        {[-1.6, 1.6].map((x) => (
+          <mesh key={x} position={[x, 0.35, 0]} castShadow>
+            <boxGeometry args={[0.35, 0.8, 1.4]} />
+            <meshStandardMaterial color="#3d2f1f" roughness={0.85} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Coffee Table - Premium */}
+      <group position={[2.2, -0.8, 0.8]}>
+        <mesh position={[0, 0, 0]} receiveShadow castShadow>
+          <boxGeometry args={[1.4, 0.12, 0.9]} />
+          <meshStandardMaterial 
+            color="#6d5345" 
+            roughness={0.4}
+            metalness={0.1}
+          />
+        </mesh>
+        {[[-0.6, -0.35], [0.6, -0.35], [-0.6, 0.35], [0.6, 0.35]].map((pos, i) => (
+          <mesh key={i} position={[pos[0], pos[1], 0]} castShadow>
+            <cylinderGeometry args={[0.08, 0.08, 0.35, 16]} />
+            <meshStandardMaterial 
+              color="#5d4345" 
+              roughness={0.6}
+            />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Designer Floor Lamp */}
+      <group position={[4, -0.8, 1]}>
+        <mesh position={[0, 0.4, 0]} castShadow>
+          <cylinderGeometry args={[0.1, 0.1, 0.8, 16]} />
+          <meshStandardMaterial color="#1a1a1a" roughness={0.3} metalness={0.2} />
+        </mesh>
+        <mesh position={[0, 1, 0]} castShadow>
+          <coneGeometry args={[0.35, 0.4, 24]} />
+          <meshStandardMaterial 
+            color="#fff8dc" 
+            roughness={0.2}
+            emissive="#ffedd5"
+            emissiveIntensity={0.4}
+          />
+        </mesh>
+        <pointLight position={[0, 1, 0]} intensity={1.5} color="#ffe8a8" castShadow />
+      </group>
+
+      {/* Decorative Plant - Premium */}
+      <group position={[-4.5, -0.8, -2.5]}>
+        <mesh position={[0, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.3, 0.35, 0.5, 12]} />
+          <meshStandardMaterial 
+            color="#8b7355" 
+            roughness={0.8}
+            metalness={0.05}
+          />
+        </mesh>
+        <mesh position={[0, 0.75, 0]} castShadow>
+          <sphereGeometry args={[0.5, 16, 16]} />
+          <meshStandardMaterial 
+            color="#2d5016"
+            roughness={0.7}
+            emissive="#1a3a0a"
+            emissiveIntensity={0.15}
+          />
         </mesh>
       </group>
 
-      <ambientLight intensity={0.5} />
+      {/* Window - ambient light source */}
+      <mesh position={[-7.8, 1, -4]} castShadow>
+        <boxGeometry args={[0.4, 1.5, 2]} />
+        <meshStandardMaterial 
+          color="#87ceeb" 
+          emissive="#87ceeb"
+          emissiveIntensity={0.3}
+        />
+      </mesh>
+
+      {/* Ambient + Directional Lighting */}
+      <ambientLight intensity={0.6} color="#f5e6d3" />
       <directionalLight 
-        position={[5, 8, 5]} 
-        intensity={1.2} 
+        position={[6, 10, 8]} 
+        intensity={1.4} 
         castShadow
+        color="#ffe8cc"
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
       />
-      <pointLight position={[-3, 2, 0]} intensity={0.6} color="#fff" />
+      <pointLight position={[-3, 2.5, 2]} intensity={0.8} color="#ffedd5" />
+      <pointLight position={[5, 1.5, -5]} intensity={0.6} color="#fff8dc" />
     </>
   );
 }
@@ -386,8 +461,8 @@ function RoomSceneContent({
     if (controls.left) posRef.current[0] -= speed;
     if (controls.right) posRef.current[0] += speed;
 
-    posRef.current[0] = Math.max(-4, Math.min(4, posRef.current[0]));
-    posRef.current[2] = Math.max(-4, Math.min(4, posRef.current[2]));
+    posRef.current[0] = Math.max(-5, Math.min(5, posRef.current[0]));
+    posRef.current[2] = Math.max(-5, Math.min(5, posRef.current[2]));
 
     onPositionChange([...posRef.current]);
   });
@@ -396,7 +471,7 @@ function RoomSceneContent({
     <>
       <Room />
       <AnimatedLaptop laptopId={laptopId} activity={activity} userPos={posRef.current} />
-      {activity === 'playing' && <Sparkles count={30} scale={3} size={3} speed={0.5} />}
+      {activity === 'playing' && <Sparkles count={40} scale={4} size={4} speed={0.6} />}
     </>
   );
 }
@@ -412,7 +487,7 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
   ];
 
   return (
-    <Canvas shadows camera={{ position: [5, 2, 8], fov: 45 }}>
+    <Canvas shadows camera={{ position: [5, 2.5, 8], fov: 45 }}>
       <KeyboardControls map={keyMap}>
         <RoomSceneContent 
           laptopId={laptopId} 
