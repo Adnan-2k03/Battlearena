@@ -650,6 +650,7 @@ function RoomSceneContent({
 
 function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activity }) {
   const [laptopPos, setLaptopPos] = useState<[number, number, number]>([0, 0, 0]);
+  const mapControlsRef = useRef<any>(null);
 
   const keyMap = [
     { name: 'forward' as Controls, keys: ['ArrowUp', 'KeyW'] },
@@ -657,6 +658,43 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
     { name: 'left' as Controls, keys: ['ArrowLeft', 'KeyA'] },
     { name: 'right' as Controls, keys: ['ArrowRight', 'KeyD'] },
   ];
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!mapControlsRef.current) return;
+      
+      const rotateSpeed = 0.05;
+      const camera = mapControlsRef.current.object;
+      const target = mapControlsRef.current.target;
+      
+      if (e.key === 'q' || e.key === 'Q') {
+        // Rotate left
+        const pos = camera.position.sub(target);
+        pos.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotateSpeed);
+        camera.position.copy(pos.add(target));
+      } else if (e.key === 'e' || e.key === 'E') {
+        // Rotate right
+        const pos = camera.position.sub(target);
+        pos.applyAxisAngle(new THREE.Vector3(0, 1, 0), -rotateSpeed);
+        camera.position.copy(pos.add(target));
+      } else if (e.key === 'r' || e.key === 'R') {
+        // Rotate up
+        const pos = camera.position.sub(target);
+        const right = new THREE.Vector3().crossVectors(camera.up, pos).normalize();
+        pos.applyAxisAngle(right, rotateSpeed);
+        camera.position.copy(pos.add(target));
+      } else if (e.key === 'f' || e.key === 'F') {
+        // Rotate down
+        const pos = camera.position.sub(target);
+        const right = new THREE.Vector3().crossVectors(camera.up, pos).normalize();
+        pos.applyAxisAngle(right, -rotateSpeed);
+        camera.position.copy(pos.add(target));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <Canvas shadows camera={{ position: [5, 2.5, 8], fov: 45 }}>
@@ -667,7 +705,7 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
           onPositionChange={setLaptopPos}
         />
       </KeyboardControls>
-      <MapControls enableZoom={true} enablePan={true} enableRotate={true} panSpeed={1} rotateSpeed={0.5} zoomSpeed={0.5} minDistance={0.5} maxDistance={80} autoRotate={false} />
+      <MapControls ref={mapControlsRef} enableZoom={true} enablePan={true} enableRotate={false} panSpeed={1} zoomSpeed={0.5} minDistance={0.5} maxDistance={80} autoRotate={false} />
     </Canvas>
   );
 }
