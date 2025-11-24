@@ -124,15 +124,24 @@ export function HomePage({ socket, onMatchStart, onRoomJoined, onCompanionRoom }
         error={error}
       />
       
-      {/* Audio Toggle Button - Fixed Position */}
-      <Button
-        onClick={toggleMute}
-        variant="outline"
-        size="icon"
-        className="fixed top-4 right-4 bg-slate-900/90 border-slate-700 hover:bg-slate-800 z-50"
-      >
-        {isMuted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
-      </Button>
+      {/* Top Right Controls */}
+      <div className="fixed top-4 right-4 flex gap-2 z-50">
+        <Button
+          onClick={onCompanionRoom}
+          variant="outline"
+          className="bg-slate-900/90 border-slate-700 hover:bg-slate-800 text-white"
+        >
+          💻 Visit Companion
+        </Button>
+        <Button
+          onClick={toggleMute}
+          variant="outline"
+          size="icon"
+          className="bg-slate-900/90 border-slate-700 hover:bg-slate-800"
+        >
+          {isMuted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
+        </Button>
+      </div>
     </div>
   );
 }
