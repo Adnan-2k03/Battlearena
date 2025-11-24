@@ -314,15 +314,6 @@ function Room() {
         />
       </mesh>
 
-      {/* Back wall - TOP SECTION (above small door from x=10 to x=11.5) */}
-      <mesh position={[10.75, 2.9, -8]} receiveShadow>
-        <boxGeometry args={[1.5, 1.1, 0.5]} />
-        <meshStandardMaterial 
-          color="#daa55b" 
-          roughness={0.7}
-        />
-      </mesh>
-
       {/* Back wall - RIGHT PILLAR (right side of door from x=11.5 to x=12) */}
       <mesh position={[11.75, 0.8, -8]} receiveShadow>
         <boxGeometry args={[0.5, 4.0, 0.5]} />
@@ -345,8 +336,8 @@ function Room() {
       </mesh>
 
       {/* Left wall - warmer accent */}
-      <mesh position={[-12, 1.5, 0]} receiveShadow>
-        <boxGeometry args={[0.5, 3.5, 24]} />
+      <mesh position={[-12, 0.8, 0]} receiveShadow>
+        <boxGeometry args={[0.5, 4.0, 24]} />
         <meshStandardMaterial 
           color="#d4a574"
           roughness={0.7}
@@ -354,8 +345,8 @@ function Room() {
       </mesh>
 
       {/* Right wall - ambient lighting surface */}
-      <mesh position={[12, 1.5, 0]} receiveShadow>
-        <boxGeometry args={[0.5, 3.5, 24]} />
+      <mesh position={[12, 0.8, 0]} receiveShadow>
+        <boxGeometry args={[0.5, 4.0, 24]} />
         <meshStandardMaterial 
           color="#c99a6e"
           roughness={0.7}
