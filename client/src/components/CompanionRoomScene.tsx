@@ -542,36 +542,6 @@ function Room() {
         ))}
       </group>
 
-      {/* Premium Coffee Table - Glass & Walnut - IN FRONT OF SOFA */}
-      <group position={[-9, -0.8, 1]}>
-        {/* Glass top surface */}
-        <mesh position={[0, 0.08, 0]} receiveShadow castShadow>
-          <boxGeometry args={[1.8, 0.08, 1.2]} />
-          <meshStandardMaterial 
-            color="#f0f8ff" 
-            roughness={0.1}
-            metalness={0.2}
-            transparent={true}
-            opacity={0.85}
-          />
-        </mesh>
-        {/* Wood frame under glass */}
-        <mesh position={[0, 0.02, 0]} receiveShadow castShadow>
-          <boxGeometry args={[1.75, 0.04, 1.15]} />
-          <meshStandardMaterial color="#3a2f24" roughness={0.5} metalness={0.15} />
-        </mesh>
-        {/* Premium walnut legs */}
-        {[[-0.75, -0.4], [0.75, -0.4], [-0.75, 0.45], [0.75, 0.45]].map((pos, i) => (
-          <mesh key={i} position={[pos[0], pos[1], 0]} castShadow>
-            <cylinderGeometry args={[0.12, 0.12, 0.45, 16]} />
-            <meshStandardMaterial 
-              color="#1a1410" 
-              roughness={0.6}
-              metalness={0.12}
-            />
-          </mesh>
-        ))}
-      </group>
 
       {/* Premium Designer Floor Lamp */}
       <group position={[6, -0.8, 1]}>
