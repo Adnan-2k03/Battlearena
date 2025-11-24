@@ -2,292 +2,85 @@
 
 ## Overview
 
-This is a real-time multiplayer typing battle game where two teams (Blue vs Red) compete in a 2v2 format. Each team has two players with distinct roles: a Striker (attacker) and a Guardian (defender). Players type words to either attack the enemy team or defend their own team by restoring shields. The game uses WebSocket communication through Socket.io for real-time synchronization, with a React frontend and Express backend.
+This project is a real-time multiplayer typing battle game designed for two teams (Blue vs. Red) in a 2v2 format. Each team comprises a Striker (attacker) and a Guardian (defender). Players engage by typing words to either launch attacks on the opposing team or defend their own by restoring shields. The game leverages WebSocket communication via Socket.io for real-time synchronization, featuring a React frontend and an Express backend. The ambition is to create an engaging and competitive typing game experience.
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (November 24, 2025)
-
-### UI and Performance Improvements (Latest)
-- **Map-Aware Admin Controls**: Admin panel barrier element selector now dynamically shows elements based on the selected map
-  - Elemental Arena: Fire, Water, Leaf options
-  - Cosmic Realm: Light, Darkness, Space options
-  - Uses element colors and icons for visual clarity
-- **Attack Performance Optimization**: Reduced projectile lag during attacks
-  - Reduced trail rendering from 3 meshes to 1 optimized mesh
-  - Simplified critical hit particles (from 6 to 1 glow effect)
-  - Improved frame rates during intense battles
-- **360° Arena Background**: Added skybox environment to arena
-  - Uses sky.png texture for immersive background
-  - Seamless 200-unit sphere with inverted normals
-  - Maintains consistent lighting across both maps
-- **Compact Map Selection**: Redesigned map selection UI
-  - Horizontal carousel layout instead of large vertical cards
-  - Smaller card size (180px width) with compact padding
-  - Shows map thumbnail, name, and element icons
-  - Improved mobile and desktop responsiveness
-- **Streamlined Game Mode Selection**: Made mode selection more compact
-  - Reduced padding from p-4 to p-2
-  - Smaller icons (w-4 h-4 instead of w-6 h-6)
-  - Removed subtitle text for cleaner appearance
-
-### Map-Specific Element System
-- **Complete Element Theming**: Implemented dynamic theming system supporting all 6 elements (fire, water, leaf, light, darkness, space) across the entire UI
-  - Element colors, icons, energy bars, barriers, and attacks all adapt to selected map's elements
-  - Added icons for cosmic elements: light (Sun), darkness (Moon), space (Sparkles)
-- **Arena Visuals**: Distinct visual designs for both arenas
-  - Elemental Arena: Grassy terrain with green particle effects
-  - Cosmic Realm: Dark metallic terrain with purple glow and floating golden stars
-- **State Management Improvements**:
-  - useGameState hook now receives selectedMap parameter and initializes charges correctly for map-specific elements
-  - Socket listeners properly re-subscribe when map changes to avoid stale element closures
-  - All charge data normalized to current map's elements only
-  - Enemy charge aggregation dynamically built from mapElements
-- **Navigation Fix**: Returning from match now goes to lobby instead of nickname entry screen
-- **UI Improvements**: Reduced size of game mode selection and start button for better visual hierarchy
-- **Quick Customization**: Added clickable map and laptop selection directly in battle section
-
-## Recent Changes (November 24, 2025 - Earlier)
-
-### Customization System Overhaul
-- **Home Page Redesign**: Improved design with larger buttons, modern gradients, and better visual hierarchy
-- **Victory Modal Update**: Added "Return to Home" button for easier navigation after match ends
-- **Laptop/Ability Separation**: Split customization into two distinct systems:
-  - **Laptop Skins**: Purely cosmetic visual customization with unique colors (Client Defender, Shadow Strike, Neon Pulse, etc.)
-  - **Abilities**: Gameplay modifiers with stat bonuses (defined in separate abilities.ts file)
-- **3D Laptop Visualization**: Selected laptop skin now appears on player's keyboard in 3D arena
-  - Uses socket ID for proper player identification
-  - Displays custom laptop color with enhanced metallic/emissive effects
-  - Only applies to the actual user's keyboard, not other players
-- **Admin Auto-Unlock**: Users with "admin" prefix in nickname automatically own all laptops, maps, abilities, and receive unlimited currency
-
-### Audio Controls Enhancement
-- Removed the "Start Game with Sound" modal screen
-- Added speaker toggle button directly in the lobby screen (top-right corner)
-- Users can now control audio settings without navigating through a separate screen
-
-### UI Positioning Improvements
-- Moved admin control panel to top-left to prevent overlap with shield/HP displays
-- Moved leave match button to bottom-left for better visibility
-- Both controls are now positioned to avoid hiding critical game information
-
-### Projectile-Based Damage System
-- Implemented delayed damage calculation (1.2 seconds) to match visual projectile travel time
-- Shields are now checked at projectile impact time, not launch time
-- Server validates room state, attacker presence, and team alignment before applying damage
-- Prevents race conditions from player disconnects during projectile flight
-
-### Admin Panel Improvements
-- Added "Reset Match" button to restore HP to 100 and clear all barriers
-- Added "Force Win" button for testing victory conditions
-- Removed game speed multiplier feature
-- Enhanced admin privilege validation for all admin commands
-- God Mode now properly prevents damage to admin's team
-- Unlimited Enemy Health correctly protects enemy team from admin attacks
-
-## Development Features
-
-### Admin Mode
-For testing purposes, an admin mode is available that provides unlimited element energy. To activate admin mode:
-
-1. Enter a nickname starting with "admin" (e.g., "admin", "admin123", "admintest")
-2. Join a game as normal
-3. All three element charges (Fire, Water, Leaf) will be automatically set to 100% and stay maxed out
-4. A visual indicator "⚡ ADMIN MODE ⚡" will appear in the game UI
-5. You can use all element attacks and barriers without typing words to charge them
-
-This mode allows you to test all game features without needing to type words to build up energy.
-
 ## System Architecture
 
 ### Full-Stack Architecture
 
-**Problem**: Need a unified development and production environment for a real-time multiplayer game.
-
-**Solution**: Monorepo structure with separate client and server directories, using Vite for frontend development and Express for the backend server.
-
-**Rationale**: 
-- Single repository simplifies deployment and code sharing
-- Vite provides fast HMR for React development
-- Express handles both API routes and WebSocket connections
-- Shared schema types ensure type safety across client and server
-
-**Key Components**:
-- `client/`: React frontend with TypeScript
-- `server/`: Express backend with Socket.io
-- `shared/`: Common types and database schemas
-- Development mode (`index-dev.ts`) uses Vite middleware
-- Production mode (`index-prod.ts`) serves pre-built static files
+The project utilizes a monorepo structure with distinct client and server directories to streamline development and deployment. The frontend is built with React and Vite, while the backend uses Express with Socket.io for real-time communication. Shared TypeScript schemas ensure type safety across the entire application.
 
 ### Frontend Architecture
 
-**Problem**: Build an interactive real-time game UI with complex state management.
-
-**Solution**: React with Zustand for state management, Socket.io client for real-time communication, and a component-based UI using Radix UI primitives.
-
-**Design Patterns**:
-- **Component Structure**: Three main views (Lobby, GameArena, SpectatorView)
-- **State Management**: Zustand stores for game state and audio management
-- **Real-time Updates**: Socket.io event handlers update local state
-- **UI Framework**: Tailwind CSS with shadcn/ui components for consistent design
-
-**Key Files**:
-- `App.tsx`: Main application controller managing game phases and modes
-- `components/Lobby.tsx`: Player matchmaking and room management
-- `components/GameArena.tsx`: Core gameplay interface
-- `components/VictoryModal.tsx`: End-game statistics and results
-- `lib/stores/useGame.tsx`: Game phase state management
-- `lib/stores/useAudio.tsx`: Sound effects management
+The frontend is a React application managing complex real-time game states. It uses Zustand for state management and Socket.io for real-time updates. The UI is component-based, leveraging Radix UI primitives and styled with Tailwind CSS for a consistent design. Key views include Lobby, GameArena, and SpectatorView.
 
 ### Backend Architecture
 
-**Problem**: Handle real-time multiplayer game logic with room management and player synchronization.
-
-**Solution**: Express server with Socket.io for WebSocket communication, in-memory game state management.
-
-**Design Decisions**:
-- **Room-Based Architecture**: Each game room maintains independent state
-- **Role Assignment**: Automatic assignment of Striker/Guardian roles based on join order
-- **Team Balancing**: First two players join Blue team, next two join Red team
-- **Game Loop**: Server authoritative game state with client-side prediction
-- **Matchmaking**: Queue system for automatic room creation and player pairing
-
-**Key Components**:
-- `server/routes.ts`: Socket.io event handlers and game logic
-- Room state includes: players, teams, HP/shield values, game phase
-- Player stats tracking: words typed, accuracy, damage dealt, shields restored
-- Spectator mode support for full rooms
-
-**Pros**:
-- Centralized game logic prevents cheating
-- In-memory storage is fast for real-time games
-- Simple room-based scaling
-
-**Cons**:
-- In-memory state lost on server restart
-- No persistence between sessions
-- Limited to single-server deployment
+The backend is an Express server responsible for real-time multiplayer game logic, room management, and player synchronization via Socket.io. It employs a room-based architecture where each game room maintains an independent state. Role assignment (Striker/Guardian) and team balancing are handled automatically. The server maintains authoritative game state, with in-memory storage for fast real-time operations, though this means state is ephemeral.
 
 ### Database Layer
 
-**Problem**: Need structured data storage with type-safe schemas.
-
-**Solution**: Drizzle ORM with PostgreSQL dialect, though currently using in-memory storage implementation.
-
-**Current State**:
-- Schema defined in `shared/schema.ts` (users table)
-- Drizzle configuration points to PostgreSQL
-- Actual implementation uses `MemStorage` class for in-memory data
-- Database credentials expected via `DATABASE_URL` environment variable
-
-**Future Considerations**:
-- Current game state is ephemeral (in-memory maps)
-- User authentication schema exists but not actively used in game flow
-- Easy migration path to persistent storage by swapping storage implementation
+The project is configured to use Drizzle ORM with a PostgreSQL dialect, defining schemas in `shared/schema.ts`. However, the current implementation utilizes an in-memory storage (`MemStorage`) for game data. This design allows for a clear migration path to persistent storage in the future.
 
 ### Real-Time Communication
 
-**Problem**: Synchronize game state across multiple clients in real-time.
-
-**Solution**: Socket.io for bidirectional WebSocket communication with fallback to polling.
-
-**Event Architecture**:
-- **Client → Server**: Join room, start match, submit word
-- **Server → Client**: Room updates, game state changes, match results
-- **Broadcast Patterns**: Team-specific updates, room-wide notifications
-
-**Key Events**:
-- `join_room` / `join_matchmaking`: Player connection
-- `room_update`: Player list and readiness state
-- `match_started`: Game initialization
-- `submit_word`: Gameplay action
-- `team_update`: HP/shield changes
-- `match_ended`: Victory conditions
+Socket.io is used for real-time bidirectional WebSocket communication between the client and server. This enables synchronization of game state, player actions (e.g., submitting words), and game events (e.g., HP changes, match outcomes). Events are structured for client-to-server actions (e.g., `join_room`, `submit_word`) and server-to-client updates (e.g., `room_update`, `match_ended`).
 
 ### UI Component System
 
-**Problem**: Build a consistent, accessible, and responsive UI quickly.
-
-**Solution**: shadcn/ui component library built on Radix UI primitives with Tailwind CSS.
-
-**Benefits**:
-- Pre-built accessible components
-- Customizable through Tailwind classes
-- TypeScript support
-- Mobile-responsive by default
-
-**Component Categories**:
-- Form controls: Input, Button, Select
-- Layout: Card, Dialog, Sheet
-- Feedback: Toast, Progress, Alert
-- Data display: Table, Tabs, Badge
+The UI is built using shadcn/ui, which is based on Radix UI primitives and styled with Tailwind CSS. This provides a consistent, accessible, and responsive component library for rapid UI development.
 
 ### Audio System
 
-**Problem**: Manage game sound effects with user control.
+Game sound effects are managed through a Zustand store that controls HTML5 Audio elements. The system supports a mute toggle, and audio elements are cloned to allow for overlapping sounds, enhancing the game's auditory feedback.
 
-**Solution**: Zustand store managing HTML5 Audio elements with mute toggle.
+### Companion Room - Outdoor Biking Experience
 
-**Implementation**:
-- Sound files loaded as Audio objects
-- Muted by default (user must unmute)
-- Cloned audio elements allow overlapping sounds
-- Keyboard shortcut (M key) for mute toggle
-- Separate sounds for hits, success, and background music
+An interactive "Companion Room" features a real-world outdoor biking experience. Players can physically move their laptop character outside the room to mount a bike. The system includes proximity-based mounting, full riding controls (WASD/Arrow keys), animated bike components (wheels, pedals), and an enhanced outdoor environment with dynamic lighting and textured terrain.
+
+### Customization System
+
+The game includes a customization system with cosmetic Laptop Skins and gameplay-modifying Abilities. Laptop skins are visually represented in the 3D arena on the player's keyboard, featuring unique colors and effects. Admin users have automatic access to all customization options.
+
+### Projectile-Based Damage System
+
+Damage calculation is delayed to synchronize with visual projectile travel time. Shields are checked at the moment of projectile impact, and the server validates game state before applying damage to prevent race conditions.
 
 ## External Dependencies
 
 ### Core Framework Dependencies
 
-- **React 18** with **React DOM**: UI framework
-- **Vite**: Build tool and development server
-- **TypeScript**: Type safety across the stack
-- **Express**: Backend web framework
-- **Socket.io**: Real-time bidirectional communication
-- **Node.js**: Runtime environment
+- **React 18** with **React DOM**
+- **Vite**
+- **TypeScript**
+- **Express**
+- **Socket.io**
+- **Node.js**
 
 ### Database & ORM
 
-- **Drizzle ORM** (`drizzle-orm`, `drizzle-kit`): Type-safe database toolkit
-- **@neondatabase/serverless**: PostgreSQL driver (configured but not actively used)
-- **Zod**: Schema validation (via `drizzle-zod`)
+- **Drizzle ORM** (`drizzle-orm`, `drizzle-kit`)
+- **@neondatabase/serverless** (PostgreSQL driver, configured)
+- **Zod**
 
 ### UI Libraries
 
-- **Radix UI**: Headless component primitives (20+ component packages)
-- **Tailwind CSS**: Utility-first CSS framework
-- **class-variance-authority**: Component variant management
-- **clsx** / **tailwind-merge**: CSS class utilities
-- **Lucide React**: Icon library
+- **Radix UI**
+- **Tailwind CSS**
+- **class-variance-authority**
+- **clsx** / **tailwind-merge**
+- **Lucide React**
 
-### 3D Graphics (Unused in Current Implementation)
+### State Management
 
-- **@react-three/fiber**: React renderer for Three.js
-- **@react-three/drei**: Useful helpers for react-three-fiber
-- **@react-three/postprocessing**: Post-processing effects
-- **vite-plugin-glsl**: GLSL shader support
-
-### State Management & Data Fetching
-
-- **Zustand**: Lightweight state management
-- **@tanstack/react-query**: Server state management (configured but minimal usage)
-
-### Session Management
-
-- **express-session**: Session middleware
-- **connect-pg-simple**: PostgreSQL session store
+- **Zustand**
 
 ### Utilities
 
-- **nanoid**: Unique ID generation
-- **date-fns**: Date manipulation
-- **cmdk**: Command palette component
-
-### Development Tools
-
-- **tsx**: TypeScript execution for development
-- **esbuild**: Fast bundler for production build
-- **@replit/vite-plugin-runtime-error-modal**: Development error overlay
-- **@jridgewell/trace-mapping**: Source map utilities
+- **nanoid**
+- **date-fns**
+- **cmdk**
