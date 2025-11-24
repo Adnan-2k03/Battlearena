@@ -660,6 +660,44 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
   ];
 
   useEffect(() => {
+    let isDragging = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      isDragging = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !mapControlsRef.current) return;
+
+      const deltaX = e.clientX - lastX;
+      const deltaY = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+
+      const rotateSpeed = 0.008;
+      const camera = mapControlsRef.current.object;
+      const target = mapControlsRef.current.target;
+
+      // Rotate horizontally (around Y axis)
+      const pos = camera.position.sub(target);
+      pos.applyAxisAngle(new THREE.Vector3(0, 1, 0), -deltaX * rotateSpeed);
+      camera.position.copy(pos.add(target));
+
+      // Rotate vertically (around right axis)
+      const right = new THREE.Vector3().crossVectors(camera.up, pos).normalize();
+      const posForVertical = camera.position.sub(target);
+      posForVertical.applyAxisAngle(right, deltaY * rotateSpeed);
+      camera.position.copy(posForVertical.add(target));
+    };
+
+    const handleMouseUp = () => {
+      isDragging = false;
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!mapControlsRef.current) return;
       
@@ -695,8 +733,17 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
       }
     };
 
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   return (
@@ -708,7 +755,7 @@ function RoomScene({ laptopId, activity }: { laptopId: string; activity: Activit
           onPositionChange={setLaptopPos}
         />
       </KeyboardControls>
-      <MapControls ref={mapControlsRef} enableZoom={true} enablePan={false} enableRotate={true} rotateSpeed={0.5} zoomSpeed={0.5} minDistance={0.5} maxDistance={80} autoRotate={false} />
+      <MapControls ref={mapControlsRef} enableZoom={true} enablePan={false} enableRotate={false} zoomSpeed={0.5} minDistance={0.5} maxDistance={80} autoRotate={false} />
     </Canvas>
   );
 }
