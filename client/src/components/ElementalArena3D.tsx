@@ -1,4 +1,4 @@
-import { Suspense, useRef, useState, useEffect } from 'react';
+import { Suspense, useRef, useState, useEffect, useMemo, memo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Environment, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
@@ -18,8 +18,14 @@ interface ElementalArena3DProps {
   isAdminMode?: boolean;
 }
 
-// Terrain component
-function Terrain() {
+// Deterministic random function for stable terrain generation
+function seededRandom(seed: number) {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+// Terrain component - Memoized to prevent re-renders
+const Terrain = memo(function Terrain() {
   let grassTexture: THREE.Texture | null = null;
   try {
     grassTexture = useTexture('/textures/grass.png');
@@ -28,6 +34,17 @@ function Terrain() {
   } catch (e) {
     console.log('Grass texture not loaded, using default color');
   }
+
+  const ambientParticles = useMemo(() => {
+    return [...Array(20)].map((_, i) => {
+      const angle = (i / 20) * Math.PI * 2;
+      const radius = 15 + seededRandom(i + 100) * 5;
+      return {
+        key: i,
+        position: [Math.cos(angle) * radius, 0.5, Math.sin(angle) * radius] as [number, number, number]
+      };
+    });
+  }, []);
 
   return (
     <group>
@@ -54,23 +71,19 @@ function Terrain() {
         <meshBasicMaterial color="#ffffff" transparent opacity={0.5} />
       </mesh>
       
-      {/* Ambient particles */}
-      {[...Array(20)].map((_, i) => {
-        const angle = (i / 20) * Math.PI * 2;
-        const radius = 15 + Math.random() * 5;
-        return (
-          <mesh 
-            key={i}
-            position={[Math.cos(angle) * radius, 0.5, Math.sin(angle) * radius]}
-          >
-            <sphereGeometry args={[0.1, 8, 8]} />
-            <meshBasicMaterial color="#4ade80" transparent opacity={0.6} />
-          </mesh>
-        );
-      })}
+      {/* Ambient particles - Pre-calculated */}
+      {ambientParticles.map(particle => (
+        <mesh 
+          key={particle.key}
+          position={particle.position}
+        >
+          <sphereGeometry args={[0.1, 8, 8]} />
+          <meshBasicMaterial color="#4ade80" transparent opacity={0.6} />
+        </mesh>
+      ))}
     </group>
   );
-}
+});
 
 // Keyboard 3D Model
 interface Keyboard3DProps {

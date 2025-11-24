@@ -150,11 +150,12 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         <div style={{
-          background: 'rgba(255, 255, 255, 0.05)',
-          padding: '12px',
-          borderRadius: '8px'
+          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%)',
+          padding: '14px',
+          borderRadius: '10px',
+          border: '1px solid rgba(239, 68, 68, 0.3)'
         }}>
-          <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#a78bfa' }}>Enemy Team Controls</h4>
+          <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: '#fca5a5', fontWeight: 'bold' }}>⚔️ Enemy Team Controls</h4>
           
           <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', cursor: 'pointer' }}>
             <input
@@ -167,7 +168,7 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
           </label>
 
           <div style={{ marginBottom: '10px' }}>
-            <label style={{ fontSize: '13px', display: 'block', marginBottom: '5px' }}>
+            <label style={{ fontSize: '13px', display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
               Enemy Barrier Element:
             </label>
             <select
@@ -175,18 +176,29 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
               onChange={(e) => updateSetting('enemyBarrierElement', e.target.value || null)}
               style={{
                 width: '100%',
-                padding: '6px',
-                borderRadius: '4px',
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
+                padding: '8px 10px',
+                borderRadius: '6px',
+                background: settings.enemyBarrierElement 
+                  ? (settings.enemyBarrierElement === 'fire' ? 'rgba(239, 68, 68, 0.2)' 
+                    : settings.enemyBarrierElement === 'water' ? 'rgba(59, 130, 246, 0.2)' 
+                    : 'rgba(34, 197, 94, 0.2)')
+                  : 'rgba(255, 255, 255, 0.1)',
+                border: settings.enemyBarrierElement 
+                  ? (settings.enemyBarrierElement === 'fire' ? '2px solid #ef4444' 
+                    : settings.enemyBarrierElement === 'water' ? '2px solid #3b82f6' 
+                    : '2px solid #22c55e')
+                  : '1px solid rgba(255, 255, 255, 0.3)',
                 color: 'white',
-                fontSize: '13px'
+                fontSize: '14px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                outline: 'none'
               }}
             >
-              <option value="">None</option>
-              <option value="fire">🔥 Fire</option>
-              <option value="water">💧 Water</option>
-              <option value="leaf">🌿 Leaf</option>
+              <option value="" style={{ background: '#1e293b', color: '#94a3b8' }}>None</option>
+              <option value="fire" style={{ background: '#1e293b', color: '#ef4444' }}>🔥 Fire</option>
+              <option value="water" style={{ background: '#1e293b', color: '#3b82f6' }}>💧 Water</option>
+              <option value="leaf" style={{ background: '#1e293b', color: '#22c55e' }}>🌿 Leaf</option>
             </select>
           </div>
 
@@ -208,11 +220,12 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
         </div>
 
         <div style={{
-          background: 'rgba(255, 255, 255, 0.05)',
-          padding: '12px',
-          borderRadius: '8px'
+          background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
+          padding: '14px',
+          borderRadius: '10px',
+          border: '1px solid rgba(167, 139, 250, 0.3)'
         }}>
-          <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#a78bfa' }}>Control Enemy Bots</h4>
+          <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: '#c4b5fd', fontWeight: 'bold' }}>🤖 Control Enemy Bots</h4>
           {enemyPlayers.length === 0 ? (
             <p style={{ fontSize: '12px', color: '#888', margin: 0 }}>No enemy players to control</p>
           ) : (
@@ -266,11 +279,12 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
         </div>
 
         <div style={{
-          background: 'rgba(255, 255, 255, 0.05)',
-          padding: '12px',
-          borderRadius: '8px'
+          background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.05) 100%)',
+          padding: '14px',
+          borderRadius: '10px',
+          border: '1px solid rgba(34, 197, 94, 0.3)'
         }}>
-          <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#a78bfa' }}>Player Controls</h4>
+          <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: '#86efac', fontWeight: 'bold' }}>👤 Player Controls</h4>
           
           <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', cursor: 'pointer' }}>
             <input
@@ -294,11 +308,12 @@ export function AdminControlPanel({ socket, roomId, myTeam, enemyPlayers }: Admi
         </div>
 
         <div style={{
-          background: 'rgba(255, 255, 255, 0.05)',
-          padding: '12px',
-          borderRadius: '8px'
+          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)',
+          padding: '14px',
+          borderRadius: '10px',
+          border: '1px solid rgba(59, 130, 246, 0.3)'
         }}>
-          <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#a78bfa' }}>Game Settings</h4>
+          <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: '#93c5fd', fontWeight: 'bold' }}>⚙️ Game Settings</h4>
           
           <div>
             <label style={{ fontSize: '13px', display: 'block', marginBottom: '5px' }}>

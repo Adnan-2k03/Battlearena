@@ -1074,15 +1074,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           attackerTeam: bot.team
         });
       } else if (action === 'trigger_barrier') {
-        const elements: Element[] = ['fire', 'water', 'leaf'];
-        const element = elements[Math.floor(Math.random() * elements.length)];
+        const adminPlayer = Array.from(room.players.values()).find(p => p.isAdmin);
+        const adminEnemyTeam = adminPlayer?.team === 'blue' ? 'red' : 'blue';
+        const isEnemyBot = adminPlayer?.team && bot.team === adminEnemyTeam;
+        
+        let element: Element;
+        if (isEnemyBot && room.adminSettings.enemyBarrierElement) {
+          element = room.adminSettings.enemyBarrierElement;
+        } else {
+          const elements: Element[] = ['fire', 'water', 'leaf'];
+          element = elements[Math.floor(Math.random() * elements.length)];
+        }
         
         bot.elementCharges[element] = 100;
         
         const botTeamState = bot.team === "blue" ? room.blueTeam : room.redTeam;
+        const barrierStrength = isEnemyBot && room.adminSettings.enemyBarrierStrength !== undefined 
+          ? room.adminSettings.enemyBarrierStrength 
+          : 100;
+        
         botTeamState.barrier = {
           element,
-          strength: 100
+          strength: barrierStrength
         };
 
         bot.elementCharges[element] = 0;

@@ -80,21 +80,24 @@ export function useGameState(
       setWords(newWords);
     });
 
-    // Element charges update
+    // Element charges update - Optimized to only update changed values
     socket.on('element_charges_update', ({ playerCharges }: { playerCharges: any[] }) => {
-      const playersMap = new Map<string, PlayerData>();
-      playerCharges.forEach((p: any) => {
-        playersMap.set(p.id, {
-          id: p.id,
-          nickname: p.nickname || 'Player',
-          team: p.team,
-          role: p.role,
-          charges: p.charges,
-          isTyping: false,
-          lastKeyPressed: null
+      setPlayers(prev => {
+        const playersMap = new Map(prev);
+        playerCharges.forEach((p: any) => {
+          const existingPlayer = playersMap.get(p.id);
+          playersMap.set(p.id, {
+            id: p.id,
+            nickname: p.nickname || existingPlayer?.nickname || 'Player',
+            team: p.team,
+            role: p.role,
+            charges: p.charges,
+            isTyping: existingPlayer?.isTyping || false,
+            lastKeyPressed: existingPlayer?.lastKeyPressed || null
+          });
         });
+        return playersMap;
       });
-      setPlayers(playersMap);
       
       // Update my charges - always set to 100 if admin mode
       const myData = playerCharges.find((p: any) => p.id === socket.id);
@@ -130,25 +133,27 @@ export function useGameState(
       });
     });
 
-    // Attack landed
+    // Attack landed - Optimized to limit attack events and batch cleanup
     socket.on('attack_landed', ({ attackerTeam, element, blueTeam: blue, redTeam: red, isCritical }: any) => {
       setBlueTeam(blue);
       setRedTeam(red);
       
       const effectId = `${Date.now()}-${Math.random()}`;
-      setAttackEvents(prev => [...prev, {
+      const newAttack = {
         id: effectId,
         attackerTeam,
         element,
         startTime: Date.now(),
         isCritical: isCritical || false
-      }]);
+      };
+      
+      setAttackEvents(prev => {
+        const filtered = prev.filter(e => Date.now() - e.startTime < 2000);
+        const limited = filtered.slice(-5);
+        return [...limited, newAttack];
+      });
 
       playAttack();
-
-      setTimeout(() => {
-        setAttackEvents(prev => prev.filter(e => e.id !== effectId));
-      }, 2000);
     });
 
     // Barrier created
@@ -158,25 +163,21 @@ export function useGameState(
       playBarrier();
     });
 
-    // Small boost (chip damage to enemy)
+    // Small boost (chip damage to enemy) - Optimized cleanup
     socket.on('small_boost', ({ blueTeam: blue, redTeam: red, team }: any) => {
       setBlueTeam(blue);
       setRedTeam(red);
       
       const damageId = `damage-${Date.now()}`;
-      // Show the damage text over the enemy team, not the attacker's team
       const enemyTeam = team === 'blue' ? 'red' : 'blue';
       
-      setFloatingTexts(prev => [...prev, 
-        { id: damageId, text: '-3 HP', type: 'hp', team: enemyTeam, startTime: Date.now() }
-      ]);
-      
-      setTimeout(() => {
-        setFloatingTexts(prev => prev.filter(t => t.id !== damageId));
-      }, 1500);
+      setFloatingTexts(prev => {
+        const filtered = prev.filter(t => Date.now() - t.startTime < 1500);
+        return [...filtered, { id: damageId, text: '-3 HP', type: 'hp', team: enemyTeam, startTime: Date.now() }];
+      });
     });
 
-    // Damage dealt
+    // Damage dealt - Optimized cleanup
     socket.on('damage_dealt', ({ attackerTeam, blueTeam: blue, redTeam: red, damage }: any) => {
       setBlueTeam(blue);
       setRedTeam(red);
@@ -184,13 +185,10 @@ export function useGameState(
       
       const damageId = `damage-${Date.now()}`;
       const targetTeam = attackerTeam === 'blue' ? 'red' : 'blue';
-      setFloatingTexts(prev => [...prev, 
-        { id: damageId, text: `-${damage} HP`, type: 'damage', team: targetTeam, startTime: Date.now() }
-      ]);
-      
-      setTimeout(() => {
-        setFloatingTexts(prev => prev.filter(t => t.id !== damageId));
-      }, 1500);
+      setFloatingTexts(prev => {
+        const filtered = prev.filter(t => Date.now() - t.startTime < 1500);
+        return [...filtered, { id: damageId, text: `-${damage} HP`, type: 'damage', team: targetTeam, startTime: Date.now() }];
+      });
     });
 
     // Word correct
@@ -219,6 +217,17 @@ export function useGameState(
       socket.off('word_invalid');
     };
   }, [socket, roomId, playHit, playSuccess, playCharge, playBarrier, playAttack, isAdminMode]);
+
+  // Periodic cleanup for attack events and floating texts to prevent accumulation
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      setAttackEvents(prev => prev.filter(e => now - e.startTime < 2000));
+      setFloatingTexts(prev => prev.filter(t => now - t.startTime < 1500));
+    }, 500);
+
+    return () => clearInterval(cleanupInterval);
+  }, []);
 
   const submitWord = (word: string) => {
     if (!socket || !word.trim()) return;
